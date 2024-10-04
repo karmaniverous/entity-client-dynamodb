@@ -116,5 +116,11 @@
   },
   "type": "module",
   "types": "dist/index.d.ts",
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.664.0",
+    "@aws-sdk/lib-dynamodb": "^3.664.0",
+    "aws-xray-sdk": "^3.10.1",
+    "radash": "^12.1.0"
+  }
 }
