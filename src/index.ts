@@ -1,7 +1,9 @@
-/**
- * This is the main entry point for the library.
- *
- * @packageDocumentation
- */
-
-export { foo, type FooTarget } from './foo';
+export {
+  type BatchOptions,
+  DynamoDbClient,
+  type DynamoDbClientConfig,
+  type EntityManagerDynamoDbClientConfig,
+  type Logger,
+  type LoggerEndpoint,
+} from './DynamoDbClient';
+export type { WithRequiredAndNonNullable } from './WithRequiredAndNonNullable';

@@ -3,6 +3,12 @@
   "bugs": {
     "url": "https://github.com/karmaniverous/entity-manager-dynamodb/issues"
   },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.664.0",
+    "@aws-sdk/lib-dynamodb": "^3.664.0",
+    "aws-xray-sdk": "^3.10.1",
+    "radash": "^12.1.0"
+  },
   "description": "Entity Manager integrated into a DynamoDB client wrapper.",
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.14.2",
@@ -29,6 +35,7 @@
     "knip": "^5.30.6",
     "lefthook": "^1.7.18",
     "mocha": "^10.7.3",
+    "nanoid": "^5.0.7",
     "nyc": "^17.1.0",
     "prettier": "^3.3.3",
     "release-it": "^17.6.0",
@@ -112,15 +119,9 @@
     "lint:fix": "eslint --fix src/** && prettier --write src",
     "release": "dotenvx run -f .env.local -- release-it",
     "release:pre": "dotenvx run -f .env.local -- release-it --no-git.requireBranch --github.prerelease --preRelease",
-    "test": "dotenvx run --quiet --log-level=LOG_LEVEL=debug -- nyc mocha"
+    "test": "dotenvx run -f .env.local --quiet --log-level=LOG_LEVEL=debug -- nyc mocha"
   },
   "type": "module",
   "types": "dist/index.d.ts",
-  "version": "0.0.0",
-  "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.664.0",
-    "@aws-sdk/lib-dynamodb": "^3.664.0",
-    "aws-xray-sdk": "^3.10.1",
-    "radash": "^12.1.0"
-  }
+  "version": "0.0.0"
 }
