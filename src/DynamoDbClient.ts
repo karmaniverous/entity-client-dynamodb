@@ -9,14 +9,16 @@ import {
   waitUntilTableNotExists,
 } from '@aws-sdk/client-dynamodb';
 import {
-  BatchWriteCommandOutput,
-  DeleteCommandInput,
+  type BatchWriteCommandOutput,
+  type DeleteCommandInput,
+  type DeleteCommandOutput,
   DynamoDBDocument,
-  NativeAttributeValue,
-  PutCommandInput,
+  type NativeAttributeValue,
+  type PutCommandInput,
+  type PutCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 import AWSXray from 'aws-xray-sdk';
-import { cluster, isFunction, parallel } from 'radash';
+import { cluster, isFunction, isString, parallel } from 'radash';
 import { setTimeout } from 'timers/promises';
 
 import type { WithRequiredAndNonNullable } from './WithRequiredAndNonNullable';
@@ -66,6 +68,9 @@ export interface EntityManagerDynamoDbClientConfig {
 export type DynamoDbClientConfig = SdkDynamoDbClientConfig &
   EntityManagerDynamoDbClientConfig;
 
+/**
+ * Options for methods that support batch operations.
+ */
 export interface BatchOptions {
   /** Batch size. Defaults to {@link EntityManagerDynamoDbClientConfig.defaultBatchSize | `EntityManagerDynamoDbClientConfig.defaultBatchSize`}. */
   batchSize?: number;
@@ -252,24 +257,62 @@ export class DynamoDbClient {
 
   /**
    * Puts an item to a DynamoDB table.
+   * @param tableName - Table name.
+   * @param item - Item.
+   * @returns The resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandOutput | `PutCommandOutput`} object.
+   * @overload
+   */
+  /**
+   * Puts an item to a DynamoDB table.
    * @param options - {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandInput | `PutCommandInput`} object with the `Item` & `TableName` properties required and non-nullable.
    * @returns The resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandOutput | `PutCommandOutput`} object.
+   * @overload
    */
   async putItem(
     options: WithRequiredAndNonNullable<PutCommandInput, 'Item' | 'TableName'>,
-  ) {
+  ): Promise<PutCommandOutput>;
+  async putItem(
+    tableName: string,
+    item: Record<string, NativeAttributeValue>,
+  ): Promise<PutCommandOutput>;
+  async putItem(
+    optionsOrTableName:
+      | WithRequiredAndNonNullable<PutCommandInput, 'Item' | 'TableName'>
+      | string,
+    item?: Record<string, NativeAttributeValue>,
+  ): Promise<PutCommandOutput> {
     try {
-      // Validate options.
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (!options.Item) throw new Error('Item is required');
-      if (!options.TableName) throw new Error('TableName is required');
+      // Normalize params.
+      let options: WithRequiredAndNonNullable<
+        PutCommandInput,
+        'Item' | 'TableName'
+      >;
+
+      if (isString(optionsOrTableName)) {
+        if (!optionsOrTableName) throw new Error('tableName is required');
+        if (!item) throw new Error('item is required');
+
+        options = { Item: item, TableName: optionsOrTableName };
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (!optionsOrTableName.Item)
+          throw new Error('options.Item is required');
+        if (!optionsOrTableName.TableName)
+          throw new Error('options.TableName is required');
+
+        options = optionsOrTableName;
+      }
 
       // Send command.
       const response = await this.#doc.put(options);
 
       // Evaluate response.
       if (response.$metadata.httpStatusCode === 200)
-        this.config.logger.debug('put item to table', { options, response });
+        this.config.logger.debug('put item to table', {
+          optionsOrTableName,
+          item,
+          response,
+        });
       else {
         const msg = 'failed to put item to table';
         this.config.logger.error(msg, response);
@@ -279,7 +322,7 @@ export class DynamoDbClient {
       return response;
     } catch (error) {
       if (error instanceof Error)
-        this.config.logger.error(error.message, { options });
+        this.config.logger.error(error.message, { optionsOrTableName, item });
 
       throw error;
     }
@@ -287,20 +330,53 @@ export class DynamoDbClient {
 
   /**
    * Deletes an item from a DynamoDB table.
+   * @param tableName - Table name.
+   * @param key - Item key.
+   * @returns The resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/DeleteCommandOutput | `DeleteCommandOutput`} object.
+   * @overload
+   */
+  async deleteItem(
+    tableName: string,
+    key: Record<string, NativeAttributeValue>,
+  ): Promise<DeleteCommandOutput>;
+  /**
+   * Deletes an item from a DynamoDB table.
    * @param options - {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/DeleteCommandInput | `DeleteCommandInput`} object with the `Key` & `TableName` properties required and non-nullable.
    * @returns The resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/DeleteCommandOutput | `DeleteCommandOutput`} object.
+   * @overload
    */
   async deleteItem(
     options: WithRequiredAndNonNullable<
       DeleteCommandInput,
       'Key' | 'TableName'
     >,
-  ) {
+  ): Promise<DeleteCommandOutput>;
+  async deleteItem(
+    optionsOrTableName:
+      | WithRequiredAndNonNullable<DeleteCommandInput, 'Key' | 'TableName'>
+      | string,
+    key?: Record<string, NativeAttributeValue>,
+  ): Promise<DeleteCommandOutput> {
     try {
-      // Validate options.
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (!options.Key) throw new Error('Key is required');
-      if (!options.TableName) throw new Error('TableName is required');
+      // Normalize params.
+      let options: WithRequiredAndNonNullable<
+        DeleteCommandInput,
+        'Key' | 'TableName'
+      >;
+
+      if (isString(optionsOrTableName)) {
+        if (!optionsOrTableName) throw new Error('tableName is required');
+        if (!key) throw new Error('key is required');
+
+        options = { Key: key, TableName: optionsOrTableName };
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (!optionsOrTableName.Key) throw new Error('options.Key is required');
+        if (!optionsOrTableName.TableName)
+          throw new Error('options.TableName is required');
+
+        options = optionsOrTableName;
+      }
 
       // Send command.
       const response = await this.#doc.delete(options);
@@ -308,7 +384,8 @@ export class DynamoDbClient {
       // Evaluate response.
       if (response.$metadata.httpStatusCode === 200)
         this.config.logger.debug('deleted item from table', {
-          options,
+          optionsOrTableName,
+          key,
           response,
         });
       else {
@@ -320,7 +397,7 @@ export class DynamoDbClient {
       return response;
     } catch (error) {
       if (error instanceof Error)
-        this.config.logger.error(error.message, { options });
+        this.config.logger.error(error.message, { optionsOrTableName, key });
 
       throw error;
     }
@@ -329,23 +406,21 @@ export class DynamoDbClient {
   /**
    * Puts multiple items to a DynamoDB table in batches.
    *
-   * @param options - Options object.
+   * @param tableName - Table name.
+   * @param items - Array of items.
+   * @param batchOptions - {@link BatchOptions | `BatchOptions`} object.
    * @returns Array of {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchWriteCommandOutput | `BatchWriteCommandOutput`} objects.
    */
-  async putItems({
-    batchSize = this.config.defaultBatchSize,
-    delayIncrement = this.config.defaultDelayIncrement,
-    items,
-    maxRetries = this.config.defaultMaxRetries,
-    tableName,
-    throttle = this.config.defaultThrottle,
-  }: {
-    /** Array of items. */
-    items: Record<string, NativeAttributeValue>[];
-
-    /** Table name. */
-    tableName: string;
-  } & BatchOptions) {
+  async putItems(
+    tableName: string,
+    items: Record<string, NativeAttributeValue>[],
+    {
+      batchSize = this.config.defaultBatchSize,
+      delayIncrement = this.config.defaultDelayIncrement,
+      maxRetries = this.config.defaultMaxRetries,
+      throttle = this.config.defaultThrottle,
+    }: BatchOptions = {},
+  ): Promise<BatchWriteCommandOutput[]> {
     try {
       // Validate options.
       if (!tableName) throw new Error('tableName is required');
@@ -417,23 +492,21 @@ export class DynamoDbClient {
   /**
    * Deletes multiple items from a DynamoDB table in batches.
    *
-   * @param options - Options object.
+   * @param tableName - Table name.
+   * @param keys - Array of item keys.
+   * @param batchOptions - {@link BatchOptions | `BatchOptions`} object.
    * @returns Array of {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchWriteCommandOutput | `BatchWriteCommandOutput`} objects.
    */
-  async deleteItems({
-    batchSize = this.config.defaultBatchSize,
-    delayIncrement = this.config.defaultDelayIncrement,
-    keys,
-    maxRetries = this.config.defaultMaxRetries,
-    tableName,
-    throttle = this.config.defaultThrottle,
-  }: {
-    /** Array of items (only primary key values are required). */
-    keys: Record<string, NativeAttributeValue>[];
-
-    /** Table name. */
-    tableName: string;
-  } & BatchOptions) {
+  async deleteItems(
+    tableName: string,
+    keys: Record<string, NativeAttributeValue>[],
+    {
+      batchSize = this.config.defaultBatchSize,
+      delayIncrement = this.config.defaultDelayIncrement,
+      maxRetries = this.config.defaultMaxRetries,
+      throttle = this.config.defaultThrottle,
+    }: BatchOptions = {},
+  ): Promise<BatchWriteCommandOutput[]> {
     try {
       // Validate options.
       if (!tableName) throw new Error('tableName is required');

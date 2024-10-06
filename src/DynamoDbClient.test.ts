@@ -104,10 +104,7 @@ describe('WrappedDynamoDbClient', function () {
             }));
 
             // Put items.
-            const putResponse = await dynamoDbClient.putItems({
-              items,
-              tableName,
-            });
+            const putResponse = await dynamoDbClient.putItems(tableName, items);
 
             expect(putResponse.every((r) => r.$metadata.httpStatusCode === 200))
               .to.be.true;
@@ -120,10 +117,10 @@ describe('WrappedDynamoDbClient', function () {
             expect(putScan.Items).not.to.be.empty;
 
             // Delete items.
-            const deleteResponse = await dynamoDbClient.deleteItems({
-              keys: items,
+            const deleteResponse = await dynamoDbClient.deleteItems(
               tableName,
-            });
+              items,
+            );
 
             expect(
               deleteResponse.every((r) => r.$metadata.httpStatusCode === 200),
