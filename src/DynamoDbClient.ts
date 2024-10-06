@@ -1,5 +1,4 @@
 import {
-  type AttributeValue,
   CreateTableCommand,
   type CreateTableCommandInput,
   DeleteTableCommand,
@@ -14,12 +13,24 @@ import {
   type DeleteCommandInput,
   type DeleteCommandOutput,
   DynamoDBDocument,
+  type GetCommandInput,
+  type GetCommandOutput,
   type NativeAttributeValue,
   type PutCommandInput,
   type PutCommandOutput,
+  TransactWriteCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 import AWSXray from 'aws-xray-sdk';
-import { cluster, isFunction, isString, parallel, pick, sift } from 'radash';
+import {
+  cluster,
+  isArray,
+  isFunction,
+  isString,
+  parallel,
+  pick,
+  sift,
+  zipToObject,
+} from 'radash';
 import { setTimeout } from 'timers/promises';
 
 import type { WithRequiredAndNonNullable } from './WithRequiredAndNonNullable';
@@ -84,6 +95,48 @@ export interface BatchOptions {
 
   /** Throttle for parallel operations. Defaults to {@link EntityManagerDynamoDbClientConfig.defaultThrottle | `EntityManagerDynamoDbClientConfig.defaultThrottle`}. */
   throttle?: number;
+}
+
+/**
+ * Options for {@link DynamoDbClient.getItem | `DynamoDbClient.getItem`} method.
+ *
+ * @typeParam T - Item type.
+ */
+export interface GetItemOptions {
+  /** Item attributes to retrieve (undefined retrieves all attributes). */
+  attributes?: string[];
+
+  /** Determines the read consistency model: If set to `true`, then the operation uses strongly consistent reads; otherwise, the operation uses eventually consistent reads. */
+  consistentRead?: GetCommandInput['ConsistentRead'];
+
+  /**
+   * <p>Determines the level of detail about either provisioned or on-demand throughput
+   *             consumption that is returned in the response:</p>
+   *          <ul>
+   *             <li>
+   *                <p>
+   *                   <code>INDEXES</code> - The response includes the aggregate
+   *                         <code>ConsumedCapacity</code> for the operation, together with
+   *                         <code>ConsumedCapacity</code> for each table and secondary index that was
+   *                     accessed.</p>
+   *                <p>Note that some operations, such as <code>GetItem</code> and
+   *                         <code>BatchGetItem</code>, do not access any indexes at all. In these cases,
+   *                     specifying <code>INDEXES</code> will only return <code>ConsumedCapacity</code>
+   *                     information for table(s).</p>
+   *             </li>
+   *             <li>
+   *                <p>
+   *                   <code>TOTAL</code> - The response includes only the aggregate
+   *                         <code>ConsumedCapacity</code> for the operation.</p>
+   *             </li>
+   *             <li>
+   *                <p>
+   *                   <code>NONE</code> - No <code>ConsumedCapacity</code> details are included in the
+   *                     response.</p>
+   *             </li>
+   *          </ul>
+   */
+  returnConsumedCapacity?: GetCommandInput['ReturnConsumedCapacity'];
 }
 
 /**
@@ -358,27 +411,27 @@ export class DynamoDbClient {
       | string,
     key?: Record<string, NativeAttributeValue>,
   ): Promise<DeleteCommandOutput> {
+    // Normalize params.
+    let options: WithRequiredAndNonNullable<
+      DeleteCommandInput,
+      'Key' | 'TableName'
+    >;
+
+    if (isString(optionsOrTableName)) {
+      if (!optionsOrTableName) throw new Error('tableName is required');
+      if (!key) throw new Error('key is required');
+
+      options = { Key: key, TableName: optionsOrTableName };
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (!optionsOrTableName.Key) throw new Error('options.Key is required');
+      if (!optionsOrTableName.TableName)
+        throw new Error('options.TableName is required');
+
+      options = optionsOrTableName;
+    }
+
     try {
-      // Normalize params.
-      let options: WithRequiredAndNonNullable<
-        DeleteCommandInput,
-        'Key' | 'TableName'
-      >;
-
-      if (isString(optionsOrTableName)) {
-        if (!optionsOrTableName) throw new Error('tableName is required');
-        if (!key) throw new Error('key is required');
-
-        options = { Key: key, TableName: optionsOrTableName };
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (!optionsOrTableName.Key) throw new Error('options.Key is required');
-        if (!optionsOrTableName.TableName)
-          throw new Error('options.TableName is required');
-
-        options = optionsOrTableName;
-      }
-
       // Send command.
       const response = await this.#doc.delete(options);
 
@@ -585,8 +638,8 @@ export class DynamoDbClient {
       if (!hashKey) throw new Error('hashKey is required');
 
       let purged = 0;
-      let items: Record<string, AttributeValue>[] = [];
-      let lastEvaluatedKey: Record<string, AttributeValue> | undefined =
+      let items: Record<string, NativeAttributeValue>[] = [];
+      let lastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
         undefined;
 
       do {
@@ -623,6 +676,174 @@ export class DynamoDbClient {
           hashKey,
           rangeKey,
           batchOptions,
+        });
+
+      throw error;
+    }
+  }
+
+  /**
+   * Puts multiple items to a DynamoDB table as a single transaction.
+   *
+   * @param tableName - Table name.
+   * @param items - Array of items.
+   * @returns {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/TransactWriteItemsCommandOutput | `TransactWriteCommandOutput`} object.
+   */
+  async transactPutItems(
+    tableName: string,
+    items: Record<string, NativeAttributeValue>[],
+  ): Promise<TransactWriteCommandOutput> {
+    try {
+      // Validate options.
+      if (!tableName) throw new Error('tableName is required');
+
+      const transactWriteCommandOutput = await this.doc.transactWrite({
+        TransactItems: items.map((item) => ({
+          Put: { Item: item, TableName: tableName },
+        })),
+      });
+
+      this.config.logger.debug('put items to table as transaction', {
+        tableName,
+        items,
+        transactWriteCommandOutput,
+      });
+
+      return transactWriteCommandOutput;
+    } catch (error) {
+      if (error instanceof Error)
+        this.config.logger.error(error.message, {
+          tableName,
+          items,
+        });
+
+      throw error;
+    }
+  }
+
+  /**
+   * Deletes multiple items from a DynamoDB table as a single transaction.
+   *
+   * @param tableName - Table name.
+   * @param keys - Array of item keys.
+   * @returns {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/TransactWriteItemsCommandOutput | `TransactWriteCommandOutput`} object.
+   */
+  async transactDeleteItems(
+    tableName: string,
+    keys: Record<string, NativeAttributeValue>[],
+  ): Promise<TransactWriteCommandOutput> {
+    try {
+      // Validate options.
+      if (!tableName) throw new Error('tableName is required');
+
+      const transactWriteCommandOutput = await this.doc.transactWrite({
+        TransactItems: keys.map((key) => ({
+          Delete: { Key: key, TableName: tableName },
+        })),
+      });
+
+      this.config.logger.debug('deleted items from table as transaction', {
+        tableName,
+        keys,
+        transactWriteCommandOutput,
+      });
+
+      return transactWriteCommandOutput;
+    } catch (error) {
+      if (error instanceof Error)
+        this.config.logger.error(error.message, {
+          tableName,
+          keys,
+        });
+
+      throw error;
+    }
+  }
+
+  /**
+   * Get item from a DynamoDB table.
+   *
+   * @param tableName - Table name.
+   * @param key - Item keys.
+   * @param options - {@link GetItemOptions | `GetItemOptions`} object.
+   *
+   * @returns {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/GetCommandOutput/ | GetCommandOutput`} object.
+   */
+  async getItem(
+    tableName: string,
+    key: Record<string, NativeAttributeValue>,
+    options?: GetItemOptions,
+  ): Promise<GetCommandOutput>;
+  /**
+   * Get item from a DynamoDB table.
+   *
+   * @param tableName - Table name.
+   * @param key - Item keys.
+   * @param attributes - Item attributes to retrieve.
+   * @param options - {@link GetItemOptions | `GetItemOptions`} object, omitting `attributes`.
+   *
+   * @returns {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/GetCommandOutput/ | GetCommandOutput`} object.
+   */
+  async getItem(
+    tableName: string,
+    key: Record<string, NativeAttributeValue>,
+    attributes: string[],
+    options?: Omit<GetItemOptions, 'attributes'>,
+  ): Promise<GetCommandOutput>;
+  async getItem(
+    tableName: string,
+    key: Record<string, NativeAttributeValue>,
+    attributesOrOptions?: string[] | GetItemOptions,
+    remainingOptions?: Omit<GetItemOptions, 'attributes'>,
+  ): Promise<GetCommandOutput> {
+    // Resolve params.
+    const attributes = isArray(attributesOrOptions)
+      ? attributesOrOptions
+      : attributesOrOptions?.attributes;
+
+    const { consistentRead, returnConsumedCapacity } = isArray(
+      attributesOrOptions,
+    )
+      ? (remainingOptions ?? {})
+      : (attributesOrOptions ?? {});
+
+    const attributeExpressions = attributes?.map((a) => `#${a}`);
+
+    try {
+      const getCommandOutput = await this.doc.get({
+        ConsistentRead: consistentRead,
+        Key: key,
+        ReturnConsumedCapacity: returnConsumedCapacity,
+        TableName: tableName,
+        ...(attributes && attributeExpressions
+          ? {
+              ExpressionAttributeNames: zipToObject(
+                attributeExpressions,
+                attributes,
+              ),
+              ProjectionExpression: attributeExpressions.join(','),
+            }
+          : {}),
+      });
+
+      this.config.logger.debug('got item from table', {
+        tableName,
+        key,
+        attributes,
+        consistentRead,
+        returnConsumedCapacity,
+        getCommandOutput,
+      });
+
+      return getCommandOutput;
+    } catch (error) {
+      if (error instanceof Error)
+        this.config.logger.error(error.message, {
+          tableName,
+          key,
+          attributes,
+          consistentRead,
+          returnConsumedCapacity,
         });
 
       throw error;

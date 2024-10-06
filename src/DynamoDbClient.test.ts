@@ -167,6 +167,44 @@ describe('WrappedDynamoDbClient', function () {
 
             expect(deleteScan.Items).to.be.empty;
           });
+
+          it('transact puts/deletes should close', async function () {
+            const hashKey = nanoid();
+            const items = [...range(96)].map((rangeKey) => ({
+              hashKey,
+              rangeKey,
+            }));
+
+            // Put items.
+            const putResponse = await dynamoDbClient.transactPutItems(
+              tableName,
+              items,
+            );
+
+            expect(putResponse.$metadata.httpStatusCode).to.equal(200);
+
+            // Query items.
+            const putScan = await dynamoDbClient.doc.scan({
+              TableName: tableName,
+            });
+
+            expect(putScan.Items).not.to.be.empty;
+
+            // Delete items.
+            const deleteResponse = await dynamoDbClient.transactDeleteItems(
+              tableName,
+              items,
+            );
+
+            expect(deleteResponse.$metadata.httpStatusCode).to.equal(200);
+
+            // Query items.
+            const deleteScan = await dynamoDbClient.doc.scan({
+              TableName: tableName,
+            });
+
+            expect(deleteScan.Items).to.be.empty;
+          });
         });
       });
     });
