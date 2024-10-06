@@ -1,7 +1,4 @@
-import {
-  type CreateTableCommandInput,
-  ScanCommand,
-} from '@aws-sdk/client-dynamodb';
+import { type CreateTableCommandInput } from '@aws-sdk/client-dynamodb';
 import { expect } from 'chai';
 import { nanoid } from 'nanoid';
 import { range } from 'radash';
@@ -110,9 +107,9 @@ describe('WrappedDynamoDbClient', function () {
               .to.be.true;
 
             // Query items.
-            const putScan = await dynamoDbClient.client.send(
-              new ScanCommand({ TableName: tableName }),
-            );
+            const putScan = await dynamoDbClient.doc.scan({
+              TableName: tableName,
+            });
 
             expect(putScan.Items).not.to.be.empty;
 
@@ -127,9 +124,46 @@ describe('WrappedDynamoDbClient', function () {
             ).to.be.true;
 
             // Query items.
-            const deleteScan = await dynamoDbClient.client.send(
-              new ScanCommand({ TableName: tableName }),
+            const deleteScan = await dynamoDbClient.doc.scan({
+              TableName: tableName,
+            });
+
+            expect(deleteScan.Items).to.be.empty;
+          });
+
+          it('puts/purge should close', async function () {
+            const hashKey = nanoid();
+            const items = [...range(96)].map((rangeKey) => ({
+              hashKey,
+              rangeKey,
+            }));
+
+            // Put items.
+            const putResponse = await dynamoDbClient.putItems(tableName, items);
+
+            expect(putResponse.every((r) => r.$metadata.httpStatusCode === 200))
+              .to.be.true;
+
+            // Query items.
+            const putScan = await dynamoDbClient.doc.scan({
+              TableName: tableName,
+            });
+
+            expect(putScan.Items).not.to.be.empty;
+
+            // Purge items.
+            const purged = await dynamoDbClient.purgeItems(
+              tableName,
+              'hashKey',
+              'rangeKey',
             );
+
+            expect(purged).to.equal(97);
+
+            // Query items.
+            const deleteScan = await dynamoDbClient.doc.scan({
+              TableName: tableName,
+            });
 
             expect(deleteScan.Items).to.be.empty;
           });

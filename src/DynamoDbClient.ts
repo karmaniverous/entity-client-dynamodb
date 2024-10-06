@@ -1,4 +1,5 @@
 import {
+  type AttributeValue,
   CreateTableCommand,
   type CreateTableCommandInput,
   DeleteTableCommand,
@@ -18,7 +19,7 @@ import {
   type PutCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 import AWSXray from 'aws-xray-sdk';
-import { cluster, isFunction, isString, parallel } from 'radash';
+import { cluster, isFunction, isString, parallel, pick, sift } from 'radash';
 import { setTimeout } from 'timers/promises';
 
 import type { WithRequiredAndNonNullable } from './WithRequiredAndNonNullable';
@@ -464,12 +465,9 @@ export class DynamoDbClient {
       });
 
       this.config.logger.debug('put items to table', {
-        batchSize,
-        delayIncrement,
-        items,
-        maxRetries,
         tableName,
-        throttle,
+        items,
+        batchOptions: { batchSize, delayIncrement, maxRetries, throttle },
         batchWriteCommandOutputs,
       });
 
@@ -477,12 +475,9 @@ export class DynamoDbClient {
     } catch (error) {
       if (error instanceof Error)
         this.config.logger.error(error.message, {
-          batchSize,
-          delayIncrement,
-          items,
-          maxRetries,
           tableName,
-          throttle,
+          items,
+          batchOptions: { batchSize, delayIncrement, maxRetries, throttle },
         });
 
       throw error;
@@ -550,12 +545,9 @@ export class DynamoDbClient {
       });
 
       this.config.logger.debug('deleted keys from table', {
-        batchSize,
-        delayIncrement,
-        keys,
-        maxRetries,
         tableName,
-        throttle,
+        keys,
+        batchOptions: { batchSize, delayIncrement, maxRetries, throttle },
         batchWriteCommandOutputs,
       });
 
@@ -563,12 +555,74 @@ export class DynamoDbClient {
     } catch (error) {
       if (error instanceof Error)
         this.config.logger.error(error.message, {
-          batchSize,
-          delayIncrement,
-          keys,
-          maxRetries,
           tableName,
-          throttle,
+          keys,
+          batchOptions: { batchSize, delayIncrement, maxRetries, throttle },
+        });
+
+      throw error;
+    }
+  }
+
+  /**
+   * Purge all items from a DynamoDB table.
+   *
+   * @param tableName - Table name.
+   * @param hashKey - Hash key name.
+   * @param rangeKey - Range key name.
+   * @param batchOptions - {@link BatchOptions | `BatchOptions`} object.
+   * @returns Number of items purged.
+   */
+  async purgeItems(
+    tableName: string,
+    hashKey: string,
+    rangeKey?: string,
+    batchOptions: BatchOptions = {},
+  ): Promise<number> {
+    try {
+      // Validate options.
+      if (!tableName) throw new Error('tableName is required');
+      if (!hashKey) throw new Error('hashKey is required');
+
+      let purged = 0;
+      let items: Record<string, AttributeValue>[] = [];
+      let lastEvaluatedKey: Record<string, AttributeValue> | undefined =
+        undefined;
+
+      do {
+        ({ Items: items = [], LastEvaluatedKey: lastEvaluatedKey } =
+          await this.#doc.scan({
+            TableName: tableName,
+            ExclusiveStartKey: lastEvaluatedKey,
+          }));
+
+        if (items.length) {
+          const itemKeys = items.map((item) =>
+            pick(item, sift([hashKey, rangeKey])),
+          );
+
+          await this.deleteItems(tableName, itemKeys, batchOptions);
+
+          purged += items.length;
+        }
+      } while (items.length);
+
+      this.config.logger.debug('purged items from table', {
+        tableName,
+        hashKey,
+        rangeKey,
+        batchOptions,
+        purged,
+      });
+
+      return purged;
+    } catch (error) {
+      if (error instanceof Error)
+        this.config.logger.error(error.message, {
+          tableName,
+          hashKey,
+          rangeKey,
+          batchOptions,
         });
 
       throw error;
