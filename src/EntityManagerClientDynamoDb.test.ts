@@ -276,6 +276,19 @@ describe('WrappedDynamoDbClient', function () {
                 expect(response.Item).not.to.exist;
               });
             });
+
+            describe('gets', function () {
+              it('should get multiple items', async function () {
+                // Get items.
+                const response = await dynamoDbClient.getItems(tableName, [
+                  pick(item0, ['hashKey', 'rangeKey']),
+                  pick(item1, ['hashKey', 'rangeKey']),
+                ]);
+                expect(response.items)
+                  .to.deep.include(item0)
+                  .and.to.deep.include(item1);
+              });
+            });
           });
         });
       });

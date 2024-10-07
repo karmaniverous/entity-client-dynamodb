@@ -9,6 +9,7 @@ import {
   waitUntilTableNotExists,
 } from '@aws-sdk/client-dynamodb';
 import {
+  BatchGetCommandOutput,
   type BatchWriteCommandOutput,
   type DeleteCommandInput,
   type DeleteCommandOutput,
@@ -648,6 +649,66 @@ export class EntityManagerClientDynamoDb extends EntityManagerClient<EntityManag
           attributes,
           consistentRead,
           returnConsumedCapacity,
+        });
+
+      throw error;
+    }
+  }
+
+  /**
+   * Gets multiple items from a DynamoDB table in batches.
+   *
+   * @param tableName - Table name.
+   * @param keys - Array of item keys.
+   * @param batchOptions - {@link EntityManagerClientBatchOptions | `EntityManagerClientBatchOptions`} object.
+   *
+   * @returns An object containing a flattened array of returned items and the array of returned {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchGetCommandOutput | `BatchGetCommandOutput`} objects.
+   */
+  async getItems(
+    tableName: string,
+    keys: Item[],
+    batchOptions: EntityManagerClientBatchOptions = {},
+  ): Promise<{ items: Item[]; outputs: BatchGetCommandOutput[] }> {
+    // Validate options.
+    if (!tableName) throw new Error('tableName is required');
+
+    try {
+      const executeBatch = async (batch: Item[]) =>
+        await this.doc.batchGet({
+          RequestItems: {
+            [tableName]: {
+              Keys: batch,
+            },
+          },
+        });
+
+      const getUnprocessedItems = (output: BatchGetCommandOutput) =>
+        output.UnprocessedKeys?.[tableName]?.Keys;
+
+      const outputs = await this.batchExecute(
+        keys,
+        executeBatch,
+        getUnprocessedItems,
+        batchOptions,
+      );
+
+      this.options.logger.debug('got items from table', {
+        tableName,
+        keys,
+        batchOptions,
+        outputs,
+      });
+
+      return {
+        items: outputs.flatMap((output) => output.Responses?.[tableName] ?? []),
+        outputs,
+      };
+    } catch (error) {
+      if (error instanceof Error)
+        this.options.logger.error(error.message, {
+          tableName,
+          keys,
+          batchOptions,
         });
 
       throw error;
