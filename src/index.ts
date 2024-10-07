@@ -1,9 +1,4 @@
-export {
-  type BatchOptions,
-  DynamoDbClient,
-  type DynamoDbClientConfig,
-  type EntityManagerDynamoDbClientConfig,
-  type Logger,
-  type LoggerEndpoint,
-} from './DynamoDbClient';
-export type { WithRequiredAndNonNullable } from './WithRequiredAndNonNullable';
+export { EntityManagerClientDynamoDb } from './EntityManagerClientDynamoDb';
+export type { EntityManagerClientDynamoDbOptions } from './EntityManagerClientDynamoDbOptions';
+export type { GetItemOptions } from './GetItemOptions';
+export type { EntityManagerClientBatchOptions } from '@karmaniverous/entity-manager';

@@ -3,7 +3,7 @@ import commonjsPlugin from '@rollup/plugin-commonjs';
 import jsonPlugin from '@rollup/plugin-json';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import typescriptPlugin from '@rollup/plugin-typescript';
-import type { InputOptions,  RollupOptions } from 'rollup';
+import type { InputOptions, RollupOptions } from 'rollup';
 import dtsPlugin from 'rollup-plugin-dts';
 
 import pkg from './package.json' assert { type: 'json' };
@@ -26,6 +26,7 @@ const commonInputOptions: InputOptions = {
   external: [
     ...Object.keys((pkg as unknown as Package).dependencies ?? {}),
     ...Object.keys((pkg as unknown as Package).peerDependencies ?? {}),
+    'tslib',
   ],
   plugins: [aliasPlugin({ entries: commonAliases }), commonPlugins],
 };

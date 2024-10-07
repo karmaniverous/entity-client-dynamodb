@@ -4,7 +4,7 @@ import {
   DeleteTableCommand,
   type DeleteTableCommandInput,
   DynamoDBClient,
-  type DynamoDBClientConfig as SdkDynamoDbClientConfig,
+  type DynamoDBClientConfig,
   waitUntilTableExists,
   waitUntilTableNotExists,
 } from '@aws-sdk/client-dynamodb';
@@ -13,18 +13,21 @@ import {
   type DeleteCommandInput,
   type DeleteCommandOutput,
   DynamoDBDocument,
-  type GetCommandInput,
   type GetCommandOutput,
   type NativeAttributeValue,
   type PutCommandInput,
   type PutCommandOutput,
-  TransactWriteCommandOutput,
+  type TransactWriteCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
+import {
+  EntityManagerClient,
+  type EntityManagerClientBatchOptions,
+  type WithRequiredAndNonNullable,
+} from '@karmaniverous/entity-manager';
 import AWSXray from 'aws-xray-sdk';
 import {
   cluster,
   isArray,
-  isFunction,
   isString,
   parallel,
   pick,
@@ -33,151 +36,26 @@ import {
 } from 'radash';
 import { setTimeout } from 'timers/promises';
 
-import type { WithRequiredAndNonNullable } from './WithRequiredAndNonNullable';
-
-export type LoggerEndpoint = (...args: unknown[]) => void;
-
-export interface Logger {
-  debug: LoggerEndpoint;
-  error: LoggerEndpoint;
-}
-
-const conditionalizeLoggerEndpoint =
-  (fn: LoggerEndpoint, condition: boolean): LoggerEndpoint =>
-  (...args: unknown[]) => {
-    if (condition) fn(...args);
-  };
-
-/**
- * Configurations specific to the Entity Manager DynamoDBClient.
- */
-export interface EntityManagerDynamoDbClientConfig {
-  /** Default batch size for batched operations. Defaults to `25`. */
-  defaultBatchSize?: number;
-
-  /** Default delay increment in ms for retry operations. Defaults to `100` and is doubled on each retry. */
-  defaultDelayIncrement?: number;
-
-  /** Default max retries for retry operations. Defaults to `5`. */
-  defaultMaxRetries?: number;
-
-  /** Default throttle for parallel operations. Defaults to `10`. */
-  defaultThrottle?: number;
-
-  /** Activates AWS Xray for internal DynamoDb client when `true` and running in a Lambda environment. */
-  enableXray?: boolean;
-
-  /** Logger to use for internal logging. Must support the `debug` & `error` methods. Defaults to `console`. */
-  logger?: Logger;
-
-  /** Enables internal logging when `true`. */
-  logInternals?: boolean;
-}
-
-/**
- * Entity Manager DynamoDBClient configuration.
- */
-export type DynamoDbClientConfig = SdkDynamoDbClientConfig &
-  EntityManagerDynamoDbClientConfig;
-
-/**
- * Options for methods that support batch operations.
- */
-export interface BatchOptions {
-  /** Batch size. Defaults to {@link EntityManagerDynamoDbClientConfig.defaultBatchSize | `EntityManagerDynamoDbClientConfig.defaultBatchSize`}. */
-  batchSize?: number;
-
-  /** Delay increment in ms for retry operations. Defaults to {@link EntityManagerDynamoDbClientConfig.defaultDelayIncrement | `EntityManagerDynamoDbClientConfig.defaultDelayIncrement`} and is doubled on each retry. */
-  delayIncrement?: number;
-
-  /** Max retries for retry operations. Defaults to {@link EntityManagerDynamoDbClientConfig.defaultMaxRetries | `EntityManagerDynamoDbClientConfig.defaultMaxRetries`}. */
-  maxRetries?: number;
-
-  /** Throttle for parallel operations. Defaults to {@link EntityManagerDynamoDbClientConfig.defaultThrottle | `EntityManagerDynamoDbClientConfig.defaultThrottle`}. */
-  throttle?: number;
-}
-
-/**
- * Options for {@link DynamoDbClient.getItem | `DynamoDbClient.getItem`} method.
- *
- * @typeParam T - Item type.
- */
-export interface GetItemOptions {
-  /** Item attributes to retrieve (undefined retrieves all attributes). */
-  attributes?: string[];
-
-  /** Determines the read consistency model: If set to `true`, then the operation uses strongly consistent reads; otherwise, the operation uses eventually consistent reads. */
-  consistentRead?: GetCommandInput['ConsistentRead'];
-
-  /**
-   * <p>Determines the level of detail about either provisioned or on-demand throughput
-   *             consumption that is returned in the response:</p>
-   *          <ul>
-   *             <li>
-   *                <p>
-   *                   <code>INDEXES</code> - The response includes the aggregate
-   *                         <code>ConsumedCapacity</code> for the operation, together with
-   *                         <code>ConsumedCapacity</code> for each table and secondary index that was
-   *                     accessed.</p>
-   *                <p>Note that some operations, such as <code>GetItem</code> and
-   *                         <code>BatchGetItem</code>, do not access any indexes at all. In these cases,
-   *                     specifying <code>INDEXES</code> will only return <code>ConsumedCapacity</code>
-   *                     information for table(s).</p>
-   *             </li>
-   *             <li>
-   *                <p>
-   *                   <code>TOTAL</code> - The response includes only the aggregate
-   *                         <code>ConsumedCapacity</code> for the operation.</p>
-   *             </li>
-   *             <li>
-   *                <p>
-   *                   <code>NONE</code> - No <code>ConsumedCapacity</code> details are included in the
-   *                     response.</p>
-   *             </li>
-   *          </ul>
-   */
-  returnConsumedCapacity?: GetCommandInput['ReturnConsumedCapacity'];
-}
+import type { EntityManagerClientDynamoDbOptions } from './EntityManagerClientDynamoDbOptions';
+import type { GetItemOptions } from './GetItemOptions';
 
 /**
  * A convenience wrapper around the AWS SDK DynamoDBClient and DynamoDBDocument classes. Provides special support for marshaling query constraints & generating Entity Manager ShardQueryFunction.
  */
-export class DynamoDbClient {
+export class EntityManagerClientDynamoDb extends EntityManagerClient<EntityManagerClientDynamoDbOptions> {
   #client: DynamoDBClient;
-  #config: SdkDynamoDbClientConfig &
-    Required<EntityManagerDynamoDbClientConfig>;
   #doc: DynamoDBDocument;
 
-  constructor({
-    defaultBatchSize = 25,
-    defaultDelayIncrement = 100,
-    defaultMaxRetries = 5,
-    defaultThrottle = 10,
-    enableXray = false,
-    logger = console,
-    logInternals = false,
-    ...sdkConfig
-  }: DynamoDbClientConfig = {}) {
-    if (!isFunction(logger.debug))
-      throw new Error('logger must support debug method');
-    if (!isFunction(logger.error))
-      throw new Error('logger must support error method');
+  constructor(
+    dynamoDbClientConfig: DynamoDBClientConfig,
+    {
+      enableXray = false,
+      ...baseOptions
+    }: EntityManagerClientDynamoDbOptions = {},
+  ) {
+    super({ enableXray, ...baseOptions });
 
-    this.#config = {
-      defaultBatchSize,
-      defaultDelayIncrement,
-      defaultMaxRetries,
-      defaultThrottle,
-      enableXray,
-      logger: {
-        ...logger,
-        debug: conditionalizeLoggerEndpoint(logger.debug, logInternals),
-      },
-      logInternals,
-      ...sdkConfig,
-    };
-
-    const client = new DynamoDBClient(sdkConfig);
+    const client = new DynamoDBClient(dynamoDbClientConfig);
 
     this.#client =
       enableXray && process.env.AWS_XRAY_DAEMON_ADDRESS
@@ -204,13 +82,6 @@ export class DynamoDbClient {
   }
 
   /**
-   * Returns the configuration used to create the DynamoDbClient instance.
-   */
-  get config() {
-    return this.#config;
-  }
-
-  /**
    * Creates a DynamoDB table using {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/command/CreateTableCommand | `CreateTableCommand`} and waits for the table to be created and available using {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Variable/waitUntilTableExists/ | `waitUntilTableExists`}.
    * @param options - {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/CreateTableCommandInput | `CreateTableCommandInput`} object with the `TableName` property required and non-nullable.
    * @param waiterConfig - {@link https://github.com/smithy-lang/smithy-typescript/blob/main/packages/types/src/waiter.ts | `WaiterConfiguration`} with `client` parameter omitted & `maxWaitTime` defaulted to 60s.
@@ -233,7 +104,7 @@ export class DynamoDbClient {
 
       if (!createTableCommandOutput.TableDescription?.TableStatus) {
         const msg = 'table creation request failed';
-        this.config.logger.error(msg, createTableCommandOutput);
+        this.options.logger.error(msg, createTableCommandOutput);
         throw new Error(msg);
       }
 
@@ -243,7 +114,7 @@ export class DynamoDbClient {
         { TableName: options.TableName },
       );
 
-      this.config.logger.debug('created table', {
+      this.options.logger.debug('created table', {
         options,
         createTableCommandOutput,
         waiterResult,
@@ -252,7 +123,7 @@ export class DynamoDbClient {
       return { createTableCommandOutput, waiterResult };
     } catch (error) {
       if (error instanceof Error)
-        this.config.logger.error(error.message, { options });
+        this.options.logger.error(error.message, { options });
 
       throw error;
     }
@@ -284,7 +155,7 @@ export class DynamoDbClient {
 
       if (!deleteTableCommandOutput.TableDescription?.TableStatus) {
         const msg = 'table deletion request failed';
-        this.config.logger.error(msg, deleteTableCommandOutput);
+        this.options.logger.error(msg, deleteTableCommandOutput);
         throw new Error(msg);
       }
 
@@ -294,7 +165,7 @@ export class DynamoDbClient {
         { TableName: options.TableName },
       );
 
-      this.config.logger.debug('deleted table', {
+      this.options.logger.debug('deleted table', {
         options,
         deleteTableCommandOutput,
         waiterResult,
@@ -303,7 +174,7 @@ export class DynamoDbClient {
       return { deleteTableCommandOutput, waiterResult };
     } catch (error) {
       if (error instanceof Error)
-        this.config.logger.error(error.message, { options });
+        this.options.logger.error(error.message, { options });
 
       throw error;
     }
@@ -316,6 +187,10 @@ export class DynamoDbClient {
    * @returns The resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandOutput | `PutCommandOutput`} object.
    * @overload
    */
+  async putItem(
+    tableName: string,
+    item: Record<string, NativeAttributeValue>,
+  ): Promise<PutCommandOutput>;
   /**
    * Puts an item to a DynamoDB table.
    * @param options - {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandInput | `PutCommandInput`} object with the `Item` & `TableName` properties required and non-nullable.
@@ -326,57 +201,51 @@ export class DynamoDbClient {
     options: WithRequiredAndNonNullable<PutCommandInput, 'Item' | 'TableName'>,
   ): Promise<PutCommandOutput>;
   async putItem(
-    tableName: string,
-    item: Record<string, NativeAttributeValue>,
-  ): Promise<PutCommandOutput>;
-  async putItem(
     optionsOrTableName:
       | WithRequiredAndNonNullable<PutCommandInput, 'Item' | 'TableName'>
       | string,
     item?: Record<string, NativeAttributeValue>,
   ): Promise<PutCommandOutput> {
+    // Normalize params.
+    let options: WithRequiredAndNonNullable<
+      PutCommandInput,
+      'Item' | 'TableName'
+    >;
+
+    if (isString(optionsOrTableName)) {
+      if (!optionsOrTableName) throw new Error('tableName is required');
+      if (!item) throw new Error('item is required');
+
+      options = { Item: item, TableName: optionsOrTableName };
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (!optionsOrTableName.Item) throw new Error('options.Item is required');
+      if (!optionsOrTableName.TableName)
+        throw new Error('options.TableName is required');
+
+      options = optionsOrTableName;
+    }
+
     try {
-      // Normalize params.
-      let options: WithRequiredAndNonNullable<
-        PutCommandInput,
-        'Item' | 'TableName'
-      >;
-
-      if (isString(optionsOrTableName)) {
-        if (!optionsOrTableName) throw new Error('tableName is required');
-        if (!item) throw new Error('item is required');
-
-        options = { Item: item, TableName: optionsOrTableName };
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (!optionsOrTableName.Item)
-          throw new Error('options.Item is required');
-        if (!optionsOrTableName.TableName)
-          throw new Error('options.TableName is required');
-
-        options = optionsOrTableName;
-      }
-
       // Send command.
-      const response = await this.#doc.put(options);
+      const response = await this.doc.put(options);
 
       // Evaluate response.
       if (response.$metadata.httpStatusCode === 200)
-        this.config.logger.debug('put item to table', {
-          optionsOrTableName,
-          item,
+        this.options.logger.debug('put item to table', {
+          options,
           response,
         });
       else {
         const msg = 'failed to put item to table';
-        this.config.logger.error(msg, response);
+        this.options.logger.error(msg, response);
         throw new Error(msg);
       }
 
       return response;
     } catch (error) {
       if (error instanceof Error)
-        this.config.logger.error(error.message, { optionsOrTableName, item });
+        this.options.logger.error(error.message, options);
 
       throw error;
     }
@@ -433,25 +302,24 @@ export class DynamoDbClient {
 
     try {
       // Send command.
-      const response = await this.#doc.delete(options);
+      const response = await this.doc.delete(options);
 
       // Evaluate response.
       if (response.$metadata.httpStatusCode === 200)
-        this.config.logger.debug('deleted item from table', {
-          optionsOrTableName,
-          key,
+        this.options.logger.debug('deleted item from table', {
+          options,
           response,
         });
       else {
         const msg = 'failed to delete item from table';
-        this.config.logger.error(msg, response);
+        this.options.logger.error(msg, { options, response });
         throw new Error(msg);
       }
 
       return response;
     } catch (error) {
       if (error instanceof Error)
-        this.config.logger.error(error.message, { optionsOrTableName, key });
+        this.options.logger.error(error.message, options);
 
       throw error;
     }
@@ -462,18 +330,18 @@ export class DynamoDbClient {
    *
    * @param tableName - Table name.
    * @param items - Array of items.
-   * @param batchOptions - {@link BatchOptions | `BatchOptions`} object.
+   * @param batchOptions - {@link EntityManagerClientBatchOptions | `EntityManagerClientBatchOptions`} object.
    * @returns Array of {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchWriteCommandOutput | `BatchWriteCommandOutput`} objects.
    */
   async putItems(
     tableName: string,
     items: Record<string, NativeAttributeValue>[],
     {
-      batchSize = this.config.defaultBatchSize,
-      delayIncrement = this.config.defaultDelayIncrement,
-      maxRetries = this.config.defaultMaxRetries,
-      throttle = this.config.defaultThrottle,
-    }: BatchOptions = {},
+      batchSize = this.options.batchSize,
+      delayIncrement = this.options.delayIncrement,
+      maxRetries = this.options.maxRetries,
+      throttle = this.options.throttle,
+    }: EntityManagerClientBatchOptions = {},
   ): Promise<BatchWriteCommandOutput[]> {
     try {
       // Validate options.
@@ -489,7 +357,7 @@ export class DynamoDbClient {
         while (batch.length) {
           if (delay) await setTimeout(delay);
 
-          const batchWriteCommandOutput = await this.#doc.batchWrite({
+          const batchWriteCommandOutput = await this.doc.batchWrite({
             RequestItems: {
               [tableName]: batch.map((item) => ({
                 PutRequest: { Item: item },
@@ -497,7 +365,7 @@ export class DynamoDbClient {
             },
           });
 
-          this.config.logger.debug('put item batch to table', {
+          this.options.logger.debug('put item batch to table', {
             batch,
             delay,
             retry,
@@ -517,7 +385,7 @@ export class DynamoDbClient {
         }
       });
 
-      this.config.logger.debug('put items to table', {
+      this.options.logger.debug('put items to table', {
         tableName,
         items,
         batchOptions: { batchSize, delayIncrement, maxRetries, throttle },
@@ -527,7 +395,7 @@ export class DynamoDbClient {
       return batchWriteCommandOutputs;
     } catch (error) {
       if (error instanceof Error)
-        this.config.logger.error(error.message, {
+        this.options.logger.error(error.message, {
           tableName,
           items,
           batchOptions: { batchSize, delayIncrement, maxRetries, throttle },
@@ -542,18 +410,18 @@ export class DynamoDbClient {
    *
    * @param tableName - Table name.
    * @param keys - Array of item keys.
-   * @param batchOptions - {@link BatchOptions | `BatchOptions`} object.
+   * @param batchOptions - {@link EntityManagerClientBatchOptions | `EntityManagerClientBatchOptions`} object.
    * @returns Array of {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchWriteCommandOutput | `BatchWriteCommandOutput`} objects.
    */
   async deleteItems(
     tableName: string,
     keys: Record<string, NativeAttributeValue>[],
     {
-      batchSize = this.config.defaultBatchSize,
-      delayIncrement = this.config.defaultDelayIncrement,
-      maxRetries = this.config.defaultMaxRetries,
-      throttle = this.config.defaultThrottle,
-    }: BatchOptions = {},
+      batchSize = this.options.batchSize,
+      delayIncrement = this.options.delayIncrement,
+      maxRetries = this.options.maxRetries,
+      throttle = this.options.throttle,
+    }: EntityManagerClientBatchOptions = {},
   ): Promise<BatchWriteCommandOutput[]> {
     try {
       // Validate options.
@@ -569,7 +437,7 @@ export class DynamoDbClient {
         while (batch.length) {
           if (delay) await setTimeout(delay);
 
-          const batchWriteCommandOutput = await this.#doc.batchWrite({
+          const batchWriteCommandOutput = await this.doc.batchWrite({
             RequestItems: {
               [tableName]: batch.map((key) => ({
                 DeleteRequest: { Key: key },
@@ -577,7 +445,7 @@ export class DynamoDbClient {
             },
           });
 
-          this.config.logger.debug('deleted key batch from table', {
+          this.options.logger.debug('deleted key batch from table', {
             batch,
             delay,
             retry,
@@ -597,7 +465,7 @@ export class DynamoDbClient {
         }
       });
 
-      this.config.logger.debug('deleted keys from table', {
+      this.options.logger.debug('deleted keys from table', {
         tableName,
         keys,
         batchOptions: { batchSize, delayIncrement, maxRetries, throttle },
@@ -607,7 +475,7 @@ export class DynamoDbClient {
       return batchWriteCommandOutputs;
     } catch (error) {
       if (error instanceof Error)
-        this.config.logger.error(error.message, {
+        this.options.logger.error(error.message, {
           tableName,
           keys,
           batchOptions: { batchSize, delayIncrement, maxRetries, throttle },
@@ -623,14 +491,14 @@ export class DynamoDbClient {
    * @param tableName - Table name.
    * @param hashKey - Hash key name.
    * @param rangeKey - Range key name.
-   * @param batchOptions - {@link BatchOptions | `BatchOptions`} object.
+   * @param batchOptions - {@link EntityManagerClientBatchOptions | `EntityManagerClientBatchOptions`} object.
    * @returns Number of items purged.
    */
   async purgeItems(
     tableName: string,
     hashKey: string,
     rangeKey?: string,
-    batchOptions: BatchOptions = {},
+    batchOptions: EntityManagerClientBatchOptions = {},
   ): Promise<number> {
     try {
       // Validate options.
@@ -644,7 +512,7 @@ export class DynamoDbClient {
 
       do {
         ({ Items: items = [], LastEvaluatedKey: lastEvaluatedKey } =
-          await this.#doc.scan({
+          await this.doc.scan({
             TableName: tableName,
             ExclusiveStartKey: lastEvaluatedKey,
           }));
@@ -660,7 +528,7 @@ export class DynamoDbClient {
         }
       } while (items.length);
 
-      this.config.logger.debug('purged items from table', {
+      this.options.logger.debug('purged items from table', {
         tableName,
         hashKey,
         rangeKey,
@@ -671,7 +539,7 @@ export class DynamoDbClient {
       return purged;
     } catch (error) {
       if (error instanceof Error)
-        this.config.logger.error(error.message, {
+        this.options.logger.error(error.message, {
           tableName,
           hashKey,
           rangeKey,
@@ -703,7 +571,7 @@ export class DynamoDbClient {
         })),
       });
 
-      this.config.logger.debug('put items to table as transaction', {
+      this.options.logger.debug('put items to table as transaction', {
         tableName,
         items,
         transactWriteCommandOutput,
@@ -712,7 +580,7 @@ export class DynamoDbClient {
       return transactWriteCommandOutput;
     } catch (error) {
       if (error instanceof Error)
-        this.config.logger.error(error.message, {
+        this.options.logger.error(error.message, {
           tableName,
           items,
         });
@@ -742,7 +610,7 @@ export class DynamoDbClient {
         })),
       });
 
-      this.config.logger.debug('deleted items from table as transaction', {
+      this.options.logger.debug('deleted items from table as transaction', {
         tableName,
         keys,
         transactWriteCommandOutput,
@@ -751,7 +619,7 @@ export class DynamoDbClient {
       return transactWriteCommandOutput;
     } catch (error) {
       if (error instanceof Error)
-        this.config.logger.error(error.message, {
+        this.options.logger.error(error.message, {
           tableName,
           keys,
         });
@@ -826,7 +694,7 @@ export class DynamoDbClient {
           : {}),
       });
 
-      this.config.logger.debug('got item from table', {
+      this.options.logger.debug('got item from table', {
         tableName,
         key,
         attributes,
@@ -838,7 +706,7 @@ export class DynamoDbClient {
       return getCommandOutput;
     } catch (error) {
       if (error instanceof Error)
-        this.config.logger.error(error.message, {
+        this.options.logger.error(error.message, {
           tableName,
           key,
           attributes,

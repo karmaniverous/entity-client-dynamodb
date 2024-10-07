@@ -1,14 +1,16 @@
 import { type CreateTableCommandInput } from '@aws-sdk/client-dynamodb';
 import { expect } from 'chai';
 import { nanoid } from 'nanoid';
-import { range } from 'radash';
+import { pick, range } from 'radash';
 
-import { DynamoDbClient } from './DynamoDbClient';
+import { EntityManagerClientDynamoDb } from './EntityManagerClientDynamoDb';
 
-const dynamoDbClient = new DynamoDbClient({
-  logInternals: false,
-  region: process.env.AWS_DEFAULT_REGION,
-});
+const dynamoDbClient = new EntityManagerClientDynamoDb(
+  {
+    region: process.env.AWS_DEFAULT_REGION,
+  },
+  { logInternals: false },
+);
 
 const tableOptions: Omit<CreateTableCommandInput, 'TableName'> = {
   AttributeDefinitions: [
@@ -24,8 +26,8 @@ const tableOptions: Omit<CreateTableCommandInput, 'TableName'> = {
 
 describe('WrappedDynamoDbClient', function () {
   describe('constructor', function () {
-    it('should create a DynamoDbClient instance', function () {
-      expect(dynamoDbClient).to.be.an.instanceof(DynamoDbClient);
+    it('should create a EntityManagerClientDynamoDb instance', function () {
+      expect(dynamoDbClient).to.be.an.instanceof(EntityManagerClientDynamoDb);
     });
   });
 
@@ -204,6 +206,76 @@ describe('WrappedDynamoDbClient', function () {
             });
 
             expect(deleteScan.Items).to.be.empty;
+          });
+
+          describe('put ... delete', function () {
+            let hashKey: string;
+
+            interface Item {
+              hashKey: string;
+              rangeKey: number;
+              a0: string;
+              a1: string;
+            }
+            let item0: Item;
+            let item1: Item;
+
+            beforeEach(async function () {
+              hashKey = nanoid();
+              item0 = { hashKey, rangeKey: 0, a0: 'foo', a1: 'bar' };
+              item1 = { hashKey, rangeKey: 1, a0: 'baz', a1: 'qux' };
+
+              // Put items.
+              await dynamoDbClient.putItem(tableName, item0);
+              await dynamoDbClient.putItem(tableName, item1);
+            });
+
+            afterEach(async function () {
+              // Delete items.
+              await dynamoDbClient.deleteItem(
+                tableName,
+                pick(item0, ['hashKey', 'rangeKey']),
+              );
+              await dynamoDbClient.deleteItem(
+                tableName,
+                pick(item1, ['hashKey', 'rangeKey']),
+              );
+            });
+
+            describe('get', function () {
+              it('should get items', async function () {
+                // Get item.
+                const response0 = await dynamoDbClient.getItem(
+                  tableName,
+                  pick(item0, ['hashKey', 'rangeKey']),
+                );
+                expect(response0.Item).to.deep.equal(item0);
+
+                const response1 = await dynamoDbClient.getItem(
+                  tableName,
+                  pick(item1, ['hashKey', 'rangeKey']),
+                );
+                expect(response1.Item).to.deep.equal(item1);
+              });
+
+              it('should get designated attributes', async function () {
+                // Get item.
+                const response0 = await dynamoDbClient.getItem(
+                  tableName,
+                  pick(item0, ['hashKey', 'rangeKey']),
+                  ['a0'],
+                );
+                expect(response0.Item).to.deep.equal(pick(item0, ['a0']));
+              });
+
+              it('should fail to get nonexistent item', async function () {
+                const item2 = { hashKey, rangeKey: 2 };
+
+                // Get item.
+                const response = await dynamoDbClient.getItem(tableName, item2);
+                expect(response.Item).not.to.exist;
+              });
+            });
           });
         });
       });
