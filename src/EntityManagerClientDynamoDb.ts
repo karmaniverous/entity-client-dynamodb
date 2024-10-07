@@ -14,7 +14,6 @@ import {
   type DeleteCommandOutput,
   DynamoDBDocument,
   type GetCommandOutput,
-  type NativeAttributeValue,
   type PutCommandInput,
   type PutCommandOutput,
   type TransactWriteCommandOutput,
@@ -25,19 +24,11 @@ import {
   type WithRequiredAndNonNullable,
 } from '@karmaniverous/entity-manager';
 import AWSXray from 'aws-xray-sdk';
-import {
-  cluster,
-  isArray,
-  isString,
-  parallel,
-  pick,
-  sift,
-  zipToObject,
-} from 'radash';
-import { setTimeout } from 'timers/promises';
+import { isArray, isString, pick, sift, zipToObject } from 'radash';
 
 import type { EntityManagerClientDynamoDbOptions } from './EntityManagerClientDynamoDbOptions';
 import type { GetItemOptions } from './GetItemOptions';
+import { Item } from './Item';
 
 /**
  * A convenience wrapper around the AWS SDK DynamoDBClient and DynamoDBDocument classes. Provides special support for marshaling query constraints & generating Entity Manager ShardQueryFunction.
@@ -187,10 +178,7 @@ export class EntityManagerClientDynamoDb extends EntityManagerClient<EntityManag
    * @returns The resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandOutput | `PutCommandOutput`} object.
    * @overload
    */
-  async putItem(
-    tableName: string,
-    item: Record<string, NativeAttributeValue>,
-  ): Promise<PutCommandOutput>;
+  async putItem(tableName: string, item: Item): Promise<PutCommandOutput>;
   /**
    * Puts an item to a DynamoDB table.
    * @param options - {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandInput | `PutCommandInput`} object with the `Item` & `TableName` properties required and non-nullable.
@@ -204,7 +192,7 @@ export class EntityManagerClientDynamoDb extends EntityManagerClient<EntityManag
     optionsOrTableName:
       | WithRequiredAndNonNullable<PutCommandInput, 'Item' | 'TableName'>
       | string,
-    item?: Record<string, NativeAttributeValue>,
+    item?: Item,
   ): Promise<PutCommandOutput> {
     // Normalize params.
     let options: WithRequiredAndNonNullable<
@@ -258,10 +246,7 @@ export class EntityManagerClientDynamoDb extends EntityManagerClient<EntityManag
    * @returns The resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/DeleteCommandOutput | `DeleteCommandOutput`} object.
    * @overload
    */
-  async deleteItem(
-    tableName: string,
-    key: Record<string, NativeAttributeValue>,
-  ): Promise<DeleteCommandOutput>;
+  async deleteItem(tableName: string, key: Item): Promise<DeleteCommandOutput>;
   /**
    * Deletes an item from a DynamoDB table.
    * @param options - {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/DeleteCommandInput | `DeleteCommandInput`} object with the `Key` & `TableName` properties required and non-nullable.
@@ -278,7 +263,7 @@ export class EntityManagerClientDynamoDb extends EntityManagerClient<EntityManag
     optionsOrTableName:
       | WithRequiredAndNonNullable<DeleteCommandInput, 'Key' | 'TableName'>
       | string,
-    key?: Record<string, NativeAttributeValue>,
+    key?: Item,
   ): Promise<DeleteCommandOutput> {
     // Normalize params.
     let options: WithRequiredAndNonNullable<
@@ -335,70 +320,46 @@ export class EntityManagerClientDynamoDb extends EntityManagerClient<EntityManag
    */
   async putItems(
     tableName: string,
-    items: Record<string, NativeAttributeValue>[],
-    {
-      batchSize = this.options.batchSize,
-      delayIncrement = this.options.delayIncrement,
-      maxRetries = this.options.maxRetries,
-      throttle = this.options.throttle,
-    }: EntityManagerClientBatchOptions = {},
+    items: Item[],
+    batchOptions: EntityManagerClientBatchOptions = {},
   ): Promise<BatchWriteCommandOutput[]> {
+    // Validate options.
+    if (!tableName) throw new Error('tableName is required');
+
     try {
-      // Validate options.
-      if (!tableName) throw new Error('tableName is required');
+      const executeBatch = async (batch: Item[]) =>
+        await this.doc.batchWrite({
+          RequestItems: {
+            [tableName]: batch.map((item) => ({
+              PutRequest: { Item: item },
+            })),
+          },
+        });
 
-      const batches = cluster(items, batchSize);
-      const batchWriteCommandOutputs: BatchWriteCommandOutput[] = [];
+      const getUnprocessedItems = (output: BatchWriteCommandOutput) =>
+        output.UnprocessedItems?.[tableName];
 
-      await parallel(throttle, batches, async (batch) => {
-        let delay = 0;
-        let retry = 0;
-
-        while (batch.length) {
-          if (delay) await setTimeout(delay);
-
-          const batchWriteCommandOutput = await this.doc.batchWrite({
-            RequestItems: {
-              [tableName]: batch.map((item) => ({
-                PutRequest: { Item: item },
-              })),
-            },
-          });
-
-          this.options.logger.debug('put item batch to table', {
-            batch,
-            delay,
-            retry,
-            batchWriteCommandOutput,
-          });
-
-          batchWriteCommandOutputs.push(batchWriteCommandOutput);
-
-          batch = batchWriteCommandOutput.UnprocessedItems?.[tableName] ?? [];
-
-          if (batch.length) {
-            if (retry === maxRetries) throw new Error('max retries exceeded');
-
-            delay = delay ? delay * 2 : delayIncrement;
-            retry++;
-          }
-        }
-      });
+      const outputs = await this.batchExecute(
+        items,
+        executeBatch,
+        getUnprocessedItems,
+        batchOptions,
+      );
 
       this.options.logger.debug('put items to table', {
         tableName,
         items,
-        batchOptions: { batchSize, delayIncrement, maxRetries, throttle },
-        batchWriteCommandOutputs,
+        batchOptions,
+        outputs,
       });
 
-      return batchWriteCommandOutputs;
+      return outputs;
     } catch (error) {
       if (error instanceof Error)
         this.options.logger.error(error.message, {
           tableName,
           items,
-          batchOptions: { batchSize, delayIncrement, maxRetries, throttle },
+          batchOptions,
         });
 
       throw error;
@@ -415,70 +376,46 @@ export class EntityManagerClientDynamoDb extends EntityManagerClient<EntityManag
    */
   async deleteItems(
     tableName: string,
-    keys: Record<string, NativeAttributeValue>[],
-    {
-      batchSize = this.options.batchSize,
-      delayIncrement = this.options.delayIncrement,
-      maxRetries = this.options.maxRetries,
-      throttle = this.options.throttle,
-    }: EntityManagerClientBatchOptions = {},
+    keys: Item[],
+    batchOptions: EntityManagerClientBatchOptions = {},
   ): Promise<BatchWriteCommandOutput[]> {
+    // Validate options.
+    if (!tableName) throw new Error('tableName is required');
+
     try {
-      // Validate options.
-      if (!tableName) throw new Error('tableName is required');
+      const executeBatch = async (batch: Item[]) =>
+        await this.doc.batchWrite({
+          RequestItems: {
+            [tableName]: batch.map((key) => ({
+              DeleteRequest: { Key: key },
+            })),
+          },
+        });
 
-      const batches = cluster(keys, batchSize);
-      const batchWriteCommandOutputs: BatchWriteCommandOutput[] = [];
+      const getUnprocessedItems = (output: BatchWriteCommandOutput) =>
+        output.UnprocessedItems?.[tableName];
 
-      await parallel(throttle, batches, async (batch) => {
-        let delay = 0;
-        let retry = 0;
-
-        while (batch.length) {
-          if (delay) await setTimeout(delay);
-
-          const batchWriteCommandOutput = await this.doc.batchWrite({
-            RequestItems: {
-              [tableName]: batch.map((key) => ({
-                DeleteRequest: { Key: key },
-              })),
-            },
-          });
-
-          this.options.logger.debug('deleted key batch from table', {
-            batch,
-            delay,
-            retry,
-            batchWriteCommandOutput,
-          });
-
-          batchWriteCommandOutputs.push(batchWriteCommandOutput);
-
-          batch = batchWriteCommandOutput.UnprocessedItems?.[tableName] ?? [];
-
-          if (batch.length) {
-            if (retry === maxRetries) throw new Error('max retries exceeded');
-
-            delay = delay ? delay * 2 : delayIncrement;
-            retry++;
-          }
-        }
-      });
+      const outputs = await this.batchExecute(
+        keys,
+        executeBatch,
+        getUnprocessedItems,
+        batchOptions,
+      );
 
       this.options.logger.debug('deleted keys from table', {
         tableName,
         keys,
-        batchOptions: { batchSize, delayIncrement, maxRetries, throttle },
-        batchWriteCommandOutputs,
+        batchOptions,
+        outputs,
       });
 
-      return batchWriteCommandOutputs;
+      return outputs;
     } catch (error) {
       if (error instanceof Error)
         this.options.logger.error(error.message, {
           tableName,
           keys,
-          batchOptions: { batchSize, delayIncrement, maxRetries, throttle },
+          batchOptions,
         });
 
       throw error;
@@ -506,9 +443,8 @@ export class EntityManagerClientDynamoDb extends EntityManagerClient<EntityManag
       if (!hashKey) throw new Error('hashKey is required');
 
       let purged = 0;
-      let items: Record<string, NativeAttributeValue>[] = [];
-      let lastEvaluatedKey: Record<string, NativeAttributeValue> | undefined =
-        undefined;
+      let items: Item[] = [];
+      let lastEvaluatedKey: Item | undefined = undefined;
 
       do {
         ({ Items: items = [], LastEvaluatedKey: lastEvaluatedKey } =
@@ -559,13 +495,13 @@ export class EntityManagerClientDynamoDb extends EntityManagerClient<EntityManag
    */
   async transactPutItems(
     tableName: string,
-    items: Record<string, NativeAttributeValue>[],
+    items: Item[],
   ): Promise<TransactWriteCommandOutput> {
     try {
       // Validate options.
       if (!tableName) throw new Error('tableName is required');
 
-      const transactWriteCommandOutput = await this.doc.transactWrite({
+      const output = await this.doc.transactWrite({
         TransactItems: items.map((item) => ({
           Put: { Item: item, TableName: tableName },
         })),
@@ -574,10 +510,10 @@ export class EntityManagerClientDynamoDb extends EntityManagerClient<EntityManag
       this.options.logger.debug('put items to table as transaction', {
         tableName,
         items,
-        transactWriteCommandOutput,
+        output,
       });
 
-      return transactWriteCommandOutput;
+      return output;
     } catch (error) {
       if (error instanceof Error)
         this.options.logger.error(error.message, {
@@ -598,7 +534,7 @@ export class EntityManagerClientDynamoDb extends EntityManagerClient<EntityManag
    */
   async transactDeleteItems(
     tableName: string,
-    keys: Record<string, NativeAttributeValue>[],
+    keys: Item[],
   ): Promise<TransactWriteCommandOutput> {
     try {
       // Validate options.
@@ -632,21 +568,21 @@ export class EntityManagerClientDynamoDb extends EntityManagerClient<EntityManag
    * Get item from a DynamoDB table.
    *
    * @param tableName - Table name.
-   * @param key - Item keys.
+   * @param key - Item key.
    * @param options - {@link GetItemOptions | `GetItemOptions`} object.
    *
    * @returns {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/GetCommandOutput/ | GetCommandOutput`} object.
    */
   async getItem(
     tableName: string,
-    key: Record<string, NativeAttributeValue>,
+    key: Item,
     options?: GetItemOptions,
   ): Promise<GetCommandOutput>;
   /**
    * Get item from a DynamoDB table.
    *
    * @param tableName - Table name.
-   * @param key - Item keys.
+   * @param key - Item key.
    * @param attributes - Item attributes to retrieve.
    * @param options - {@link GetItemOptions | `GetItemOptions`} object, omitting `attributes`.
    *
@@ -654,13 +590,13 @@ export class EntityManagerClientDynamoDb extends EntityManagerClient<EntityManag
    */
   async getItem(
     tableName: string,
-    key: Record<string, NativeAttributeValue>,
+    key: Item,
     attributes: string[],
     options?: Omit<GetItemOptions, 'attributes'>,
   ): Promise<GetCommandOutput>;
   async getItem(
     tableName: string,
-    key: Record<string, NativeAttributeValue>,
+    key: Item,
     attributesOrOptions?: string[] | GetItemOptions,
     remainingOptions?: Omit<GetItemOptions, 'attributes'>,
   ): Promise<GetCommandOutput> {
