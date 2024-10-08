@@ -1,5 +1,5 @@
-export { EntityManagerClientDynamoDb } from './EntityManagerClientDynamoDb';
-export type { EntityManagerClientDynamoDbOptions } from './EntityManagerClientDynamoDbOptions';
+export { DynamoDbEntityManagerClient } from './DynamoDbEntityManagerClient';
+export type { DynamoDbEntityManagerClientOptions } from './DynamoDbEntityManagerClientOptions';
 export type { GetItemOptions } from './GetItemOptions';
 export type { Item } from './Item';
 export {

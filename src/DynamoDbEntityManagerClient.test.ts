@@ -3,9 +3,9 @@ import { expect } from 'chai';
 import { nanoid } from 'nanoid';
 import { pick, range } from 'radash';
 
-import { EntityManagerClientDynamoDb } from './EntityManagerClientDynamoDb';
+import { DynamoDbEntityManagerClient } from './DynamoDbEntityManagerClient';
 
-const dynamoDbClient = new EntityManagerClientDynamoDb(
+const dynamoDbClient = new DynamoDbEntityManagerClient(
   {
     region: process.env.AWS_DEFAULT_REGION,
   },
@@ -26,8 +26,8 @@ const tableOptions: Omit<CreateTableCommandInput, 'TableName'> = {
 
 describe('WrappedDynamoDbClient', function () {
   describe('constructor', function () {
-    it('should create a EntityManagerClientDynamoDb instance', function () {
-      expect(dynamoDbClient).to.be.an.instanceof(EntityManagerClientDynamoDb);
+    it('should create a DynamoDbEntityManagerClient instance', function () {
+      expect(dynamoDbClient).to.be.an.instanceof(DynamoDbEntityManagerClient);
     });
   });
 

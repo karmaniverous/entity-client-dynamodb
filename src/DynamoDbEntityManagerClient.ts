@@ -27,14 +27,14 @@ import {
 import AWSXray from 'aws-xray-sdk';
 import { isArray, isString, pick, sift, zipToObject } from 'radash';
 
-import type { EntityManagerClientDynamoDbOptions } from './EntityManagerClientDynamoDbOptions';
+import type { DynamoDbEntityManagerClientOptions } from './DynamoDbEntityManagerClientOptions';
 import type { GetItemOptions } from './GetItemOptions';
 import { Item } from './Item';
 
 /**
  * A convenience wrapper around the AWS SDK DynamoDBClient and DynamoDBDocument classes. Provides special support for marshaling query constraints & generating Entity Manager ShardQueryFunction.
  */
-export class EntityManagerClientDynamoDb extends EntityManagerClient<EntityManagerClientDynamoDbOptions> {
+export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEntityManagerClientOptions> {
   #client: DynamoDBClient;
   #doc: DynamoDBDocument;
 
@@ -43,7 +43,7 @@ export class EntityManagerClientDynamoDb extends EntityManagerClient<EntityManag
     {
       enableXray = false,
       ...baseOptions
-    }: EntityManagerClientDynamoDbOptions = {},
+    }: DynamoDbEntityManagerClientOptions = {},
   ) {
     super({ enableXray, ...baseOptions });
 

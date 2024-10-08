@@ -1,7 +1,7 @@
 import type { GetCommandInput } from '@aws-sdk/lib-dynamodb';
 
 /**
- * Options for {@link EntityManagerClientDynamoDb | `EntityManagerClientDynamoDb.getItem`} method.
+ * Options for {@link DynamoDbEntityManagerClient | `DynamoDbEntityManagerClient.getItem`} method.
  *
  * @typeParam T - Item type.
  */
