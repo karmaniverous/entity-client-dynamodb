@@ -24,7 +24,7 @@ const tableOptions: Omit<CreateTableCommandInput, 'TableName'> = {
   ],
 };
 
-describe('WrappedDynamoDbClient', function () {
+describe('DynamoDbEntityManagerClient', function () {
   describe('constructor', function () {
     it('should create a DynamoDbEntityManagerClient instance', function () {
       expect(dynamoDbClient).to.be.an.instanceof(DynamoDbEntityManagerClient);

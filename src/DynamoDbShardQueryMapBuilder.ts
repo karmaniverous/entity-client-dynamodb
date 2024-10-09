@@ -7,11 +7,17 @@ import {
   type ShardQueryMap,
   ShardQueryMapBuilder,
   type ShardQueryResult,
+  TranscodableProperties,
   type TranscodeMap,
 } from '@karmaniverous/entity-manager';
 import { mapValues } from 'radash';
 
+import {
+  addRangeKeyCondition,
+  type RangeKeyConditionOperator,
+} from './addRangeKeyCondition';
 import type { DynamoDbShardQueryMapBuilderOptions } from './DynamoDbShardQueryMapBuilderOptions';
+import { getDynamoDbDocumentQueryArgs } from './getDynamoDbDocumentQueryArgs';
 
 export class DynamoDbShardQueryMapBuilder<
   Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
@@ -39,12 +45,16 @@ export class DynamoDbShardQueryMapBuilder<
   #indexMap: Record<
     string,
     {
-      expressionAttributeNames: Record<string, string>;
-      expressionAttributeValues: Record<string, string>;
-      filterConditions: string[];
+      expressionAttributeNames: Record<string, string | undefined>;
+      expressionAttributeValues: Record<string, string | undefined>;
+      filterConditions: (string | undefined)[];
       rangeKeyCondition?: string;
     }
   > = {};
+
+  get indexMap() {
+    return this.#indexMap;
+  }
 
   #getShardQueryFunction(
     indexToken: string,
@@ -55,38 +65,18 @@ export class DynamoDbShardQueryMapBuilder<
       pageSize?: number,
     ) => {
       const {
-        expressionAttributeNames,
-        expressionAttributeValues,
-        filterConditions,
-        rangeKeyCondition,
-      } = this.#indexMap[indexToken];
-
-      const {
         Count: count = 0,
         Items: items = [],
         LastEvaluatedKey: newPageKey,
-      } = await this.options.dynamoDbEntityManagerClient.doc.query({
-        ExclusiveStartKey: pageKey,
-        ExpressionAttributeNames: {
-          [`#${this.options.hashKeyToken}`]: `:${this.options.hashKeyToken}`,
-          ...expressionAttributeNames,
-        },
-        ExpressionAttributeValues: {
-          [`#${this.options.hashKeyToken}`]: hashKey,
-          ...expressionAttributeValues,
-        },
-        ...(filterConditions.length
-          ? { FilterExpression: filterConditions.join(' AND ') }
-          : {}),
-        IndexName: indexToken,
-        KeyConditionExpression: [
-          `#${this.options.hashKeyToken} = :${this.options.hashKeyToken}`,
-          ...(rangeKeyCondition ? [rangeKeyCondition] : []),
-        ].join(' AND '),
-        ...(pageSize ? { Limit: pageSize } : {}),
-        ScanIndexForward: this.options.scanIndexForward,
-        TableName: this.options.tableName,
-      });
+      } = await this.options.dynamoDbEntityManagerClient.doc.query(
+        getDynamoDbDocumentQueryArgs(
+          this,
+          indexToken,
+          hashKey,
+          pageKey,
+          pageSize,
+        ),
+      );
 
       return { count, items, pageKey: newPageKey } as ShardQueryResult<
         Item,
@@ -110,5 +100,35 @@ export class DynamoDbShardQueryMapBuilder<
     return mapValues(this.#indexMap, (indexConfig, indexToken) =>
       this.#getShardQueryFunction(indexToken),
     );
+  }
+
+  addRangeKeyCondition(
+    indexToken: string,
+    rangeKeyToken: TranscodableProperties<Item, T>,
+    operator: RangeKeyConditionOperator,
+    item: Partial<Item>,
+  ): this;
+  addRangeKeyCondition(
+    indexToken: string,
+    rangeKeyToken: TranscodableProperties<Item, T>,
+    operator: RangeKeyConditionOperator,
+    fromItem: Partial<Item>,
+    toItem: Partial<Item>,
+  ): this;
+  addRangeKeyCondition(
+    indexToken: string,
+    rangeKeyToken: TranscodableProperties<Item, T>,
+    operator: RangeKeyConditionOperator,
+    itemOrFromItem: Partial<Item>,
+    toItem?: Partial<Item>,
+  ): this {
+    return addRangeKeyCondition(
+      this,
+      indexToken,
+      rangeKeyToken,
+      operator,
+      itemOrFromItem,
+      toItem,
+    ) as this;
   }
 }

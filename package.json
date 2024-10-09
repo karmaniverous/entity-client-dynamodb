@@ -6,7 +6,7 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.667.0",
     "@aws-sdk/lib-dynamodb": "^3.667.0",
-    "@karmaniverous/entity-manager": "^6.3.0",
+    "@karmaniverous/entity-manager": "^6.4.1",
     "aws-xray-sdk": "^3.10.1",
     "radash": "^12.1.0"
   },
@@ -14,6 +14,7 @@
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.16.1",
     "@eslint/js": "^9.12.0",
+    "@faker-js/faker": "^9.0.3",
     "@rollup/plugin-alias": "^5.1.1",
     "@rollup/plugin-commonjs": "^28.0.0",
     "@rollup/plugin-json": "^6.1.0",
