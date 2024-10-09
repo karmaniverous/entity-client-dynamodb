@@ -1,14 +1,7 @@
 import {
-  type EntityMap,
-  type Exactify,
-  type ItemMap,
-  type PartialTranscodable,
-  type ShardQueryFunction,
-  type ShardQueryMap,
+  type ClientShardQueryFunction,
+  type ClientShardQueryMap,
   ShardQueryMapBuilder,
-  type ShardQueryResult,
-  TranscodableProperties,
-  type TranscodeMap,
 } from '@karmaniverous/entity-manager';
 import { mapValues } from 'radash';
 
@@ -18,30 +11,9 @@ import {
 } from './addRangeKeyCondition';
 import type { DynamoDbShardQueryMapBuilderOptions } from './DynamoDbShardQueryMapBuilderOptions';
 import { getDynamoDbDocumentQueryArgs } from './getDynamoDbDocumentQueryArgs';
+import { Item } from './Item';
 
-export class DynamoDbShardQueryMapBuilder<
-  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
-  EntityToken extends keyof Exactify<M> & string,
-  M extends EntityMap,
-  HashKey extends string,
-  RangeKey extends string,
-  T extends TranscodeMap,
-> extends ShardQueryMapBuilder<
-  Item,
-  EntityToken,
-  M,
-  HashKey,
-  RangeKey,
-  T,
-  DynamoDbShardQueryMapBuilderOptions<
-    Item,
-    EntityToken,
-    M,
-    HashKey,
-    RangeKey,
-    T
-  >
-> {
+export class DynamoDbShardQueryMapBuilder extends ShardQueryMapBuilder<DynamoDbShardQueryMapBuilderOptions> {
   #indexMap: Record<
     string,
     {
@@ -56,14 +28,8 @@ export class DynamoDbShardQueryMapBuilder<
     return this.#indexMap;
   }
 
-  #getShardQueryFunction(
-    indexToken: string,
-  ): ShardQueryFunction<Item, EntityToken, M, HashKey, RangeKey, T> {
-    return async (
-      hashKey: string,
-      pageKey?: PartialTranscodable<Item, T>,
-      pageSize?: number,
-    ) => {
+  #getShardQueryFunction(indexToken: string): ClientShardQueryFunction {
+    return async (hashKey: string, pageKey?: Item, pageSize?: number) => {
       const {
         Count: count = 0,
         Items: items = [],
@@ -78,25 +44,11 @@ export class DynamoDbShardQueryMapBuilder<
         ),
       );
 
-      return { count, items, pageKey: newPageKey } as ShardQueryResult<
-        Item,
-        EntityToken,
-        M,
-        HashKey,
-        RangeKey,
-        T
-      >;
+      return { count, items, pageKey: newPageKey };
     };
   }
 
-  getShardQueryMap(): ShardQueryMap<
-    Item,
-    EntityToken,
-    M,
-    HashKey,
-    RangeKey,
-    T
-  > {
+  getShardQueryMap(): ClientShardQueryMap {
     return mapValues(this.#indexMap, (indexConfig, indexToken) =>
       this.#getShardQueryFunction(indexToken),
     );
@@ -104,30 +56,26 @@ export class DynamoDbShardQueryMapBuilder<
 
   addRangeKeyCondition(
     indexToken: string,
-    rangeKeyToken: TranscodableProperties<Item, T>,
-    operator: RangeKeyConditionOperator,
-    item: Partial<Item>,
+    rangeKeyToken: string,
+    operator: Omit<RangeKeyConditionOperator, 'between'>,
   ): this;
   addRangeKeyCondition(
     indexToken: string,
-    rangeKeyToken: TranscodableProperties<Item, T>,
-    operator: RangeKeyConditionOperator,
-    fromItem: Partial<Item>,
-    toItem: Partial<Item>,
+    rangeKeyToken: string,
+    operator: 'between',
+    toItem: Item,
   ): this;
   addRangeKeyCondition(
     indexToken: string,
-    rangeKeyToken: TranscodableProperties<Item, T>,
+    rangeKeyToken: string,
     operator: RangeKeyConditionOperator,
-    itemOrFromItem: Partial<Item>,
-    toItem?: Partial<Item>,
+    toItem?: Item,
   ): this {
     return addRangeKeyCondition(
       this,
       indexToken,
       rangeKeyToken,
       operator,
-      itemOrFromItem,
       toItem,
     ) as this;
   }

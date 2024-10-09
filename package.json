@@ -6,7 +6,7 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.667.0",
     "@aws-sdk/lib-dynamodb": "^3.667.0",
-    "@karmaniverous/entity-manager": "^6.4.1",
+    "@karmaniverous/entity-manager": "^6.4.3",
     "aws-xray-sdk": "^3.10.1",
     "radash": "^12.1.0"
   },

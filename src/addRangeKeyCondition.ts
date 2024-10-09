@@ -1,12 +1,5 @@
-import type {
-  EntityMap,
-  Exactify,
-  ItemMap,
-  TranscodableProperties,
-  TranscodeMap,
-} from '@karmaniverous/entity-manager';
-
 import { DynamoDbShardQueryMapBuilder } from './DynamoDbShardQueryMapBuilder';
+import { Item } from './Item';
 
 export type RangeKeyConditionOperator =
   | '='
@@ -23,31 +16,14 @@ const defaultIndexMapValue = {
   filterConditions: [],
 };
 
-export const addRangeKeyCondition = <
-  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
-  EntityToken extends keyof Exactify<M> & string,
-  M extends EntityMap,
-  HashKey extends string,
-  RangeKey extends string,
-  T extends TranscodeMap,
->(
-  dynamoDbShardQueryMapBuilder: DynamoDbShardQueryMapBuilder<
-    Item,
-    EntityToken,
-    M,
-    HashKey,
-    RangeKey,
-    T
-  >,
+export const addRangeKeyCondition = (
+  dynamoDbShardQueryMapBuilder: DynamoDbShardQueryMapBuilder,
   indexToken: string,
-  rangeKeyToken: TranscodableProperties<Item, T>,
+  rangeKeyToken: string,
   operator: RangeKeyConditionOperator,
-  itemOrFromItem: Partial<Item>,
-  toItem?: Partial<Item>,
+  toItem?: Item,
 ): typeof dynamoDbShardQueryMapBuilder => {
   try {
-    // Validate params.
-
     // Default index map value.
     dynamoDbShardQueryMapBuilder.indexMap[indexToken] ??= {
       ...defaultIndexMapValue,
@@ -63,24 +39,16 @@ export const addRangeKeyCondition = <
         throw new Error("toItem is required when operator is 'between'");
 
       // Process fromItem.
-      const fromRangeKeyValue =
-        dynamoDbShardQueryMapBuilder.options.entityManager.addKeys(
-          itemOrFromItem,
-          dynamoDbShardQueryMapBuilder.options.entityToken,
-          false,
-        )[rangeKeyToken];
+      const fromRangeKeyValue = dynamoDbShardQueryMapBuilder.options.item[
+        rangeKeyToken
+      ] as string | undefined;
 
       dynamoDbShardQueryMapBuilder.indexMap[
         indexToken
       ].expressionAttributeValues[`:${rangeKeyToken}From`] = fromRangeKeyValue;
 
       // Process toItem.
-      const toRangeKeyValue =
-        dynamoDbShardQueryMapBuilder.options.entityManager.addKeys(
-          toItem,
-          dynamoDbShardQueryMapBuilder.options.entityToken,
-          false,
-        )[rangeKeyToken];
+      const toRangeKeyValue = toItem[rangeKeyToken] as string | undefined;
 
       dynamoDbShardQueryMapBuilder.indexMap[
         indexToken
@@ -107,7 +75,7 @@ export const addRangeKeyCondition = <
           indexToken,
           rangeKeyToken,
           operator,
-          fromItem: itemOrFromItem,
+          fromItem: dynamoDbShardQueryMapBuilder.options.item,
           toItem,
           fromRangeKeyValue,
           toRangeKeyValue,
@@ -119,12 +87,9 @@ export const addRangeKeyCondition = <
         throw new Error("toItem is forbidden when operator is not 'between'");
 
       // Process item.
-      const rangeKeyValue =
-        dynamoDbShardQueryMapBuilder.options.entityManager.addKeys(
-          itemOrFromItem,
-          dynamoDbShardQueryMapBuilder.options.entityToken,
-          false,
-        )[rangeKeyToken];
+      const rangeKeyValue = dynamoDbShardQueryMapBuilder.options.item[
+        rangeKeyToken
+      ] as string | undefined;
 
       dynamoDbShardQueryMapBuilder.indexMap[
         indexToken
@@ -148,7 +113,7 @@ export const addRangeKeyCondition = <
           indexToken,
           rangeKeyToken,
           operator,
-          item: itemOrFromItem,
+          item: dynamoDbShardQueryMapBuilder.options.item,
           rangeKeyValue,
           rangeKeyCondition,
         },
@@ -164,7 +129,6 @@ export const addRangeKeyCondition = <
           indexToken,
           rangeKeyToken,
           operator,
-          itemOrFromItem,
           toItem,
         },
       );

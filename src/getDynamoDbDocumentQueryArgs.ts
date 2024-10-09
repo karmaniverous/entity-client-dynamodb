@@ -1,34 +1,14 @@
 import type { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
-import type {
-  EntityMap,
-  Exactify,
-  ItemMap,
-  PartialTranscodable,
-  TranscodeMap,
-} from '@karmaniverous/entity-manager';
 import { shake, sift } from 'radash';
 
 import { DynamoDbShardQueryMapBuilder } from './DynamoDbShardQueryMapBuilder';
+import { Item } from './Item';
 
-export const getDynamoDbDocumentQueryArgs = <
-  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
-  EntityToken extends keyof Exactify<M> & string,
-  M extends EntityMap,
-  HashKey extends string,
-  RangeKey extends string,
-  T extends TranscodeMap,
->(
-  dynamoDbShardQueryMapBuilder: DynamoDbShardQueryMapBuilder<
-    Item,
-    EntityToken,
-    M,
-    HashKey,
-    RangeKey,
-    T
-  >,
+export const getDynamoDbDocumentQueryArgs = (
+  dynamoDbShardQueryMapBuilder: DynamoDbShardQueryMapBuilder,
   indexToken: string,
   hashKey: string,
-  pageKey?: PartialTranscodable<Item, T>,
+  pageKey?: Item,
   pageSize?: number,
 ): QueryCommandInput => {
   const {

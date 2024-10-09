@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { entityManager, UserItem } from '../test/config';
+import { getUsers } from '../test/users';
 import { DynamoDbEntityManagerClient } from './DynamoDbEntityManagerClient';
 import { DynamoDbShardQueryMapBuilder } from './DynamoDbShardQueryMapBuilder';
 
@@ -14,11 +14,13 @@ const dynamoDbEntityManagerClient = new DynamoDbEntityManagerClient(
 describe('DynamoDbShardQueryMapBuilder', function () {
   describe('constructor', function () {
     it('should create a DynamoDbShardQueryMapBuilder instance', function () {
+      const [user] = getUsers();
+
       const dynamoDbShardQueryMapBulder = new DynamoDbShardQueryMapBuilder({
         dynamoDbEntityManagerClient,
-        entityManager,
         entityToken: 'user',
-        hashKey: 'hashKey2',
+        hashKeyToken: 'hashKey2',
+        item: user,
         tableName: 'UserTable',
       });
 
