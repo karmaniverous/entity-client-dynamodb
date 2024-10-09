@@ -2,20 +2,20 @@ import type {
   EntityMap,
   Exactify,
   ItemMap,
-  ShardQueryFunctionBuilderOptions,
+  ShardQueryMapBuilderOptions,
   TranscodeMap,
 } from '@karmaniverous/entity-manager';
 
 import { DynamoDbEntityManagerClient } from './DynamoDbEntityManagerClient';
 
-export interface DynamoDbShardQueryFunctionBuilderOptions<
+export interface DynamoDbShardQueryMapBuilderOptions<
   Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
   EntityToken extends keyof Exactify<M> & string,
   M extends EntityMap,
   HashKey extends string,
   RangeKey extends string,
   T extends TranscodeMap,
-> extends ShardQueryFunctionBuilderOptions<
+> extends ShardQueryMapBuilderOptions<
     Item,
     EntityToken,
     M,
