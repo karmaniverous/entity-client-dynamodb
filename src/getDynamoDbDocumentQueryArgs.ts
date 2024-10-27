@@ -1,33 +1,47 @@
 import type { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 import { shake, sift } from 'radash';
 
-import { DynamoDbShardQueryMapBuilder } from './DynamoDbShardQueryMapBuilder';
-import { Item } from './Item';
+import type { IndexParams } from './IndexParams';
+import type { Item } from './Item';
 
-export const getDynamoDbDocumentQueryArgs = (
-  dynamoDbShardQueryMapBuilder: DynamoDbShardQueryMapBuilder,
-  indexToken: string,
-  hashKey: string,
-  pageKey?: Item,
-  pageSize?: number,
-): QueryCommandInput => {
+export interface GetDynamoDbDocumentQueryArgsParams {
+  indexParamsMap: Record<string, IndexParams>;
+  indexToken: string;
+  hashKeyToken: string;
+  hashKey: string;
+  pageKey?: Item;
+  pageSize?: number;
+  scanIndexForward?: boolean;
+  tableName: string;
+}
+
+export const getDynamoDbDocumentQueryArgs = ({
+  indexParamsMap,
+  indexToken,
+  hashKeyToken,
+  hashKey,
+  pageKey,
+  pageSize,
+  scanIndexForward,
+  tableName,
+}: GetDynamoDbDocumentQueryArgsParams): QueryCommandInput => {
   const {
     expressionAttributeNames,
     expressionAttributeValues,
     filterConditions,
     rangeKeyCondition,
-  } = dynamoDbShardQueryMapBuilder.indexMap[indexToken];
+  } = indexParamsMap[indexToken];
 
   const siftedFilterConditions = sift(filterConditions);
 
   return {
     ExclusiveStartKey: pageKey,
     ExpressionAttributeNames: {
-      [`#${dynamoDbShardQueryMapBuilder.options.hashKeyToken}`]: `:${dynamoDbShardQueryMapBuilder.options.hashKeyToken}`,
+      [`#${hashKeyToken}`]: `:${hashKeyToken}`,
       ...shake(expressionAttributeNames),
     },
     ExpressionAttributeValues: {
-      [`#${dynamoDbShardQueryMapBuilder.options.hashKeyToken}`]: hashKey,
+      [`#${hashKeyToken}`]: hashKey,
       ...shake(expressionAttributeValues),
     },
     ...(siftedFilterConditions.length
@@ -35,11 +49,11 @@ export const getDynamoDbDocumentQueryArgs = (
       : {}),
     IndexName: indexToken,
     KeyConditionExpression: [
-      `#${dynamoDbShardQueryMapBuilder.options.hashKeyToken} = :${dynamoDbShardQueryMapBuilder.options.hashKeyToken}`,
+      `#${hashKeyToken} = :${hashKeyToken}`,
       ...(rangeKeyCondition ? [rangeKeyCondition] : []),
     ].join(' AND '),
     ...(pageSize ? { Limit: pageSize } : {}),
-    ScanIndexForward: dynamoDbShardQueryMapBuilder.options.scanIndexForward,
-    TableName: dynamoDbShardQueryMapBuilder.options.tableName,
+    ScanIndexForward: scanIndexForward,
+    TableName: tableName,
   };
 };

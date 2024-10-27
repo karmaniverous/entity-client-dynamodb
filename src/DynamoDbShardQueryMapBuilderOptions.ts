@@ -1,10 +1,14 @@
+import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import type { ShardQueryMapBuilderOptions } from '@karmaniverous/entity-manager';
-
-import { DynamoDbEntityManagerClient } from './DynamoDbEntityManagerClient';
 
 export interface DynamoDbShardQueryMapBuilderOptions
   extends ShardQueryMapBuilderOptions {
-  dynamoDbEntityManagerClient: DynamoDbEntityManagerClient;
+  dynamoDBDocument: DynamoDBDocument;
+
+  /** Injected logger object. Must support `debug` and `error` methods. Default: `console` */
+  logger: Pick<Console, 'debug' | 'error'>;
+
   scanIndexForward?: boolean;
+
   tableName: string;
 }

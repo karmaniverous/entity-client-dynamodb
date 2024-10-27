@@ -9,7 +9,7 @@ import {
   waitUntilTableNotExists,
 } from '@aws-sdk/client-dynamodb';
 import {
-  BatchGetCommandOutput,
+  type BatchGetCommandOutput,
   type BatchWriteCommandOutput,
   type DeleteCommandInput,
   type DeleteCommandOutput,
@@ -19,33 +19,35 @@ import {
   type PutCommandOutput,
   type TransactWriteCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
-import {
-  EntityManagerClient,
-  type EntityManagerClientBatchOptions,
-  type WithRequiredAndNonNullable,
-} from '@karmaniverous/entity-manager';
+import { batchProcess } from '@karmaniverous/batch-process';
+import type { WithRequiredAndNonNullable } from '@karmaniverous/entity-manager';
 import AWSXray from 'aws-xray-sdk';
 import { isArray, isString, pick, sift, zipToObject } from 'radash';
 
 import type { DynamoDbEntityManagerClientOptions } from './DynamoDbEntityManagerClientOptions';
 import type { GetItemOptions } from './GetItemOptions';
-import { Item } from './Item';
+import type { Item } from './Item';
 
 /**
  * A convenience wrapper around the AWS SDK DynamoDBClient and DynamoDBDocument classes. Provides special support for marshaling query constraints & generating Entity Manager ShardQueryFunction.
  */
-export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEntityManagerClientOptions> {
+export class DynamoDbEntityManagerClient {
+  #batchProcessOptions: NonNullable<
+    DynamoDbEntityManagerClientOptions['batchProcessOptions']
+  >;
   #client: DynamoDBClient;
   #doc: DynamoDBDocument;
+  #logger: NonNullable<DynamoDbEntityManagerClientOptions['logger']>;
 
   constructor(
     dynamoDbClientConfig: DynamoDBClientConfig,
     {
+      batchProcessOptions = {},
       enableXray = false,
-      ...baseOptions
+      logger = console,
     }: DynamoDbEntityManagerClientOptions = {},
   ) {
-    super({ enableXray, ...baseOptions });
+    this.#batchProcessOptions = batchProcessOptions;
 
     const client = new DynamoDBClient(dynamoDbClientConfig);
 
@@ -57,6 +59,15 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
     this.#doc = DynamoDBDocument.from(this.#client, {
       marshallOptions: { removeUndefinedValues: true },
     });
+
+    this.#logger = logger;
+  }
+
+  /**
+   * Returns the default batch process options.
+   */
+  get batchProcessOptions() {
+    return this.#batchProcessOptions;
   }
 
   /**
@@ -71,6 +82,13 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
    */
   get doc() {
     return this.#doc;
+  }
+
+  /**
+   * Returns the injected logger instance.
+   */
+  get logger() {
+    return this.#logger;
   }
 
   /**
@@ -96,7 +114,7 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
 
       if (!createTableCommandOutput.TableDescription?.TableStatus) {
         const msg = 'table creation request failed';
-        this.options.logger.error(msg, createTableCommandOutput);
+        this.logger.error(msg, createTableCommandOutput);
         throw new Error(msg);
       }
 
@@ -106,7 +124,7 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
         { TableName: options.TableName },
       );
 
-      this.options.logger.debug('created table', {
+      this.logger.debug('created table', {
         options,
         createTableCommandOutput,
         waiterResult,
@@ -114,8 +132,7 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
 
       return { createTableCommandOutput, waiterResult };
     } catch (error) {
-      if (error instanceof Error)
-        this.options.logger.error(error.message, { options });
+      if (error instanceof Error) this.logger.error(error.message, { options });
 
       throw error;
     }
@@ -147,7 +164,7 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
 
       if (!deleteTableCommandOutput.TableDescription?.TableStatus) {
         const msg = 'table deletion request failed';
-        this.options.logger.error(msg, deleteTableCommandOutput);
+        this.logger.error(msg, deleteTableCommandOutput);
         throw new Error(msg);
       }
 
@@ -157,7 +174,7 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
         { TableName: options.TableName },
       );
 
-      this.options.logger.debug('deleted table', {
+      this.logger.debug('deleted table', {
         options,
         deleteTableCommandOutput,
         waiterResult,
@@ -165,8 +182,7 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
 
       return { deleteTableCommandOutput, waiterResult };
     } catch (error) {
-      if (error instanceof Error)
-        this.options.logger.error(error.message, { options });
+      if (error instanceof Error) this.logger.error(error.message, { options });
 
       throw error;
     }
@@ -221,20 +237,19 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
 
       // Evaluate response.
       if (response.$metadata.httpStatusCode === 200)
-        this.options.logger.debug('put item to table', {
+        this.logger.debug('put item to table', {
           options,
           response,
         });
       else {
         const msg = 'failed to put item to table';
-        this.options.logger.error(msg, response);
+        this.logger.error(msg, response);
         throw new Error(msg);
       }
 
       return response;
     } catch (error) {
-      if (error instanceof Error)
-        this.options.logger.error(error.message, options);
+      if (error instanceof Error) this.logger.error(error.message, options);
 
       throw error;
     }
@@ -292,20 +307,19 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
 
       // Evaluate response.
       if (response.$metadata.httpStatusCode === 200)
-        this.options.logger.debug('deleted item from table', {
+        this.logger.debug('deleted item from table', {
           options,
           response,
         });
       else {
         const msg = 'failed to delete item from table';
-        this.options.logger.error(msg, { options, response });
+        this.logger.error(msg, { options, response });
         throw new Error(msg);
       }
 
       return response;
     } catch (error) {
-      if (error instanceof Error)
-        this.options.logger.error(error.message, options);
+      if (error instanceof Error) this.logger.error(error.message, options);
 
       throw error;
     }
@@ -316,19 +330,19 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
    *
    * @param tableName - Table name.
    * @param items - Array of items.
-   * @param batchOptions - {@link EntityManagerClientBatchOptions | `EntityManagerClientBatchOptions`} object.
+   * @param batchProcessOptions - Batch process option overrides.
    * @returns Array of {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchWriteCommandOutput | `BatchWriteCommandOutput`} objects.
    */
   async putItems(
     tableName: string,
     items: Item[],
-    batchOptions: EntityManagerClientBatchOptions = {},
+    batchProcessOptions: DynamoDbEntityManagerClientOptions['batchProcessOptions'] = {},
   ): Promise<BatchWriteCommandOutput[]> {
     // Validate options.
     if (!tableName) throw new Error('tableName is required');
 
     try {
-      const executeBatch = async (batch: Item[]) =>
+      const batchHandler = async (batch: Item[]) =>
         await this.doc.batchWrite({
           RequestItems: {
             [tableName]: batch.map((item) => ({
@@ -337,30 +351,29 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
           },
         });
 
-      const getUnprocessedItems = (output: BatchWriteCommandOutput) =>
+      const unprocessedItemExtractor = (output: BatchWriteCommandOutput) =>
         output.UnprocessedItems?.[tableName];
 
-      const outputs = await this.batchExecute(
-        items,
-        executeBatch,
-        getUnprocessedItems,
-        batchOptions,
-      );
+      const outputs = await batchProcess(items, {
+        batchHandler,
+        unprocessedItemExtractor,
+        ...Object.assign(batchProcessOptions, this.batchProcessOptions),
+      });
 
-      this.options.logger.debug('put items to table', {
+      this.logger.debug('put items to table', {
         tableName,
         items,
-        batchOptions,
+        batchProcessOptions,
         outputs,
       });
 
       return outputs;
     } catch (error) {
       if (error instanceof Error)
-        this.options.logger.error(error.message, {
+        this.logger.error(error.message, {
           tableName,
           items,
-          batchOptions,
+          batchProcessOptions,
         });
 
       throw error;
@@ -372,19 +385,19 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
    *
    * @param tableName - Table name.
    * @param keys - Array of item keys.
-   * @param batchOptions - {@link EntityManagerClientBatchOptions | `EntityManagerClientBatchOptions`} object.
+   * @param batchProcessOptions - Batch process option overrides.
    * @returns Array of {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchWriteCommandOutput | `BatchWriteCommandOutput`} objects.
    */
   async deleteItems(
     tableName: string,
     keys: Item[],
-    batchOptions: EntityManagerClientBatchOptions = {},
+    batchProcessOptions: DynamoDbEntityManagerClientOptions['batchProcessOptions'] = {},
   ): Promise<BatchWriteCommandOutput[]> {
     // Validate options.
     if (!tableName) throw new Error('tableName is required');
 
     try {
-      const executeBatch = async (batch: Item[]) =>
+      const batchHandler = async (batch: Item[]) =>
         await this.doc.batchWrite({
           RequestItems: {
             [tableName]: batch.map((key) => ({
@@ -393,30 +406,29 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
           },
         });
 
-      const getUnprocessedItems = (output: BatchWriteCommandOutput) =>
+      const unprocessedItemExtractor = (output: BatchWriteCommandOutput) =>
         output.UnprocessedItems?.[tableName];
 
-      const outputs = await this.batchExecute(
-        keys,
-        executeBatch,
-        getUnprocessedItems,
-        batchOptions,
-      );
+      const outputs = await batchProcess(keys, {
+        batchHandler,
+        unprocessedItemExtractor,
+        ...Object.assign(batchProcessOptions, this.batchProcessOptions),
+      });
 
-      this.options.logger.debug('deleted keys from table', {
+      this.logger.debug('deleted keys from table', {
         tableName,
         keys,
-        batchOptions,
+        batchProcessOptions,
         outputs,
       });
 
       return outputs;
     } catch (error) {
       if (error instanceof Error)
-        this.options.logger.error(error.message, {
+        this.logger.error(error.message, {
           tableName,
           keys,
-          batchOptions,
+          batchProcessOptions,
         });
 
       throw error;
@@ -429,14 +441,14 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
    * @param tableName - Table name.
    * @param hashKey - Hash key name.
    * @param rangeKey - Range key name.
-   * @param batchOptions - {@link EntityManagerClientBatchOptions | `EntityManagerClientBatchOptions`} object.
+   * @param batchProcessOptions - Batch process option overrides.
    * @returns Number of items purged.
    */
   async purgeItems(
     tableName: string,
     hashKey: string,
     rangeKey?: string,
-    batchOptions: EntityManagerClientBatchOptions = {},
+    batchProcessOptions: DynamoDbEntityManagerClientOptions['batchProcessOptions'] = {},
   ): Promise<number> {
     try {
       // Validate options.
@@ -459,28 +471,28 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
             pick(item, sift([hashKey, rangeKey])),
           );
 
-          await this.deleteItems(tableName, itemKeys, batchOptions);
+          await this.deleteItems(tableName, itemKeys, batchProcessOptions);
 
           purged += items.length;
         }
       } while (items.length);
 
-      this.options.logger.debug('purged items from table', {
+      this.logger.debug('purged items from table', {
         tableName,
         hashKey,
         rangeKey,
-        batchOptions,
+        batchProcessOptions,
         purged,
       });
 
       return purged;
     } catch (error) {
       if (error instanceof Error)
-        this.options.logger.error(error.message, {
+        this.logger.error(error.message, {
           tableName,
           hashKey,
           rangeKey,
-          batchOptions,
+          batchProcessOptions,
         });
 
       throw error;
@@ -508,7 +520,7 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
         })),
       });
 
-      this.options.logger.debug('put items to table as transaction', {
+      this.logger.debug('put items to table as transaction', {
         tableName,
         items,
         output,
@@ -517,7 +529,7 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
       return output;
     } catch (error) {
       if (error instanceof Error)
-        this.options.logger.error(error.message, {
+        this.logger.error(error.message, {
           tableName,
           items,
         });
@@ -547,7 +559,7 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
         })),
       });
 
-      this.options.logger.debug('deleted items from table as transaction', {
+      this.logger.debug('deleted items from table as transaction', {
         tableName,
         keys,
         transactWriteCommandOutput,
@@ -556,7 +568,7 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
       return transactWriteCommandOutput;
     } catch (error) {
       if (error instanceof Error)
-        this.options.logger.error(error.message, {
+        this.logger.error(error.message, {
           tableName,
           keys,
         });
@@ -631,7 +643,7 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
           : {}),
       });
 
-      this.options.logger.debug('got item from table', {
+      this.logger.debug('got item from table', {
         tableName,
         key,
         attributes,
@@ -643,7 +655,7 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
       return getCommandOutput;
     } catch (error) {
       if (error instanceof Error)
-        this.options.logger.error(error.message, {
+        this.logger.error(error.message, {
           tableName,
           key,
           attributes,
@@ -660,20 +672,20 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
    *
    * @param tableName - Table name.
    * @param keys - Array of item keys.
-   * @param batchOptions - {@link EntityManagerClientBatchOptions | `EntityManagerClientBatchOptions`} object.
+   * @param batchProcessOptions - Batch process option overrides.
    *
    * @returns An object containing a flattened array of returned items and the array of returned {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchGetCommandOutput | `BatchGetCommandOutput`} objects.
    */
   async getItems(
     tableName: string,
     keys: Item[],
-    batchOptions: EntityManagerClientBatchOptions = {},
+    batchProcessOptions: DynamoDbEntityManagerClientOptions['batchProcessOptions'] = {},
   ): Promise<{ items: Item[]; outputs: BatchGetCommandOutput[] }> {
     // Validate options.
     if (!tableName) throw new Error('tableName is required');
 
     try {
-      const executeBatch = async (batch: Item[]) =>
+      const batchHandler = async (batch: Item[]) =>
         await this.doc.batchGet({
           RequestItems: {
             [tableName]: {
@@ -682,20 +694,19 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
           },
         });
 
-      const getUnprocessedItems = (output: BatchGetCommandOutput) =>
+      const unprocessedItemExtractor = (output: BatchGetCommandOutput) =>
         output.UnprocessedKeys?.[tableName]?.Keys;
 
-      const outputs = await this.batchExecute(
-        keys,
-        executeBatch,
-        getUnprocessedItems,
-        batchOptions,
-      );
+      const outputs = await batchProcess(keys, {
+        batchHandler,
+        unprocessedItemExtractor,
+        ...Object.assign(batchProcessOptions, this.batchProcessOptions),
+      });
 
-      this.options.logger.debug('got items from table', {
+      this.logger.debug('got items from table', {
         tableName,
         keys,
-        batchOptions,
+        batchProcessOptions,
         outputs,
       });
 
@@ -705,10 +716,10 @@ export class DynamoDbEntityManagerClient extends EntityManagerClient<DynamoDbEnt
       };
     } catch (error) {
       if (error instanceof Error)
-        this.options.logger.error(error.message, {
+        this.logger.error(error.message, {
           tableName,
           keys,
-          batchOptions,
+          batchProcessOptions,
         });
 
       throw error;

@@ -5,12 +5,9 @@ import { pick, range } from 'radash';
 
 import { DynamoDbEntityManagerClient } from './DynamoDbEntityManagerClient';
 
-const dynamoDbClient = new DynamoDbEntityManagerClient(
-  {
-    region: process.env.AWS_DEFAULT_REGION,
-  },
-  { logInternals: false },
-);
+const dynamoDbClient = new DynamoDbEntityManagerClient({
+  region: process.env.AWS_DEFAULT_REGION,
+});
 
 const tableOptions: Omit<CreateTableCommandInput, 'TableName'> = {
   AttributeDefinitions: [
