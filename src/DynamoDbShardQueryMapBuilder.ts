@@ -11,12 +11,6 @@ import { getDynamoDbDocumentQueryArgs } from './getDynamoDbDocumentQueryArgs';
 import type { IndexParams } from './IndexParams';
 import type { Item } from './Item';
 
-export const defaultIndexMapValue = {
-  expressionAttributeNames: {},
-  expressionAttributeValues: {},
-  filterConditions: [],
-};
-
 export class DynamoDbShardQueryMapBuilder extends ShardQueryMapBuilder<
   Item,
   DynamoDbShardQueryMapBuilderOptions
@@ -74,13 +68,16 @@ export class DynamoDbShardQueryMapBuilder extends ShardQueryMapBuilder<
     try {
       // Default index map value.
       this.indexParamsMap[indexToken] ??= {
-        ...defaultIndexMapValue,
+        expressionAttributeNames: {},
+        expressionAttributeValues: {},
+        filterConditions: [],
       };
 
-      // Update expressionAttributeNames.
-      this.indexParamsMap[indexToken].expressionAttributeNames[
-        `#${rangeKeyToken}`
-      ] = rangeKeyToken;
+      // No replacement of existing range key condition.
+      if (this.indexParamsMap[indexToken].rangeKeyCondition !== undefined)
+        throw new Error('range key condition already exists');
+
+      let rangeKeyCondition: string | undefined;
 
       if (operator === 'between') {
         if (!toItem)
@@ -89,28 +86,30 @@ export class DynamoDbShardQueryMapBuilder extends ShardQueryMapBuilder<
         // Process fromItem.
         const fromRangeKeyValue = item[rangeKeyToken] as string | undefined;
 
-        this.indexParamsMap[indexToken].expressionAttributeValues[
-          `:${rangeKeyToken}From`
-        ] = fromRangeKeyValue;
+        if (fromRangeKeyValue !== undefined)
+          this.indexParamsMap[indexToken].expressionAttributeValues[
+            `:${rangeKeyToken}From`
+          ] = fromRangeKeyValue;
 
         // Process toItem.
         const toRangeKeyValue = toItem[rangeKeyToken] as string | undefined;
 
-        this.indexParamsMap[indexToken].expressionAttributeValues[
-          `:${rangeKeyToken}To`
-        ] = toRangeKeyValue;
+        if (toRangeKeyValue !== undefined)
+          this.indexParamsMap[indexToken].expressionAttributeValues[
+            `:${rangeKeyToken}To`
+          ] = toRangeKeyValue;
 
         // Update rangeKeyCondition.
-        const rangeKeyCondition =
-          fromRangeKeyValue !== undefined && toRangeKeyValue !== undefined
-            ? `#${rangeKeyToken} BETWEEN :${rangeKeyToken}From AND :${rangeKeyToken}To`
-            : fromRangeKeyValue !== undefined && toRangeKeyValue === undefined
-              ? `#${rangeKeyToken} >= :${rangeKeyToken}From`
-              : fromRangeKeyValue === undefined && toRangeKeyValue !== undefined
-                ? `#${rangeKeyToken} <= :${rangeKeyToken}To`
-                : undefined;
+        if (fromRangeKeyValue !== undefined || toRangeKeyValue !== undefined) {
+          rangeKeyCondition =
+            fromRangeKeyValue !== undefined && toRangeKeyValue !== undefined
+              ? `#${rangeKeyToken} BETWEEN :${rangeKeyToken}From AND :${rangeKeyToken}To`
+              : fromRangeKeyValue !== undefined && toRangeKeyValue === undefined
+                ? `#${rangeKeyToken} >= :${rangeKeyToken}From`
+                : `#${rangeKeyToken} <= :${rangeKeyToken}To`;
 
-        this.indexParamsMap[indexToken].rangeKeyCondition = rangeKeyCondition;
+          this.indexParamsMap[indexToken].rangeKeyCondition = rangeKeyCondition;
+        }
 
         this.options.logger.debug(
           rangeKeyCondition === undefined
@@ -138,14 +137,14 @@ export class DynamoDbShardQueryMapBuilder extends ShardQueryMapBuilder<
           `:${rangeKeyToken}`
         ] = rangeKeyValue;
 
-        const rangeKeyCondition =
-          rangeKeyValue === undefined
-            ? undefined
-            : operator === 'begins_with'
+        if (rangeKeyValue != undefined) {
+          rangeKeyCondition =
+            operator === 'begins_with'
               ? `${operator}(#${rangeKeyToken}, :${rangeKeyToken})`
               : `#${rangeKeyToken} ${operator} :${rangeKeyToken}`;
 
-        this.indexParamsMap[indexToken].rangeKeyCondition = rangeKeyCondition;
+          this.indexParamsMap[indexToken].rangeKeyCondition = rangeKeyCondition;
+        }
 
         this.options.logger.debug(
           rangeKeyCondition === undefined
@@ -161,6 +160,12 @@ export class DynamoDbShardQueryMapBuilder extends ShardQueryMapBuilder<
           },
         );
       }
+
+      // Update expressionAttributeNames.
+      if (rangeKeyCondition !== undefined)
+        this.indexParamsMap[indexToken].expressionAttributeNames[
+          `#${rangeKeyToken}`
+        ] = rangeKeyToken;
 
       return this;
     } catch (error) {

@@ -1,9 +1,9 @@
 import type { Item } from './Item';
 
 export type RangeKeyConditionOperator =
-  | '='
   | '<'
   | '<='
+  | '='
   | '>'
   | '>='
   | 'begins_with'
