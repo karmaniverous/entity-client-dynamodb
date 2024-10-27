@@ -22,5 +22,6 @@
     "--experimental-specifier-resolution=node"
   ],
   "testExplorer.mergeSuites": true,
-  "mochaExplorer.logpanel": false
+  "mochaExplorer.logpanel": false,
+  "mochaExplorer.multiFileSuites": false
 }

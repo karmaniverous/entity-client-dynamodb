@@ -19,25 +19,44 @@ import {
   type PutCommandOutput,
   type TransactWriteCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
-import { batchProcess } from '@karmaniverous/batch-process';
+import {
+  batchProcess,
+  type BatchProcessOptions,
+} from '@karmaniverous/batch-process';
 import type { WithRequiredAndNonNullable } from '@karmaniverous/entity-manager';
 import AWSXray from 'aws-xray-sdk';
 import { isArray, isString, pick, sift, zipToObject } from 'radash';
 
-import type { DynamoDbEntityManagerClientOptions } from './DynamoDbEntityManagerClientOptions';
 import type { GetItemOptions } from './GetItemOptions';
 import type { Item } from './Item';
 
 /**
+ * Entity Manager DynamoDB client options.
+ */
+export interface EntityManagerClientOptions {
+  /** Default batch process options. */
+  batchProcessOptions?: Omit<
+    BatchProcessOptions<unknown, unknown>,
+    'batchHandler' | 'unprocessedItemExtractor'
+  >;
+
+  /** Activates AWS Xray for internal DynamoDb client when `true` and running in a Lambda environment. */
+  enableXray?: boolean;
+
+  /** Injected logger object. Must support `debug` and `error` methods. Default: `console` */
+  logger?: Pick<Console, 'debug' | 'error'>;
+}
+
+/**
  * A convenience wrapper around the AWS SDK DynamoDBClient and DynamoDBDocument classes. Provides special support for marshaling query constraints & generating Entity Manager ShardQueryFunction.
  */
-export class DynamoDbEntityManagerClient {
+export class EntityManagerClient {
   #batchProcessOptions: NonNullable<
-    DynamoDbEntityManagerClientOptions['batchProcessOptions']
+    EntityManagerClientOptions['batchProcessOptions']
   >;
   #client: DynamoDBClient;
   #doc: DynamoDBDocument;
-  #logger: NonNullable<DynamoDbEntityManagerClientOptions['logger']>;
+  #logger: NonNullable<EntityManagerClientOptions['logger']>;
 
   constructor(
     dynamoDbClientConfig: DynamoDBClientConfig,
@@ -45,7 +64,7 @@ export class DynamoDbEntityManagerClient {
       batchProcessOptions = {},
       enableXray = false,
       logger = console,
-    }: DynamoDbEntityManagerClientOptions = {},
+    }: EntityManagerClientOptions = {},
   ) {
     this.#batchProcessOptions = batchProcessOptions;
 
@@ -336,7 +355,7 @@ export class DynamoDbEntityManagerClient {
   async putItems(
     tableName: string,
     items: Item[],
-    batchProcessOptions: DynamoDbEntityManagerClientOptions['batchProcessOptions'] = {},
+    batchProcessOptions: EntityManagerClientOptions['batchProcessOptions'] = {},
   ): Promise<BatchWriteCommandOutput[]> {
     // Validate options.
     if (!tableName) throw new Error('tableName is required');
@@ -391,7 +410,7 @@ export class DynamoDbEntityManagerClient {
   async deleteItems(
     tableName: string,
     keys: Item[],
-    batchProcessOptions: DynamoDbEntityManagerClientOptions['batchProcessOptions'] = {},
+    batchProcessOptions: EntityManagerClientOptions['batchProcessOptions'] = {},
   ): Promise<BatchWriteCommandOutput[]> {
     // Validate options.
     if (!tableName) throw new Error('tableName is required');
@@ -448,7 +467,7 @@ export class DynamoDbEntityManagerClient {
     tableName: string,
     hashKey: string,
     rangeKey?: string,
-    batchProcessOptions: DynamoDbEntityManagerClientOptions['batchProcessOptions'] = {},
+    batchProcessOptions: EntityManagerClientOptions['batchProcessOptions'] = {},
   ): Promise<number> {
     try {
       // Validate options.
@@ -679,7 +698,7 @@ export class DynamoDbEntityManagerClient {
   async getItems(
     tableName: string,
     keys: Item[],
-    batchProcessOptions: DynamoDbEntityManagerClientOptions['batchProcessOptions'] = {},
+    batchProcessOptions: EntityManagerClientOptions['batchProcessOptions'] = {},
   ): Promise<{ items: Item[]; outputs: BatchGetCommandOutput[] }> {
     // Validate options.
     if (!tableName) throw new Error('tableName is required');

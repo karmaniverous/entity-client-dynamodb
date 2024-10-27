@@ -15,7 +15,7 @@ export interface GetDynamoDbDocumentQueryArgsParams {
   tableName: string;
 }
 
-export const getDynamoDbDocumentQueryArgs = ({
+export const getDocumentQueryArgs = ({
   indexParamsMap,
   indexToken,
   hashKeyToken,
