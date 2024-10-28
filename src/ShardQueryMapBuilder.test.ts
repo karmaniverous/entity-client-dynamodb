@@ -12,8 +12,7 @@ let builder: ShardQueryMapBuilder;
 describe('ShardQueryMapBuilder - constructor', function () {
   beforeEach(function () {
     builder = new ShardQueryMapBuilder({
-      dynamoDBDocument: entityManagerClient.doc,
-      entityToken: 'user',
+      doc: entityManagerClient.doc,
       hashKeyToken: 'hashKey2',
       tableName: 'UserTable',
     });

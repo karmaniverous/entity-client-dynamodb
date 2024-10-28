@@ -22,7 +22,6 @@ export const getDocumentQueryArgs = ({
   hashKey,
   pageKey,
   pageSize,
-  scanIndexForward,
   tableName,
 }: GetDynamoDbDocumentQueryArgsParams): QueryCommandInput => {
   const {
@@ -30,6 +29,7 @@ export const getDocumentQueryArgs = ({
     expressionAttributeValues,
     filterConditions,
     rangeKeyCondition,
+    scanIndexForward,
   } = indexParamsMap[indexToken];
 
   const siftedFilterConditions = sift(filterConditions);

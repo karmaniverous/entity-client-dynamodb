@@ -75,7 +75,7 @@ export const addRangeKeyCondition = (
           rangeKeyCondition;
       }
 
-      builder.options.logger.debug(
+      builder.logger.debug(
         rangeKeyCondition === undefined
           ? 'no range key condition added'
           : 'added range key condition',
@@ -111,7 +111,7 @@ export const addRangeKeyCondition = (
           rangeKeyCondition;
       }
 
-      builder.options.logger.debug(
+      builder.logger.debug(
         rangeKeyCondition === undefined
           ? 'no range key condition added'
           : 'added range key condition',
@@ -133,7 +133,7 @@ export const addRangeKeyCondition = (
       ] = rangeKeyToken;
   } catch (error) {
     if (error instanceof Error)
-      builder.options.logger.error(error.message, {
+      builder.logger.error(error.message, {
         indexToken,
         item,
         rangeKeyToken,

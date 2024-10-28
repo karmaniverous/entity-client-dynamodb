@@ -1,7 +1,5 @@
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import {
-  BaseShardQueryMapBuilder,
-  type BaseShardQueryMapBuilderOptions,
   type ShardQueryFunction,
   type ShardQueryMap,
 } from '@karmaniverous/entity-manager';
@@ -15,33 +13,39 @@ import { getDocumentQueryArgs } from './getDocumentQueryArgs';
 import type { IndexParams } from './IndexParams';
 import type { Item } from './Item';
 
-export interface ShardQueryMapBuilderOptions
-  extends BaseShardQueryMapBuilderOptions {
-  dynamoDBDocument: DynamoDBDocument;
+export interface ShardQueryMapBuilderOptions {
+  doc: DynamoDBDocument;
+
+  hashKeyToken: string;
 
   /** Injected logger object. Must support `debug` and `error` methods. Default: `console` */
-  logger: Pick<Console, 'debug' | 'error'>;
+  logger?: Pick<Console, 'debug' | 'error'>;
 
-  scanIndexForward?: boolean;
+  /** Dehydrated page key from the previous query data page. */
+  pageKey?: string;
 
   tableName: string;
 }
-export class ShardQueryMapBuilder extends BaseShardQueryMapBuilder<
-  Item,
-  ShardQueryMapBuilderOptions
-> {
-  #indexParamsMap: Record<string, IndexParams> = {};
-
-  get indexParamsMap() {
-    return this.#indexParamsMap;
-  }
+export class ShardQueryMapBuilder {
+  readonly doc: ShardQueryMapBuilderOptions['doc'];
+  readonly hashKeyToken: ShardQueryMapBuilderOptions['hashKeyToken'];
+  readonly indexParamsMap: Record<string, IndexParams> = {};
+  readonly logger: NonNullable<ShardQueryMapBuilderOptions['logger']>;
+  readonly pageKey: ShardQueryMapBuilderOptions['pageKey'];
+  readonly tableName: ShardQueryMapBuilderOptions['tableName'];
 
   constructor({
+    doc,
+    hashKeyToken,
     logger = console,
-    ...options
-  }: Omit<ShardQueryMapBuilderOptions, 'logger'> &
-    Partial<Pick<ShardQueryMapBuilderOptions, 'logger'>>) {
-    super({ logger, ...options });
+    pageKey,
+    tableName,
+  }: ShardQueryMapBuilderOptions) {
+    this.doc = doc;
+    this.hashKeyToken = hashKeyToken;
+    this.logger = logger;
+    this.pageKey = pageKey;
+    this.tableName = tableName;
   }
 
   #getShardQueryFunction(indexToken: string): ShardQueryFunction<Item> {
@@ -50,16 +54,15 @@ export class ShardQueryMapBuilder extends BaseShardQueryMapBuilder<
         Count: count = 0,
         Items: items = [],
         LastEvaluatedKey: newPageKey,
-      } = await this.options.dynamoDBDocument.query(
+      } = await this.doc.query(
         getDocumentQueryArgs({
           hashKey,
-          hashKeyToken: this.options.hashKeyToken,
-          indexParamsMap: this.#indexParamsMap,
+          hashKeyToken: this.hashKeyToken,
+          indexParamsMap: this.indexParamsMap,
           indexToken,
           pageKey,
           pageSize,
-          scanIndexForward: this.options.scanIndexForward,
-          tableName: this.options.tableName,
+          tableName: this.tableName,
         }),
       );
 
@@ -68,7 +71,7 @@ export class ShardQueryMapBuilder extends BaseShardQueryMapBuilder<
   }
 
   getShardQueryMap(): ShardQueryMap<Item> {
-    return mapValues(this.#indexParamsMap, (indexConfig, indexToken) =>
+    return mapValues(this.indexParamsMap, (indexConfig, indexToken) =>
       this.#getShardQueryFunction(indexToken),
     );
   }

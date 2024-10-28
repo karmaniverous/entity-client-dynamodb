@@ -3,4 +3,5 @@ export interface IndexParams {
   expressionAttributeValues: Record<string, string | undefined>;
   filterConditions: (string | undefined)[];
   rangeKeyCondition?: string;
+  scanIndexForward?: boolean;
 }
