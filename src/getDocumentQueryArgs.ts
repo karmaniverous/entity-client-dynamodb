@@ -37,19 +37,23 @@ export const getDocumentQueryArgs = ({
   return {
     ExclusiveStartKey: pageKey,
     ExpressionAttributeNames: {
-      [`#${hashKeyToken}`]: `:${hashKeyToken}`,
+      [`#${hashKeyToken}`]: hashKeyToken,
       ...shake(expressionAttributeNames),
     },
     ExpressionAttributeValues: {
-      [`#${hashKeyToken}`]: hashKey,
+      ':hashKey': hashKey,
       ...shake(expressionAttributeValues),
     },
     ...(siftedFilterConditions.length
-      ? { FilterExpression: siftedFilterConditions.join(' AND ') }
+      ? {
+          FilterExpression: siftedFilterConditions
+            .map((c) => `(${c})`)
+            .join(' AND '),
+        }
       : {}),
     IndexName: indexToken,
     KeyConditionExpression: [
-      `#${hashKeyToken} = :${hashKeyToken}`,
+      `#${hashKeyToken} = :hashKey`,
       ...(rangeKeyCondition ? [rangeKeyCondition] : []),
     ].join(' AND '),
     ...(pageSize ? { Limit: pageSize } : {}),

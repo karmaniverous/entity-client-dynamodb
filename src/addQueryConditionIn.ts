@@ -9,7 +9,7 @@ export const addQueryConditionIn = <
 >(
   builder: ShardQueryMapBuilder,
   indexToken: string,
-  { property, value }: QueryConditionIn<T>,
+  { operator, property, value }: QueryConditionIn<T>,
 ): string | undefined => {
   if (value === undefined) return;
 
@@ -27,5 +27,5 @@ export const addQueryConditionIn = <
     return alias;
   });
 
-  return `#${property} in ${aliases.join(', ')}`;
+  return `#${property} ${operator.toUpperCase()} (${aliases.join(', ')})`;
 };

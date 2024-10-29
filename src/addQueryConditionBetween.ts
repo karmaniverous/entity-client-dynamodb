@@ -11,6 +11,7 @@ export const addQueryConditionBetween = <
   builder: ShardQueryMapBuilder,
   indexToken: string,
   {
+    operator,
     property,
     value: { from: valueFrom, to: valueTo },
   }: QueryConditionBetween<T>,
@@ -32,7 +33,7 @@ export const addQueryConditionBetween = <
       valueTo.toString();
 
   return !isNil(valueFrom) && !isNil(valueTo)
-    ? `#${property} BETWEEN ${aliasFrom} AND ${aliasTo}`
+    ? `#${property} ${operator.toUpperCase()} ${aliasFrom} AND ${aliasTo}`
     : !isNil(valueFrom) && isNil(valueTo)
       ? `#${property} >= ${aliasFrom}`
       : `#${property} <= ${aliasTo}`;
