@@ -2,6 +2,7 @@ import { addQueryConditionBeginsWith } from './addQueryConditionBeginsWith';
 import { addQueryConditionBetween } from './addQueryConditionBetween';
 import { addQueryConditionComparison } from './addQueryConditionComparison';
 import type {
+  ComposeCondition,
   QueryConditionBeginsWith,
   QueryConditionBetween,
   QueryConditionComparison,
@@ -25,10 +26,10 @@ export type RangeKeyCondition =
  *
  * @returns - Condition string or `undefined`.
  */
-const composeCondition = (
-  builder: ShardQueryMapBuilder,
-  indexToken: string,
-  condition: RangeKeyCondition,
+const composeCondition: ComposeCondition<RangeKeyCondition> = (
+  builder,
+  indexToken,
+  condition,
 ): string | undefined => {
   switch (condition.operator) {
     case 'begins_with':

@@ -3,7 +3,14 @@ import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
 import { addQueryConditionBeginsWith } from './addQueryConditionBeginsWith';
 import { addQueryConditionBetween } from './addQueryConditionBetween';
 import { addQueryConditionComparison } from './addQueryConditionComparison';
+import { addQueryConditionContains } from './addQueryConditionContains';
+import { addQueryConditionExists } from './addQueryConditionExists';
+import { addQueryConditionGroup } from './addQueryConditionGroup';
+import { addQueryConditionIn } from './addQueryConditionIn';
+import { addQueryConditionNot } from './addQueryConditionNot';
 import type {
+  ActuallyScalarAttributeValue,
+  ComposeCondition,
   QueryConditionBeginsWith,
   QueryConditionBetween,
   QueryConditionComparison,
@@ -20,11 +27,11 @@ import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
  */
 export type FilterCondition =
   | QueryConditionBeginsWith
-  | QueryConditionBetween<Exclude<NativeScalarAttributeValue, object>>
-  | QueryConditionComparison<Exclude<NativeScalarAttributeValue, object>>
+  | QueryConditionBetween<ActuallyScalarAttributeValue>
+  | QueryConditionComparison<ActuallyScalarAttributeValue>
   | QueryConditionContains<NativeScalarAttributeValue>
   | QueryConditionExists
-  | QueryConditionIn<NativeScalarAttributeValue>
+  | QueryConditionIn<ActuallyScalarAttributeValue>
   | QueryConditionGroup<FilterCondition>
   | QueryConditionNot<FilterCondition>;
 
@@ -37,10 +44,10 @@ export type FilterCondition =
  *
  * @returns - Condition string or `undefined`.
  */
-const composeCondition = (
-  builder: ShardQueryMapBuilder,
-  indexToken: string,
-  condition: FilterCondition,
+const composeCondition: ComposeCondition<FilterCondition> = (
+  builder,
+  indexToken,
+  condition,
 ): string | undefined => {
   switch (condition.operator) {
     case 'begins_with':
@@ -55,17 +62,27 @@ const composeCondition = (
     case '<>':
       return addQueryConditionComparison(builder, indexToken, condition);
     case 'contains':
-      throw new Error('not implemented');
+      return addQueryConditionContains(builder, indexToken, condition);
     case 'attribute_exists':
     case 'attribute_not_exists':
-      throw new Error('not implemented');
+      return addQueryConditionExists(builder, indexToken, condition);
     case 'in':
-      throw new Error('not implemented');
+      return addQueryConditionIn(builder, indexToken, condition);
     case 'and':
     case 'or':
-      throw new Error('not implemented');
+      return addQueryConditionGroup(
+        builder,
+        indexToken,
+        condition,
+        composeCondition,
+      );
     case 'not':
-      throw new Error('not implemented');
+      return addQueryConditionNot(
+        builder,
+        indexToken,
+        condition,
+        composeCondition,
+      );
     default:
       throw new Error('invalid operator');
   }

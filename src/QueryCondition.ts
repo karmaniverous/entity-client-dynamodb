@@ -1,4 +1,10 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
+import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
+
+export type ActuallyScalarAttributeValue = Exclude<
+  NativeScalarAttributeValue,
+  object
+>;
 
 /**
  * Base interface for all query conditions.
@@ -21,9 +27,8 @@ export interface QueryConditionBeginsWith extends QueryCondition {
  * Query condition for the `between` operator.
  * Ensures that both `from` and `to` are of the same type.
  */
-export interface QueryConditionBetween<
-  T extends Exclude<NativeScalarAttributeValue, object>,
-> extends QueryCondition {
+export interface QueryConditionBetween<T extends ActuallyScalarAttributeValue>
+  extends QueryCondition {
   property: string;
   operator: 'between';
   value: { from?: T; to?: T };
@@ -33,7 +38,7 @@ export interface QueryConditionBetween<
  * Query condition for comparison operators.
  */
 export interface QueryConditionComparison<
-  T extends Exclude<NativeScalarAttributeValue, object>,
+  T extends ActuallyScalarAttributeValue,
 > extends QueryCondition {
   property: string;
   operator: '<' | '<=' | '<>' | '=' | '>' | '>=';
@@ -85,3 +90,9 @@ export interface QueryConditionNot<T extends QueryCondition> {
   operator: 'not';
   condition: T;
 }
+
+export type ComposeCondition<T extends QueryCondition> = (
+  builder: ShardQueryMapBuilder,
+  indexToken: string,
+  condition: T,
+) => string | undefined;
