@@ -71,12 +71,6 @@ export class ShardQueryMapBuilder {
     };
   }
 
-  getShardQueryMap(): ShardQueryMap<Item> {
-    return mapValues(this.indexParamsMap, (indexConfig, indexToken) =>
-      this.#getShardQueryFunction(indexToken),
-    );
-  }
-
   addRangeKeyCondition(indexToken: string, condition: RangeKeyCondition): this {
     addRangeKeyCondition(this, indexToken, condition);
     return this;
@@ -85,5 +79,11 @@ export class ShardQueryMapBuilder {
   addFilterCondition(indexToken: string, condition: FilterCondition): this {
     addFilterCondition(this, indexToken, condition);
     return this;
+  }
+
+  getShardQueryMap(): ShardQueryMap<Item> {
+    return mapValues(this.indexParamsMap, (indexConfig, indexToken) =>
+      this.#getShardQueryFunction(indexToken),
+    );
   }
 }

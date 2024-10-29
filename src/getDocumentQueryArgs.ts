@@ -11,7 +11,6 @@ export interface GetDynamoDbDocumentQueryArgsParams {
   hashKey: string;
   pageKey?: Item;
   pageSize?: number;
-  scanIndexForward?: boolean;
   tableName: string;
 }
 
@@ -35,7 +34,7 @@ export const getDocumentQueryArgs = ({
   const siftedFilterConditions = sift(filterConditions);
 
   return {
-    ExclusiveStartKey: pageKey,
+    ...(pageKey === undefined ? {} : { ExclusiveStartKey: pageKey }),
     ExpressionAttributeNames: {
       [`#${hashKeyToken}`]: hashKeyToken,
       ...shake(expressionAttributeNames),
@@ -57,7 +56,9 @@ export const getDocumentQueryArgs = ({
       ...(rangeKeyCondition ? [rangeKeyCondition] : []),
     ].join(' AND '),
     ...(pageSize ? { Limit: pageSize } : {}),
-    ScanIndexForward: scanIndexForward,
+    ...(scanIndexForward === undefined
+      ? {}
+      : { ScanIndexForward: scanIndexForward }),
     TableName: tableName,
   };
 };
