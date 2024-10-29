@@ -17,7 +17,7 @@ import type { Item } from './Item';
 /**
  * Options for {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} constructor.
  *
- * @category ShardQueryMap Builder
+ * @category ShardQueryMapBuilder
  */
 export interface ShardQueryMapBuilderOptions {
   /** DynamoDB Document client. */
@@ -39,7 +39,7 @@ export interface ShardQueryMapBuilderOptions {
 /**
  * Provides a fluent API for building a {@link ShardQueryMap | `ShardQueryMap`} using a DynamoDB Document client.
  *
- * @category ShardQueryMap Builder
+ * @category ShardQueryMapBuilder
  */
 export class ShardQueryMapBuilder {
   readonly doc: ShardQueryMapBuilderOptions['doc'];

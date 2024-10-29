@@ -23,7 +23,7 @@ import {
   batchProcess,
   type BatchProcessOptions,
 } from '@karmaniverous/batch-process';
-import type { WithRequiredAndNonNullable } from '@karmaniverous/entity-manager';
+import type { WithRequiredAndNonNullable } from '@karmaniverous/entity-tools';
 import AWSXray from 'aws-xray-sdk';
 import { isArray, isString, pick, sift, zipToObject } from 'radash';
 
@@ -31,14 +31,14 @@ import type { GetItemOptions } from './GetItemOptions';
 import type { Item } from './Item';
 
 /**
- * Entity Manager DynamoDB client options. Extends {@link DynamoDBClientConfig | `DynamoDBClientConfig`} with the following additional properties:
+ * DynamoDB EntityClient options. Extends {@link DynamoDBClientConfig | `DynamoDBClientConfig`} with the following additional properties:
  * - `batchProcessOptions` - Default batch process options.
  * - `enableXray` - Activates AWS Xray for internal DynamoDb client when `true` and running in a Lambda environment.
  * - `logger` - Injected logger object. Must support `debug` and `error` methods. Default: `console`.
  *
- * @category EntityManager Client
+ * @category EntityClient
  */
-export interface EntityManagerClientOptions
+export interface EntityClientOptions
   extends Omit<DynamoDBClientConfig, 'logger'> {
   /** Default batch process options. */
   batchProcessOptions?: Omit<
@@ -54,24 +54,25 @@ export interface EntityManagerClientOptions
 }
 
 /**
- * A convenience wrapper around the AWS SDK DynamoDBClient and DynamoDBDocument classes. Provides special support for marshaling query constraints & generating Entity Manager ShardQueryFunction.
+ * A convenience wrapper around the AWS SDK DynamoDBClient and DynamoDBDocument classes. Provides a simplified interface and enhanced batch processing.
  *
- * @category EntityManager Client
+ * @remarks
+ * This class provides a number of enhanced methods. For everything else, both the {@link DynamoDBClient | `DynamoDBClient`} and {@link DynamoDBDocument | `DynamoDBDocument`} instances are exposed for direct access on the `client` and `doc` properties, respectively.
+ *
+ * @category EntityClient
  */
-export class EntityManagerClient {
-  #batchProcessOptions: NonNullable<
-    EntityManagerClientOptions['batchProcessOptions']
-  >;
+export class EntityClient {
+  #batchProcessOptions: NonNullable<EntityClientOptions['batchProcessOptions']>;
   #client: DynamoDBClient;
   #doc: DynamoDBDocument;
-  #logger: NonNullable<EntityManagerClientOptions['logger']>;
+  #logger: NonNullable<EntityClientOptions['logger']>;
 
   /**
-   * DynamoDB EntityManager client constructor.
+   * DynamoDB EntityClient constructor.
    *
-   * @param options - {@link EntityManagerClientOptions | `EntityManagerClientOptions`} object.
+   * @param options - {@link EntityClientOptions | `EntityClientOptions`} object.
    */
-  constructor(options: EntityManagerClientOptions) {
+  constructor(options: EntityClientOptions) {
     const {
       batchProcessOptions = {},
       enableXray = false,
@@ -125,8 +126,10 @@ export class EntityManagerClient {
 
   /**
    * Creates a DynamoDB table using {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/command/CreateTableCommand | `CreateTableCommand`} and waits for the table to be created and available using {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Variable/waitUntilTableExists/ | `waitUntilTableExists`}.
+   *
    * @param options - {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/CreateTableCommandInput | `CreateTableCommandInput`} object with the `TableName` property required and non-nullable.
    * @param waiterConfig - {@link https://github.com/smithy-lang/smithy-typescript/blob/main/packages/types/src/waiter.ts | `WaiterConfiguration`} with `client` parameter omitted & `maxWaitTime` defaulted to 60s.
+   *
    * @returns An object containing the resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/CreateTableCommandOutput | `CreateTableCommandOutput`} and {@link https://github.com/smithy-lang/smithy-typescript/blob/main/packages/util-waiter/src/waiter.ts#L36-L43 | `WaiterResult`} objects.
    */
   async createTable(
@@ -172,8 +175,10 @@ export class EntityManagerClient {
 
   /**
    * Deletes a DynamoDB table using {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/command/DeleteTableCommand/ | `DeleteTableCommand`} and waits for the table to be confirmed deleted with {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Variable/waitUntilTableNotExists/ | `waitUntilTableNotExists`}.
+   *
    * @param options - {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/DeleteTableCommandInput | `DeleteTableCommandInput`} object with the `TableName` property required and non-nullable.
    * @param waiterConfig - {@link https://github.com/smithy-lang/smithy-typescript/blob/main/packages/types/src/waiter.ts | `WaiterConfiguration`} with `client` parameter omitted & `maxWaitTime` defaulted to 60s.
+   *
    * @returns An object containing the resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/DeleteTableCommandOutput | `DeleteTableCommandOutput`} and {@link https://github.com/smithy-lang/smithy-typescript/blob/main/packages/util-waiter/src/waiter.ts#L36-L43 | `WaiterResult`} objects.
    */
   async deleteTable(
@@ -222,16 +227,22 @@ export class EntityManagerClient {
 
   /**
    * Puts an item to a DynamoDB table.
+   *
    * @param tableName - Table name.
    * @param item - Item.
+   *
    * @returns The resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandOutput | `PutCommandOutput`} object.
+   *
    * @overload
    */
   async putItem(tableName: string, item: Item): Promise<PutCommandOutput>;
   /**
    * Puts an item to a DynamoDB table.
+   *
    * @param options - {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandInput | `PutCommandInput`} object with the `Item` & `TableName` properties required and non-nullable.
+   *
    * @returns The resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandOutput | `PutCommandOutput`} object.
+   *
    * @overload
    */
   async putItem(
@@ -289,9 +300,12 @@ export class EntityManagerClient {
 
   /**
    * Deletes an item from a DynamoDB table.
+   *
    * @param tableName - Table name.
    * @param key - Item key.
+   *
    * @returns The resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/DeleteCommandOutput | `DeleteCommandOutput`} object.
+   *
    * @overload
    */
   async deleteItem(tableName: string, key: Item): Promise<DeleteCommandOutput>;
@@ -363,12 +377,13 @@ export class EntityManagerClient {
    * @param tableName - Table name.
    * @param items - Array of items.
    * @param batchProcessOptions - Batch process option overrides.
+   *
    * @returns Array of {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchWriteCommandOutput | `BatchWriteCommandOutput`} objects.
    */
   async putItems(
     tableName: string,
     items: Item[],
-    batchProcessOptions: EntityManagerClientOptions['batchProcessOptions'] = {},
+    batchProcessOptions: EntityClientOptions['batchProcessOptions'] = {},
   ): Promise<BatchWriteCommandOutput[]> {
     // Validate options.
     if (!tableName) throw new Error('tableName is required');
@@ -418,12 +433,13 @@ export class EntityManagerClient {
    * @param tableName - Table name.
    * @param keys - Array of item keys.
    * @param batchProcessOptions - Batch process option overrides.
+   *
    * @returns Array of {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchWriteCommandOutput | `BatchWriteCommandOutput`} objects.
    */
   async deleteItems(
     tableName: string,
     keys: Item[],
-    batchProcessOptions: EntityManagerClientOptions['batchProcessOptions'] = {},
+    batchProcessOptions: EntityClientOptions['batchProcessOptions'] = {},
   ): Promise<BatchWriteCommandOutput[]> {
     // Validate options.
     if (!tableName) throw new Error('tableName is required');
@@ -474,13 +490,14 @@ export class EntityManagerClient {
    * @param hashKey - Hash key name.
    * @param rangeKey - Range key name.
    * @param batchProcessOptions - Batch process option overrides.
+   *
    * @returns Number of items purged.
    */
   async purgeItems(
     tableName: string,
     hashKey: string,
     rangeKey?: string,
-    batchProcessOptions: EntityManagerClientOptions['batchProcessOptions'] = {},
+    batchProcessOptions: EntityClientOptions['batchProcessOptions'] = {},
   ): Promise<number> {
     try {
       // Validate options.
@@ -536,6 +553,7 @@ export class EntityManagerClient {
    *
    * @param tableName - Table name.
    * @param items - Array of items.
+   *
    * @returns {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/TransactWriteItemsCommandOutput | `TransactWriteCommandOutput`} object.
    */
   async transactPutItems(
@@ -575,6 +593,7 @@ export class EntityManagerClient {
    *
    * @param tableName - Table name.
    * @param keys - Array of item keys.
+   *
    * @returns {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/TransactWriteItemsCommandOutput | `TransactWriteCommandOutput`} object.
    */
   async transactDeleteItems(
@@ -711,7 +730,7 @@ export class EntityManagerClient {
   async getItems(
     tableName: string,
     keys: Item[],
-    batchProcessOptions: EntityManagerClientOptions['batchProcessOptions'] = {},
+    batchProcessOptions: EntityClientOptions['batchProcessOptions'] = {},
   ): Promise<{ items: Item[]; outputs: BatchGetCommandOutput[] }> {
     // Validate options.
     if (!tableName) throw new Error('tableName is required');

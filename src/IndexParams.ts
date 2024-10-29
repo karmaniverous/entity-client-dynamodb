@@ -1,7 +1,7 @@
 /**
  * IndexParams
  *
- * @category ShardQueryMap Builder
+ * @category ShardQueryMapBuilder
  * @protected
  */
 export interface IndexParams {

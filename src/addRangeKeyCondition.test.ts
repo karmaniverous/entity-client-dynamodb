@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 
-import { EntityManagerClient } from './EntityManagerClient';
+import { EntityClient } from './EntityClient';
 import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
-const entityManagerClient = new EntityManagerClient({
+const entityManagerClient = new EntityClient({
   region: process.env.AWS_DEFAULT_REGION,
 });
 

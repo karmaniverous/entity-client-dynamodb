@@ -1,13 +1,14 @@
 {
   "author": "Jason Williscroft",
   "bugs": {
-    "url": "https://github.com/karmaniverous/entity-manager-dynamodb/issues"
+    "url": "https://github.com/karmaniverous/entity-client-dynamodb/issues"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.679.0",
     "@aws-sdk/lib-dynamodb": "^3.679.0",
     "@karmaniverous/batch-process": "^0.1.0",
-    "@karmaniverous/entity-manager": "^6.4.9",
+    "@karmaniverous/entity-manager": "^6.4.10",
+    "@karmaniverous/entity-tools": "^0.4.1",
     "aws-xray-sdk": "^3.10.1",
     "radash": "^12.1.0"
   },
@@ -15,18 +16,17 @@
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.21.0",
     "@eslint/js": "^9.13.0",
-    "@faker-js/faker": "^9.1.0",
     "@rollup/plugin-alias": "^5.1.1",
     "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-typescript": "^12.1.1",
-    "@types/chai": "^5.0.0",
+    "@types/chai": "^5.0.1",
     "@types/eslint__js": "^8.42.3",
     "@types/eslint-config-prettier": "^6.11.3",
     "@types/eslint-plugin-mocha": "^10.4.0",
     "@types/mocha": "^10.0.9",
-    "@types/node": "^22.8.1",
+    "@types/node": "^22.8.2",
     "auto-changelog": "^2.5.0",
     "chai": "^5.1.2",
     "eslint": "^9.13.0",
@@ -35,10 +35,10 @@
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-tsdoc": "^0.3.0",
     "jsdom-global": "^3.0.2",
-    "knip": "^5.34.1",
-    "lefthook": "^1.8.1",
+    "knip": "^5.34.2",
+    "lefthook": "^1.8.2",
     "mocha": "^10.7.3",
-    "nanoid": "^5.0.7",
+    "nanoid": "^5.0.8",
     "nyc": "^17.1.0",
     "prettier": "^3.3.3",
     "release-it": "^17.10.0",
@@ -52,7 +52,7 @@
     "typedoc-plugin-mdn-links": "^3.3.5",
     "typedoc-plugin-replace-text": "^4.0.0",
     "typescript": "^5.6.3",
-    "typescript-eslint": "^8.11.0"
+    "typescript-eslint": "^8.12.1"
   },
   "exports": {
     ".": {
@@ -69,14 +69,14 @@
   "files": [
     "dist"
   ],
-  "homepage": "https://github.com/karmaniverous/entity-manager-dynamodb#readme",
+  "homepage": "https://github.com/karmaniverous/entity-client-dynamodb#readme",
   "keywords": [
     "dynamodb"
   ],
   "license": "BSD-3-Clause",
   "main": "dist/cjs/index.js",
   "module": "dist/mjs/index.js",
-  "name": "@karmaniverous/entity-manager-dynamodb",
+  "name": "@karmaniverous/entity-client-dynamodb",
   "publishConfig": {
     "access": "public"
   },
@@ -112,7 +112,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/karmaniverous/entity-manager-dynamodb.git"
+    "url": "git+https://github.com/karmaniverous/entity-client-dynamodb.git"
   },
   "scripts": {
     "build": "rimraf dist && rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",

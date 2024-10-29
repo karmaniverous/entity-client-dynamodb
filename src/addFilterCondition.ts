@@ -25,7 +25,7 @@ import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 /**
  * Union type of all possible filter conditions.
  *
- * @category ShardQueryMap Builder
+ * @category ShardQueryMapBuilder
  * @protected
  */
 export type FilterCondition =

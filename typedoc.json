@@ -1,5 +1,5 @@
 {
-  "categoryOrder": ["EntityManager Client", "ShardQueryMap Builder"],
+  "categoryOrder": ["EntityClient", "ShardQueryMapBuilder"],
   "entryPoints": ["./src/index.ts"],
   "externalSymbolLinkMappings": {
     "@aws-sdk/client-dynamodb": {
@@ -49,7 +49,7 @@
   },
   "searchInComments": true,
   "searchInDocuments": true,
-  "titleLink": "https://github.com/karmaniverous/entity-manager-dynamodb",
+  "titleLink": "https://github.com/karmaniverous/entity-client-dynamodb",
   "visibilityFilters": {
     "protected": false
   }

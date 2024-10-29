@@ -1,12 +1,12 @@
 <!-- TYPEDOC_EXCLUDE -->
 
-> [API Documentation](https://karmaniverous.github.io/entity-manager-dynamodb) • [CHANGELOG](https://github.com/karmaniverous/entity-manager-dynamodb/tree/main/CHANGELOG.md)
+> [API Documentation](https://karmaniverous.github.io/entity-client-dynamodb) • [CHANGELOG](https://github.com/karmaniverous/entity-client-dynamodb/tree/main/CHANGELOG.md)
 
 <!-- /TYPEDOC_EXCLUDE -->
 
-# entity-manager-dynamodb
+# entity-client-dynamodb
 
-Entity Manager integrated into a DynamoDB client wrapper.
+A DynamoDB client wrapper.
 
 ---
 
