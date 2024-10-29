@@ -7,7 +7,7 @@ import { mapValues } from 'radash';
 
 import {
   addRangeKeyCondition,
-  type AddRangeKeyConditionParams,
+  type RangeKeyCondition,
 } from './addRangeKeyCondition';
 import { getDocumentQueryArgs } from './getDocumentQueryArgs';
 import type { IndexParams } from './IndexParams';
@@ -76,8 +76,8 @@ export class ShardQueryMapBuilder {
     );
   }
 
-  addRangeKeyCondition(params: AddRangeKeyConditionParams): this {
-    addRangeKeyCondition(this, params);
+  addRangeKeyCondition(indexToken: string, condition: RangeKeyCondition): this {
+    addRangeKeyCondition(this, indexToken, condition);
     return this;
   }
 }

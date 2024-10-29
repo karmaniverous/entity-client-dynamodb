@@ -7,7 +7,7 @@
     "@aws-sdk/client-dynamodb": "^3.679.0",
     "@aws-sdk/lib-dynamodb": "^3.679.0",
     "@karmaniverous/batch-process": "^0.1.0",
-    "@karmaniverous/entity-manager": "^6.4.8",
+    "@karmaniverous/entity-manager": "^6.4.9",
     "aws-xray-sdk": "^3.10.1",
     "radash": "^12.1.0"
   },

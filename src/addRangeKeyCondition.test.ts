@@ -19,12 +19,15 @@ describe('ShardQueryMapBuilder - addRangeKeyCondition', function () {
   });
 
   it('<', function () {
-    builder = builder.addRangeKeyCondition({
-      indexToken: 'index1',
-      rangeKeyToken: 'rangeKey1',
+    builder = builder.addRangeKeyCondition('index1', {
+      property: 'rangeKey1',
       operator: '<',
-      item: { rangeKey1: 'value1' },
+      value: 'value1',
     });
+
+    const [alias] = Object.keys(
+      builder.indexParamsMap.index1.expressionAttributeValues,
+    );
 
     expect(builder.indexParamsMap).to.deep.equal({
       index1: {
@@ -32,21 +35,24 @@ describe('ShardQueryMapBuilder - addRangeKeyCondition', function () {
           '#rangeKey1': 'rangeKey1',
         },
         expressionAttributeValues: {
-          ':rangeKey1': 'value1',
+          [alias]: 'value1',
         },
         filterConditions: [],
-        rangeKeyCondition: '#rangeKey1 < :rangeKey1',
+        rangeKeyCondition: `#rangeKey1 < ${alias}`,
       },
     });
   });
 
   it('<=', function () {
-    builder = builder.addRangeKeyCondition({
-      indexToken: 'index1',
-      rangeKeyToken: 'rangeKey1',
+    builder = builder.addRangeKeyCondition('index1', {
+      property: 'rangeKey1',
       operator: '<=',
-      item: { rangeKey1: 'value1' },
+      value: 'value1',
     });
+
+    const [alias] = Object.keys(
+      builder.indexParamsMap.index1.expressionAttributeValues,
+    );
 
     expect(builder.indexParamsMap).to.deep.equal({
       index1: {
@@ -54,21 +60,24 @@ describe('ShardQueryMapBuilder - addRangeKeyCondition', function () {
           '#rangeKey1': 'rangeKey1',
         },
         expressionAttributeValues: {
-          ':rangeKey1': 'value1',
+          [alias]: 'value1',
         },
         filterConditions: [],
-        rangeKeyCondition: '#rangeKey1 <= :rangeKey1',
+        rangeKeyCondition: `#rangeKey1 <= ${alias}`,
       },
     });
   });
 
   it('=', function () {
-    builder = builder.addRangeKeyCondition({
-      indexToken: 'index1',
-      rangeKeyToken: 'rangeKey1',
+    builder = builder.addRangeKeyCondition('index1', {
+      property: 'rangeKey1',
       operator: '=',
-      item: { rangeKey1: 'value1' },
+      value: 'value1',
     });
+
+    const [alias] = Object.keys(
+      builder.indexParamsMap.index1.expressionAttributeValues,
+    );
 
     expect(builder.indexParamsMap).to.deep.equal({
       index1: {
@@ -76,21 +85,24 @@ describe('ShardQueryMapBuilder - addRangeKeyCondition', function () {
           '#rangeKey1': 'rangeKey1',
         },
         expressionAttributeValues: {
-          ':rangeKey1': 'value1',
+          [alias]: 'value1',
         },
         filterConditions: [],
-        rangeKeyCondition: '#rangeKey1 = :rangeKey1',
+        rangeKeyCondition: `#rangeKey1 = ${alias}`,
       },
     });
   });
 
   it('>', function () {
-    builder = builder.addRangeKeyCondition({
-      indexToken: 'index1',
-      rangeKeyToken: 'rangeKey1',
+    builder = builder.addRangeKeyCondition('index1', {
+      property: 'rangeKey1',
       operator: '>',
-      item: { rangeKey1: 'value1' },
+      value: 'value1',
     });
+
+    const [alias] = Object.keys(
+      builder.indexParamsMap.index1.expressionAttributeValues,
+    );
 
     expect(builder.indexParamsMap).to.deep.equal({
       index1: {
@@ -98,21 +110,24 @@ describe('ShardQueryMapBuilder - addRangeKeyCondition', function () {
           '#rangeKey1': 'rangeKey1',
         },
         expressionAttributeValues: {
-          ':rangeKey1': 'value1',
+          [alias]: 'value1',
         },
         filterConditions: [],
-        rangeKeyCondition: '#rangeKey1 > :rangeKey1',
+        rangeKeyCondition: `#rangeKey1 > ${alias}`,
       },
     });
   });
 
   it('>=', function () {
-    builder = builder.addRangeKeyCondition({
-      indexToken: 'index1',
-      rangeKeyToken: 'rangeKey1',
+    builder = builder.addRangeKeyCondition('index1', {
+      property: 'rangeKey1',
       operator: '>=',
-      item: { rangeKey1: 'value1' },
+      value: 'value1',
     });
+
+    const [alias] = Object.keys(
+      builder.indexParamsMap.index1.expressionAttributeValues,
+    );
 
     expect(builder.indexParamsMap).to.deep.equal({
       index1: {
@@ -120,21 +135,24 @@ describe('ShardQueryMapBuilder - addRangeKeyCondition', function () {
           '#rangeKey1': 'rangeKey1',
         },
         expressionAttributeValues: {
-          ':rangeKey1': 'value1',
+          [alias]: 'value1',
         },
         filterConditions: [],
-        rangeKeyCondition: '#rangeKey1 >= :rangeKey1',
+        rangeKeyCondition: `#rangeKey1 >= ${alias}`,
       },
     });
   });
 
   it('begins_with', function () {
-    builder = builder.addRangeKeyCondition({
-      indexToken: 'index1',
-      rangeKeyToken: 'rangeKey1',
+    builder = builder.addRangeKeyCondition('index1', {
+      property: 'rangeKey1',
       operator: 'begins_with',
-      item: { rangeKey1: 'value1' },
+      value: 'value1',
     });
+
+    const [alias] = Object.keys(
+      builder.indexParamsMap.index1.expressionAttributeValues,
+    );
 
     expect(builder.indexParamsMap).to.deep.equal({
       index1: {
@@ -142,22 +160,24 @@ describe('ShardQueryMapBuilder - addRangeKeyCondition', function () {
           '#rangeKey1': 'rangeKey1',
         },
         expressionAttributeValues: {
-          ':rangeKey1': 'value1',
+          [alias]: 'value1',
         },
         filterConditions: [],
-        rangeKeyCondition: 'begins_with(#rangeKey1, :rangeKey1)',
+        rangeKeyCondition: `begins_with(#rangeKey1, ${alias})`,
       },
     });
   });
 
   it('between', function () {
-    builder = builder.addRangeKeyCondition({
-      indexToken: 'index1',
-      rangeKeyToken: 'rangeKey1',
+    builder = builder.addRangeKeyCondition('index1', {
+      property: 'rangeKey1',
       operator: 'between',
-      item: { rangeKey1: 'value1' },
-      toItem: { rangeKey1: 'value2' },
+      value: { from: 'value1', to: 'value2' },
     });
+
+    const [aliasFrom, aliasTo] = Object.keys(
+      builder.indexParamsMap.index1.expressionAttributeValues,
+    );
 
     expect(builder.indexParamsMap).to.deep.equal({
       index1: {
@@ -165,23 +185,25 @@ describe('ShardQueryMapBuilder - addRangeKeyCondition', function () {
           '#rangeKey1': 'rangeKey1',
         },
         expressionAttributeValues: {
-          ':rangeKey1From': 'value1',
-          ':rangeKey1To': 'value2',
+          [aliasFrom]: 'value1',
+          [aliasTo]: 'value2',
         },
         filterConditions: [],
-        rangeKeyCondition: '#rangeKey1 BETWEEN :rangeKey1From AND :rangeKey1To',
+        rangeKeyCondition: `#rangeKey1 BETWEEN ${aliasFrom} AND ${aliasTo}`,
       },
     });
   });
 
   it('between no bottom', function () {
-    builder = builder.addRangeKeyCondition({
-      indexToken: 'index1',
-      rangeKeyToken: 'rangeKey1',
+    builder = builder.addRangeKeyCondition('index1', {
+      property: 'rangeKey1',
       operator: 'between',
-      item: {},
-      toItem: { rangeKey1: 'value2' },
+      value: { to: 'value2' },
     });
+
+    const [alias] = Object.keys(
+      builder.indexParamsMap.index1.expressionAttributeValues,
+    );
 
     expect(builder.indexParamsMap).to.deep.equal({
       index1: {
@@ -189,22 +211,24 @@ describe('ShardQueryMapBuilder - addRangeKeyCondition', function () {
           '#rangeKey1': 'rangeKey1',
         },
         expressionAttributeValues: {
-          ':rangeKey1To': 'value2',
+          [alias]: 'value2',
         },
         filterConditions: [],
-        rangeKeyCondition: '#rangeKey1 <= :rangeKey1To',
+        rangeKeyCondition: `#rangeKey1 <= ${alias}`,
       },
     });
   });
 
   it('between no top', function () {
-    builder = builder.addRangeKeyCondition({
-      indexToken: 'index1',
-      rangeKeyToken: 'rangeKey1',
+    builder = builder.addRangeKeyCondition('index1', {
+      property: 'rangeKey1',
       operator: 'between',
-      item: { rangeKey1: 'value1' },
-      toItem: {},
+      value: { from: 'value1' },
     });
+
+    const [alias] = Object.keys(
+      builder.indexParamsMap.index1.expressionAttributeValues,
+    );
 
     expect(builder.indexParamsMap).to.deep.equal({
       index1: {
@@ -212,21 +236,19 @@ describe('ShardQueryMapBuilder - addRangeKeyCondition', function () {
           '#rangeKey1': 'rangeKey1',
         },
         expressionAttributeValues: {
-          ':rangeKey1From': 'value1',
+          [alias]: 'value1',
         },
         filterConditions: [],
-        rangeKeyCondition: '#rangeKey1 >= :rangeKey1From',
+        rangeKeyCondition: `#rangeKey1 >= ${alias}`,
       },
     });
   });
 
   it('between unbounded', function () {
-    builder = builder.addRangeKeyCondition({
-      indexToken: 'index1',
-      rangeKeyToken: 'rangeKey1',
+    builder = builder.addRangeKeyCondition('index1', {
+      property: 'rangeKey1',
       operator: 'between',
-      item: {},
-      toItem: {},
+      value: {},
     });
 
     expect(builder.indexParamsMap).to.deep.equal({
@@ -240,19 +262,20 @@ describe('ShardQueryMapBuilder - addRangeKeyCondition', function () {
 
   it('between unbounded replacement', function () {
     builder = builder
-      .addRangeKeyCondition({
-        indexToken: 'index1',
-        rangeKeyToken: 'rangeKey1',
+      .addRangeKeyCondition('index1', {
+        property: 'rangeKey1',
         operator: 'between',
-        item: {},
-        toItem: {},
+        value: {},
       })
-      .addRangeKeyCondition({
-        indexToken: 'index1',
-        rangeKeyToken: 'rangeKey1',
+      .addRangeKeyCondition('index1', {
+        property: 'rangeKey1',
         operator: '<',
-        item: { rangeKey1: 'value1' },
+        value: 'value1',
       });
+
+    const [alias] = Object.keys(
+      builder.indexParamsMap.index1.expressionAttributeValues,
+    );
 
     expect(builder.indexParamsMap).to.deep.equal({
       index1: {
@@ -260,10 +283,10 @@ describe('ShardQueryMapBuilder - addRangeKeyCondition', function () {
           '#rangeKey1': 'rangeKey1',
         },
         expressionAttributeValues: {
-          ':rangeKey1': 'value1',
+          [alias]: 'value1',
         },
         filterConditions: [],
-        rangeKeyCondition: '#rangeKey1 < :rangeKey1',
+        rangeKeyCondition: `#rangeKey1 < ${alias}`,
       },
     });
   });
@@ -272,17 +295,15 @@ describe('ShardQueryMapBuilder - addRangeKeyCondition', function () {
     expect(
       () =>
         (builder = builder
-          .addRangeKeyCondition({
-            indexToken: 'index1',
-            rangeKeyToken: 'rangeKey1',
+          .addRangeKeyCondition('index1', {
+            property: 'rangeKey1',
             operator: '<',
-            item: { rangeKey1: 'value1' },
+            value: 'value1',
           })
-          .addRangeKeyCondition({
-            indexToken: 'index1',
-            rangeKeyToken: 'rangeKey1',
+          .addRangeKeyCondition('index1', {
+            property: 'rangeKey1',
             operator: '<',
-            item: { rangeKey1: 'value1' },
+            value: 'value1',
           })),
     ).to.throw('range key condition already exists');
   });

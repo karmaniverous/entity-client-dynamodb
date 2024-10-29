@@ -1,3 +1,5 @@
+import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
+
 import { addQueryConditionBeginsWith } from './addQueryConditionBeginsWith';
 import { addQueryConditionBetween } from './addQueryConditionBetween';
 import { addQueryConditionComparison } from './addQueryConditionComparison';
@@ -5,30 +7,40 @@ import type {
   QueryConditionBeginsWith,
   QueryConditionBetween,
   QueryConditionComparison,
+  QueryConditionContains,
+  QueryConditionExists,
+  QueryConditionGroup,
+  QueryConditionIn,
+  QueryConditionNot,
 } from './QueryCondition';
 import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
 /**
  * Union type of all possible filter conditions.
  */
-export type RangeKeyCondition =
+export type FilterCondition =
   | QueryConditionBeginsWith
-  | QueryConditionBetween<string | number>
-  | QueryConditionComparison<string | number>;
+  | QueryConditionBetween<Exclude<NativeScalarAttributeValue, object>>
+  | QueryConditionComparison<Exclude<NativeScalarAttributeValue, object>>
+  | QueryConditionContains<NativeScalarAttributeValue>
+  | QueryConditionExists
+  | QueryConditionIn<NativeScalarAttributeValue>
+  | QueryConditionGroup<FilterCondition>
+  | QueryConditionNot<FilterCondition>;
 
 /**
  * Recursively compose condition string and add expression attribute names & values to builder.
  *
  * @param builder - {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} instance.
  * @param indexToken - Index token in {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} `indexParamsMap`.
- * @param condition - {@link RangeKeyCondition | `RangeKeyCondition`} object.
+ * @param condition - {@link FilterCondition | `FilterCondition`} object.
  *
  * @returns - Condition string or `undefined`.
  */
 const composeCondition = (
   builder: ShardQueryMapBuilder,
   indexToken: string,
-  condition: RangeKeyCondition,
+  condition: FilterCondition,
 ): string | undefined => {
   switch (condition.operator) {
     case 'begins_with':
@@ -42,22 +54,34 @@ const composeCondition = (
     case '>=':
     case '<>':
       return addQueryConditionComparison(builder, indexToken, condition);
+    case 'contains':
+      throw new Error('not implemented');
+    case 'attribute_exists':
+    case 'attribute_not_exists':
+      throw new Error('not implemented');
+    case 'in':
+      throw new Error('not implemented');
+    case 'and':
+    case 'or':
+      throw new Error('not implemented');
+    case 'not':
+      throw new Error('not implemented');
     default:
       throw new Error('invalid operator');
   }
 };
 
 /**
- * Add range key condition to builder.
+ * Add filter condition to builder.
  *
  * @param builder - {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} instance.
  * @param indexToken - Index token in {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} `indexParamsMap`.
- * @param condition - {@link RangeKeyCondition | `RangeKeyCondition`} object.
+ * @param condition - {@link FilterCondition | `FilterCondition`} object.
  */
-export const addRangeKeyCondition = (
+export const addFilterCondition = (
   builder: ShardQueryMapBuilder,
   indexToken: string,
-  condition: RangeKeyCondition,
+  condition: FilterCondition,
 ): void => {
   try {
     // Default index map value.
@@ -67,27 +91,19 @@ export const addRangeKeyCondition = (
       filterConditions: [],
     };
 
-    // No replacement of existing range key condition.
-    if (builder.indexParamsMap[indexToken].rangeKeyCondition !== undefined)
-      throw new Error('range key condition already exists');
-
     // Compose condition string.
     const conditionString = composeCondition(builder, indexToken, condition);
 
     builder.logger.debug(
       conditionString === undefined
-        ? 'no range key condition added'
-        : 'added range key condition',
+        ? 'no filter condition added'
+        : 'added filter condition',
       {
         indexToken,
         condition,
         conditionString,
       },
     );
-
-    // Save range key condition.
-    if (conditionString)
-      builder.indexParamsMap[indexToken].rangeKeyCondition = conditionString;
   } catch (error) {
     if (error instanceof Error)
       builder.logger.error(error.message, {
