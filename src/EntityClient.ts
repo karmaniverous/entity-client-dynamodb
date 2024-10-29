@@ -54,7 +54,7 @@ export interface EntityClientOptions
 }
 
 /**
- * A convenience wrapper around the AWS SDK DynamoDBClient and DynamoDBDocument classes. Provides a simplified interface and enhanced batch processing.
+ * Convenience wrapper around the AWS SDK {@link DynamoDBClient | `DynamoDBClient`} and {@link DynamoDBDocument | `DynamoDBDocument`} classes with enhanced batch processing.
  *
  * @remarks
  * This class provides a number of enhanced methods. For everything else, both the {@link DynamoDBClient | `DynamoDBClient`} and {@link DynamoDBDocument | `DynamoDBDocument`} instances are exposed for direct access on the `client` and `doc` properties, respectively.

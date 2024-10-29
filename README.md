@@ -6,7 +6,9 @@
 
 # entity-client-dynamodb
 
-A DynamoDB client wrapper.
+Convenience wrapper for DynamoDB SDK with enhanced batch processing & [EntityManager](https://github.com/karmaniverous/entity-manager) support.
+
+Still writing documentation but putting it out there because it's already useful.
 
 ---
 
