@@ -121,6 +121,10 @@ export const addFilterCondition = (
         conditionString,
       },
     );
+
+    // Save condition string.
+    if (conditionString)
+      builder.indexParamsMap[indexToken].filterConditions.push(conditionString);
   } catch (error) {
     if (error instanceof Error)
       builder.logger.error(error.message, {

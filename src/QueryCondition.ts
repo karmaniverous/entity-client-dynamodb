@@ -1,4 +1,5 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
+
 import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
 export type ActuallyScalarAttributeValue = Exclude<

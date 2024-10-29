@@ -86,7 +86,7 @@ export const addRangeKeyCondition = (
       },
     );
 
-    // Save range key condition.
+    // Save condition string.
     if (conditionString)
       builder.indexParamsMap[indexToken].rangeKeyCondition = conditionString;
   } catch (error) {

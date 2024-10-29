@@ -1,10 +1,11 @@
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
-import {
-  type ShardQueryFunction,
-  type ShardQueryMap,
+import type {
+  ShardQueryFunction,
+  ShardQueryMap,
 } from '@karmaniverous/entity-manager';
 import { mapValues } from 'radash';
 
+import { addFilterCondition, type FilterCondition } from './addFilterCondition';
 import {
   addRangeKeyCondition,
   type RangeKeyCondition,
@@ -78,6 +79,11 @@ export class ShardQueryMapBuilder {
 
   addRangeKeyCondition(indexToken: string, condition: RangeKeyCondition): this {
     addRangeKeyCondition(this, indexToken, condition);
+    return this;
+  }
+
+  addFilterCondition(indexToken: string, condition: FilterCondition): this {
+    addFilterCondition(this, indexToken, condition);
     return this;
   }
 }
