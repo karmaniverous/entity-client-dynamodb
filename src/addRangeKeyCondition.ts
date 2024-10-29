@@ -11,6 +11,9 @@ import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
 /**
  * Union type of all possible filter conditions.
+ *
+ * @category ShardQueryMap Builder
+ * @protected
  */
 export type RangeKeyCondition =
   | QueryConditionBeginsWith

@@ -14,9 +14,16 @@ import { getDocumentQueryArgs } from './getDocumentQueryArgs';
 import type { IndexParams } from './IndexParams';
 import type { Item } from './Item';
 
+/**
+ * Options for {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} constructor.
+ *
+ * @category ShardQueryMap Builder
+ */
 export interface ShardQueryMapBuilderOptions {
+  /** DynamoDB Document client. */
   doc: DynamoDBDocument;
 
+  /** Hash key token. */
   hashKeyToken: string;
 
   /** Injected logger object. Must support `debug` and `error` methods. Default: `console` */
@@ -25,23 +32,33 @@ export interface ShardQueryMapBuilderOptions {
   /** Dehydrated page key from the previous query data page. */
   pageKey?: string;
 
+  /** Table name. */
   tableName: string;
 }
+
+/**
+ * Provides a fluent API for building a {@link ShardQueryMap | `ShardQueryMap`} using a DynamoDB Document client.
+ *
+ * @category ShardQueryMap Builder
+ */
 export class ShardQueryMapBuilder {
   readonly doc: ShardQueryMapBuilderOptions['doc'];
   readonly hashKeyToken: ShardQueryMapBuilderOptions['hashKeyToken'];
+
+  /**
+   * About IndexParamsMap.
+   *
+   * @protected
+   */
   readonly indexParamsMap: Record<string, IndexParams> = {};
   readonly logger: NonNullable<ShardQueryMapBuilderOptions['logger']>;
   readonly pageKey: ShardQueryMapBuilderOptions['pageKey'];
   readonly tableName: ShardQueryMapBuilderOptions['tableName'];
 
-  constructor({
-    doc,
-    hashKeyToken,
-    logger = console,
-    pageKey,
-    tableName,
-  }: ShardQueryMapBuilderOptions) {
+  /** ShardQueryMapBuilder constructor. */
+  constructor(options: ShardQueryMapBuilderOptions) {
+    const { doc, hashKeyToken, logger = console, pageKey, tableName } = options;
+
     this.doc = doc;
     this.hashKeyToken = hashKeyToken;
     this.logger = logger;
@@ -71,17 +88,38 @@ export class ShardQueryMapBuilder {
     };
   }
 
+  /**
+   * Adds a range key condition to a {@link ShardQueryMap | `ShardQueryMap`} index.
+   *
+   * @param indexToken - The index token.
+   * @param condition - The {@link RangeKeyCondition | `RangeKeyCondition`} object.
+   *
+   * @returns - The modified {@link ShardQueryMap | `ShardQueryMap`} instance.
+   */
   addRangeKeyCondition(indexToken: string, condition: RangeKeyCondition): this {
     addRangeKeyCondition(this, indexToken, condition);
     return this;
   }
 
+  /**
+   * Adds a filter condition to a {@link ShardQueryMap | `ShardQueryMap`} index.
+   *
+   * @param indexToken - The index token.
+   * @param condition - The {@link FilterCondition | `FilterCondition`} object.
+   *
+   * @returns - The modified {@link ShardQueryMap | `ShardQueryMap`} instance.
+   */
   addFilterCondition(indexToken: string, condition: FilterCondition): this {
     addFilterCondition(this, indexToken, condition);
     return this;
   }
 
-  getShardQueryMap(): ShardQueryMap<Item> {
+  /**
+   * Builds a {@link ShardQueryMap | `ShardQueryMap`} object.
+   *
+   * @returns - The {@link ShardQueryMap | `ShardQueryMap`} object.
+   */
+  build(): ShardQueryMap<Item> {
     return mapValues(this.indexParamsMap, (indexConfig, indexToken) =>
       this.#getShardQueryFunction(indexToken),
     );

@@ -1,5 +1,24 @@
 {
+  "categoryOrder": ["EntityManager Client", "ShardQueryMap Builder"],
   "entryPoints": ["./src/index.ts"],
+  "externalSymbolLinkMappings": {
+    "@aws-sdk/client-dynamodb": {
+      "DynamoDBClient": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/",
+      "DynamoDBClientConfig": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/DynamoDBClientConfig"
+    },
+    "@aws-sdk/lib-dynamodb": {
+      "DynamoDBDocument": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/Class/DynamoDBDocument/",
+      "NativeAttributeBinary": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/NativeAttributeBinary",
+      "NativeScalarAttributeValue": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/NativeScalarAttributeValue",
+      "NumberValue": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/Class/NumberValue"
+    },
+    "@karmaniverous/batch-process": {
+      "BatchProcessOptions": "https://docs.karmanivero.us/batch-process/interfaces/batch_process.BatchProcessOptions.html"
+    },
+    "@karmaniverous/entity-manager": {
+      "ShardQueryMap": "https://docs.karmanivero.us/entity-manager/types/entity_manager.ShardQueryMap.html"
+    }
+  },
   "highlightLanguages": [
     "bash",
     "console",
@@ -13,6 +32,9 @@
     "tsx",
     "typescript"
   ],
+  "navigation": {
+    "includeCategories": true
+  },
   "out": "./docs/",
   "plugin": ["typedoc-plugin-mdn-links", "typedoc-plugin-replace-text"],
   "projectDocuments": ["./CHANGELOG.md"],
@@ -27,5 +49,8 @@
   },
   "searchInComments": true,
   "searchInDocuments": true,
-  "titleLink": "https://github.com/karmaniverous/entity-manager-dynamodb"
+  "titleLink": "https://github.com/karmaniverous/entity-manager-dynamodb",
+  "visibilityFilters": {
+    "protected": false
+  }
 }

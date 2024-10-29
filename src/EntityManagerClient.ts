@@ -31,9 +31,15 @@ import type { GetItemOptions } from './GetItemOptions';
 import type { Item } from './Item';
 
 /**
- * Entity Manager DynamoDB client options.
+ * Entity Manager DynamoDB client options. Extends {@link DynamoDBClientConfig | `DynamoDBClientConfig`} with the following additional properties:
+ * - `batchProcessOptions` - Default batch process options.
+ * - `enableXray` - Activates AWS Xray for internal DynamoDb client when `true` and running in a Lambda environment.
+ * - `logger` - Injected logger object. Must support `debug` and `error` methods. Default: `console`.
+ *
+ * @category EntityManager Client
  */
-export interface EntityManagerClientOptions {
+export interface EntityManagerClientOptions
+  extends Omit<DynamoDBClientConfig, 'logger'> {
   /** Default batch process options. */
   batchProcessOptions?: Omit<
     BatchProcessOptions<unknown, unknown>,
@@ -49,6 +55,8 @@ export interface EntityManagerClientOptions {
 
 /**
  * A convenience wrapper around the AWS SDK DynamoDBClient and DynamoDBDocument classes. Provides special support for marshaling query constraints & generating Entity Manager ShardQueryFunction.
+ *
+ * @category EntityManager Client
  */
 export class EntityManagerClient {
   #batchProcessOptions: NonNullable<
@@ -58,14 +66,19 @@ export class EntityManagerClient {
   #doc: DynamoDBDocument;
   #logger: NonNullable<EntityManagerClientOptions['logger']>;
 
-  constructor(
-    dynamoDbClientConfig: DynamoDBClientConfig,
-    {
+  /**
+   * DynamoDB EntityManager client constructor.
+   *
+   * @param options - {@link EntityManagerClientOptions | `EntityManagerClientOptions`} object.
+   */
+  constructor(options: EntityManagerClientOptions) {
+    const {
       batchProcessOptions = {},
       enableXray = false,
       logger = console,
-    }: EntityManagerClientOptions = {},
-  ) {
+      ...dynamoDbClientConfig
+    } = options;
+
     this.#batchProcessOptions = batchProcessOptions;
 
     const client = new DynamoDBClient(dynamoDbClientConfig);

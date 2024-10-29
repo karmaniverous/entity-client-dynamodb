@@ -1,7 +1,5 @@
-export {
-  addRangeKeyCondition,
-  type RangeKeyCondition,
-} from './addRangeKeyCondition';
+export type { FilterCondition } from './addFilterCondition';
+export type { RangeKeyCondition } from './addRangeKeyCondition';
 export {
   EntityManagerClient,
   type EntityManagerClientOptions,
@@ -10,6 +8,7 @@ export type { GetItemOptions } from './GetItemOptions';
 export type { IndexParams } from './IndexParams';
 export type { Item } from './Item';
 export type {
+  ActuallyScalarAttributeValue,
   QueryCondition,
   QueryConditionBeginsWith,
   QueryConditionBetween,

@@ -1,3 +1,9 @@
+/**
+ * IndexParams
+ *
+ * @category ShardQueryMap Builder
+ * @protected
+ */
 export interface IndexParams {
   expressionAttributeNames: Record<string, string | undefined>;
   expressionAttributeValues: Record<string, string | undefined>;

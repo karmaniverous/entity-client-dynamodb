@@ -10,6 +10,9 @@ export type ActuallyScalarAttributeValue = Exclude<
 /**
  * Base interface for all query conditions.
  * Each specific condition extends this with its own type constraints.
+ *
+ * @category ShardQueryMap Builder
+ * @protected
  */
 export interface QueryCondition {
   operator: string;
@@ -17,6 +20,9 @@ export interface QueryCondition {
 
 /**
  * Query condition for the `begins_with` operator.
+ *
+ * @category ShardQueryMap Builder
+ * @protected
  */
 export interface QueryConditionBeginsWith extends QueryCondition {
   property: string;
@@ -27,6 +33,9 @@ export interface QueryConditionBeginsWith extends QueryCondition {
 /**
  * Query condition for the `between` operator.
  * Ensures that both `from` and `to` are of the same type.
+ *
+ * @category ShardQueryMap Builder
+ * @protected
  */
 export interface QueryConditionBetween<T extends ActuallyScalarAttributeValue>
   extends QueryCondition {
@@ -37,6 +46,9 @@ export interface QueryConditionBetween<T extends ActuallyScalarAttributeValue>
 
 /**
  * Query condition for comparison operators.
+ *
+ * @category ShardQueryMap Builder
+ * @protected
  */
 export interface QueryConditionComparison<
   T extends ActuallyScalarAttributeValue,
@@ -48,6 +60,9 @@ export interface QueryConditionComparison<
 
 /**
  * Query condition for contains operator.
+ *
+ * @category ShardQueryMap Builder
+ * @protected
  */
 export interface QueryConditionContains<T extends NativeScalarAttributeValue>
   extends QueryCondition {
@@ -58,6 +73,9 @@ export interface QueryConditionContains<T extends NativeScalarAttributeValue>
 
 /**
  * Query condition for attribute existence checks.
+ *
+ * @category ShardQueryMap Builder
+ * @protected
  */
 export interface QueryConditionExists extends QueryCondition {
   property: string;
@@ -67,6 +85,9 @@ export interface QueryConditionExists extends QueryCondition {
 /**
  * Query condition for the `in` operator.
  * Ensures that all elements in the array or set are of the same type.
+ *
+ * @category ShardQueryMap Builder
+ * @protected
  */
 export interface QueryConditionIn<T extends NativeScalarAttributeValue>
   extends QueryCondition {
@@ -78,6 +99,9 @@ export interface QueryConditionIn<T extends NativeScalarAttributeValue>
 /**
  * Grouping of multiple query conditions using logical operators.
  * Allows for nesting of conditions.
+ *
+ * @category ShardQueryMap Builder
+ * @protected
  */
 export interface QueryConditionGroup<T extends QueryCondition> {
   operator: 'and' | 'or';
@@ -86,6 +110,9 @@ export interface QueryConditionGroup<T extends QueryCondition> {
 
 /**
  * Negation of a single filter condition.
+ *
+ * @category ShardQueryMap Builder
+ * @protected
  */
 export interface QueryConditionNot<T extends QueryCondition> {
   operator: 'not';

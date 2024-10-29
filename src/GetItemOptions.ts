@@ -1,9 +1,15 @@
 import type { GetCommandInput } from '@aws-sdk/lib-dynamodb';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { EntityManagerClient } from './EntityManagerClient';
+
 /**
- * Options for {@link DynamoDbEntityManagerClient | `DynamoDbEntityManagerClient.getItem`} method.
+ * Options for {@link EntityManagerClient | `EntityManagerClient.getItem`} method.
  *
  * @typeParam T - Item type.
+ *
+ * @category EntityManager Client
+ * @protected
  */
 export interface GetItemOptions {
   /** Item attributes to retrieve (undefined retrieves all attributes). */
