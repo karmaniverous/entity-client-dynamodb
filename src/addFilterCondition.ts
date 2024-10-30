@@ -23,7 +23,22 @@ import type {
 import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
 /**
- * Union type of all possible filter conditions.
+ * Passed as `condition` argument to {@link ShardQueryMapBuilder.addFilterCondition | `ShardQueryMapBuilder.addFilterCondition`}.
+ *
+ * @remarks
+ * The `operator` property determines the condition type. Operators map to conditions as follows:
+ * - `begins_with` - {@link QueryConditionBeginsWith | `QueryConditionBeginsWith`}
+ * - `between` - {@link QueryConditionBetween | `QueryConditionBetween`}
+ * - `<`, `<=`, `=`, `>`, `>=`, `<>` - {@link QueryConditionComparison | `QueryConditionComparison`}
+ * - `contains` - {@link QueryConditionContains | `QueryConditionContains`}
+ * - `attribute_exists`, `attribute_not_exists` - {@link QueryConditionExists | `QueryConditionExists`}
+ * - `in` - {@link QueryConditionIn | `QueryConditionIn`}
+ * - `and`, `or` - {@link QueryConditionGroup | `QueryConditionGroup`}
+ * - `not` - {@link QueryConditionNot | `QueryConditionNot`}
+ *
+ * Note that the `and`, `or`, and `not` operators permit nested conditions.
+ *
+ * For more info, see the DynamoDB [filter expression documentation](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.FilterExpression.html).
  *
  * @category ShardQueryMapBuilder
  * @protected

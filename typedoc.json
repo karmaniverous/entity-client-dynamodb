@@ -3,12 +3,31 @@
   "entryPoints": ["./src/index.ts"],
   "externalSymbolLinkMappings": {
     "@aws-sdk/client-dynamodb": {
+      "CreateTableCommand": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/command/CreateTableCommand",
+      "CreateTableCommandInput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/CreateTableCommandInput",
+      "CreateTableCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/CreateTableCommandOutput",
+      "DeleteTableCommand": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/command/DeleteTableCommand",
+      "DeleteTableCommandInput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/DeleteTableCommandInput",
+      "DeleteTableCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/DeleteTableCommandOutput",
       "DynamoDBClient": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/",
-      "DynamoDBClientConfig": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/DynamoDBClientConfig"
+      "DynamoDBClientConfig": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/DynamoDBClientConfig",
+      "waitUntilTableExists": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Variable/waitUntilTableExists",
+      "waitUntilTableNotExists": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Variable/waitUntilTableNotExists"
     },
     "@aws-sdk/lib-dynamodb": {
+      "BatchGetCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchGetCommandOutput",
+      "BatchWriteCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchWriteCommandOutput",
+      "DeleteCommandInput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/DeleteCommandInput",
+      "DeleteCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/DeleteCommandOutput",
       "DynamoDBDocument": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/Class/DynamoDBDocument/",
+      "GetCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/GetCommandOutput",
+      "PutCommandInput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandInput",
+      "PutCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandOutput",
+      "TransactWriteCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/TransactWriteCommandOutput"
+    },
+    "@aws-sdk/util-dynamodb": {
       "NativeAttributeBinary": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/NativeAttributeBinary",
+      "NativeAttributeValue": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/NativeAttributeValue",
       "NativeScalarAttributeValue": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/NativeScalarAttributeValue",
       "NumberValue": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/Class/NumberValue"
     },
@@ -17,6 +36,13 @@
     },
     "@karmaniverous/entity-manager": {
       "ShardQueryMap": "https://docs.karmanivero.us/entity-manager/types/entity_manager.ShardQueryMap.html"
+    },
+    "@karmaniverous/entity-tools": {
+      "WithRequiredAndNonNullable": "https://docs.karmanivero.us/entity-tools/types/entity_tools.WithRequiredAndNonNullable.html"
+    },
+    "smithy": {
+      "waiter": "https://github.com/smithy-lang/smithy-typescript/blob/main/packages/types/src/waiter.ts",
+      "WaiterResult": "https://github.com/smithy-lang/smithy-typescript/blob/main/packages/util-waiter/src/waiter.ts#L36-L43"
     }
   },
   "highlightLanguages": [

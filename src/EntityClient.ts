@@ -1,8 +1,12 @@
 import {
   CreateTableCommand,
   type CreateTableCommandInput,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  type CreateTableCommandOutput,
   DeleteTableCommand,
   type DeleteTableCommandInput,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  type DeleteTableCommandOutput,
   DynamoDBClient,
   type DynamoDBClientConfig,
   waitUntilTableExists,
@@ -57,7 +61,7 @@ export interface EntityClientOptions
  * Convenience wrapper around the AWS SDK {@link DynamoDBClient | `DynamoDBClient`} and {@link DynamoDBDocument | `DynamoDBDocument`} classes with enhanced batch processing.
  *
  * @remarks
- * This class provides a number of enhanced methods. For everything else, both the {@link DynamoDBClient | `DynamoDBClient`} and {@link DynamoDBDocument | `DynamoDBDocument`} instances are exposed for direct access on the `client` and `doc` properties, respectively.
+ * This class provides a number of enhanced methods. For everything else, both the {@link DynamoDBClient | `DynamoDBClient`} and {@link DynamoDBDocument | `DynamoDBDocument`} instances are exposed for direct access on the {@link EntityClient.client | `client`} and {@link EntityClient.doc | `doc`} properties, respectively.
  *
  * @category EntityClient
  */
@@ -97,7 +101,7 @@ export class EntityClient {
   }
 
   /**
-   * Returns the default batch process options.
+   * Returns the default {@link BatchProcessOptions | batch process options}, not including handler functions.
    */
   get batchProcessOptions() {
     return this.#batchProcessOptions;
@@ -124,14 +128,16 @@ export class EntityClient {
     return this.#logger;
   }
 
+  /* eslint-disable tsdoc/syntax */
   /**
-   * Creates a DynamoDB table using {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/command/CreateTableCommand | `CreateTableCommand`} and waits for the table to be created and available using {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Variable/waitUntilTableExists/ | `waitUntilTableExists`}.
+   * Creates a DynamoDB table using {@link CreateTableCommand | `CreateTableCommand`} and waits for the table to be created and available using {@link waitUntilTableExists | `waitUntilTableExists`}.
    *
-   * @param options - {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/CreateTableCommandInput | `CreateTableCommandInput`} object with the `TableName` property required and non-nullable.
-   * @param waiterConfig - {@link https://github.com/smithy-lang/smithy-typescript/blob/main/packages/types/src/waiter.ts | `WaiterConfiguration`} with `client` parameter omitted & `maxWaitTime` defaulted to 60s.
+   * @param options - {@link CreateTableCommandInput | `CreateTableCommandInput`} object with the `TableName` property required and non-nullable.
+   * @param waiterConfig - {@link smithy!waiter | `WaiterConfiguration`} with `client` parameter omitted & `maxWaitTime` defaulted to 60s.
    *
-   * @returns An object containing the resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/CreateTableCommandOutput | `CreateTableCommandOutput`} and {@link https://github.com/smithy-lang/smithy-typescript/blob/main/packages/util-waiter/src/waiter.ts#L36-L43 | `WaiterResult`} objects.
+   * @returns An object containing the resulting {@link CreateTableCommandOutput | `CreateTableCommandOutput`} and {@link smithy!WaiterResult | `WaiterResult`} objects.
    */
+  /* eslint-enable tsdoc/syntax */
   async createTable(
     options: WithRequiredAndNonNullable<CreateTableCommandInput, 'TableName'>,
     waiterConfig: Omit<Parameters<typeof waitUntilTableExists>[0], 'client'> = {
@@ -173,14 +179,16 @@ export class EntityClient {
     }
   }
 
+  /* eslint-disable tsdoc/syntax */
   /**
-   * Deletes a DynamoDB table using {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/command/DeleteTableCommand/ | `DeleteTableCommand`} and waits for the table to be confirmed deleted with {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Variable/waitUntilTableNotExists/ | `waitUntilTableNotExists`}.
+   * Deletes a DynamoDB table using {@link DeleteTableCommand | `DeleteTableCommand`} and waits for the table to be confirmed deleted with {@link waitUntilTableNotExists | `waitUntilTableNotExists`}.
    *
    * @param options - {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/DeleteTableCommandInput | `DeleteTableCommandInput`} object with the `TableName` property required and non-nullable.
-   * @param waiterConfig - {@link https://github.com/smithy-lang/smithy-typescript/blob/main/packages/types/src/waiter.ts | `WaiterConfiguration`} with `client` parameter omitted & `maxWaitTime` defaulted to 60s.
+   * @param waiterConfig - {@link smithy!waiter | `WaiterConfiguration`} with `client` parameter omitted & `maxWaitTime` defaulted to 60s.
    *
-   * @returns An object containing the resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/DeleteTableCommandOutput | `DeleteTableCommandOutput`} and {@link https://github.com/smithy-lang/smithy-typescript/blob/main/packages/util-waiter/src/waiter.ts#L36-L43 | `WaiterResult`} objects.
+   * @returns An object containing the resulting {@link DeleteTableCommandOutput | `DeleteTableCommandOutput`} and {@link smithy!WaiterResult | `WaiterResult`} objects.
    */
+  /* eslint-enable tsdoc/syntax */
   async deleteTable(
     options: WithRequiredAndNonNullable<DeleteTableCommandInput, 'TableName'>,
     waiterConfig: Omit<
@@ -231,7 +239,7 @@ export class EntityClient {
    * @param tableName - Table name.
    * @param item - Item.
    *
-   * @returns The resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandOutput | `PutCommandOutput`} object.
+   * @returns The resulting {@link PutCommandOutput | `PutCommandOutput`} object.
    *
    * @overload
    */
@@ -239,9 +247,9 @@ export class EntityClient {
   /**
    * Puts an item to a DynamoDB table.
    *
-   * @param options - {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandInput | `PutCommandInput`} object with the `Item` & `TableName` properties required and non-nullable.
+   * @param options - {@link PutCommandInput | `PutCommandInput`} object with the `Item` & `TableName` properties required and non-nullable.
    *
-   * @returns The resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandOutput | `PutCommandOutput`} object.
+   * @returns The resulting {@link PutCommandOutput | `PutCommandOutput`} object.
    *
    * @overload
    */
@@ -304,15 +312,15 @@ export class EntityClient {
    * @param tableName - Table name.
    * @param key - Item key.
    *
-   * @returns The resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/DeleteCommandOutput | `DeleteCommandOutput`} object.
+   * @returns The resulting {@link DeleteCommandOutput | `DeleteCommandOutput`} object.
    *
    * @overload
    */
   async deleteItem(tableName: string, key: Item): Promise<DeleteCommandOutput>;
   /**
    * Deletes an item from a DynamoDB table.
-   * @param options - {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/DeleteCommandInput | `DeleteCommandInput`} object with the `Key` & `TableName` properties required and non-nullable.
-   * @returns The resulting {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/DeleteCommandOutput | `DeleteCommandOutput`} object.
+   * @param options - {@link DeleteCommandInput | `DeleteCommandInput`} object with the `Key` & `TableName` properties required and non-nullable.
+   * @returns The resulting {@link DeleteCommandOutput | `DeleteCommandOutput`} object.
    * @overload
    */
   async deleteItem(
@@ -378,7 +386,7 @@ export class EntityClient {
    * @param items - Array of items.
    * @param batchProcessOptions - Batch process option overrides.
    *
-   * @returns Array of {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchWriteCommandOutput | `BatchWriteCommandOutput`} objects.
+   * @returns Array of {@link BatchWriteCommandOutput | `BatchWriteCommandOutput`} objects.
    */
   async putItems(
     tableName: string,
@@ -434,7 +442,7 @@ export class EntityClient {
    * @param keys - Array of item keys.
    * @param batchProcessOptions - Batch process option overrides.
    *
-   * @returns Array of {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchWriteCommandOutput | `BatchWriteCommandOutput`} objects.
+   * @returns Array of {@link BatchWriteCommandOutput | `BatchWriteCommandOutput`} objects.
    */
   async deleteItems(
     tableName: string,
@@ -554,7 +562,7 @@ export class EntityClient {
    * @param tableName - Table name.
    * @param items - Array of items.
    *
-   * @returns {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/TransactWriteItemsCommandOutput | `TransactWriteCommandOutput`} object.
+   * @returns `TransactWriteCommandOutput` object.
    */
   async transactPutItems(
     tableName: string,
@@ -594,7 +602,7 @@ export class EntityClient {
    * @param tableName - Table name.
    * @param keys - Array of item keys.
    *
-   * @returns {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/TransactWriteItemsCommandOutput | `TransactWriteCommandOutput`} object.
+   * @returns `TransactWriteCommandOutput` object.
    */
   async transactDeleteItems(
     tableName: string,
@@ -635,7 +643,9 @@ export class EntityClient {
    * @param key - Item key.
    * @param options - {@link GetItemOptions | `GetItemOptions`} object.
    *
-   * @returns {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/GetCommandOutput/ | GetCommandOutput`} object.
+   * @returns `GetCommandOutput` object.
+   *
+   * @overload
    */
   async getItem(
     tableName: string,
@@ -650,7 +660,9 @@ export class EntityClient {
    * @param attributes - Item attributes to retrieve.
    * @param options - {@link GetItemOptions | `GetItemOptions`} object, omitting `attributes`.
    *
-   * @returns {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/GetCommandOutput/ | GetCommandOutput`} object.
+   * @returns `GetCommandOutput` object.
+   *
+   * @overload
    */
   async getItem(
     tableName: string,
@@ -725,7 +737,7 @@ export class EntityClient {
    * @param keys - Array of item keys.
    * @param batchProcessOptions - Batch process option overrides.
    *
-   * @returns An object containing a flattened array of returned items and the array of returned {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchGetCommandOutput | `BatchGetCommandOutput`} objects.
+   * @returns An object containing a flattened array of returned items and the array of returned {@link BatchGetCommandOutput | `BatchGetCommandOutput`} objects.
    */
   async getItems(
     tableName: string,

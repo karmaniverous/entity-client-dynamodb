@@ -10,7 +10,15 @@ import type {
 import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
 /**
- * Union type of all possible filter conditions.
+ * Passed as `condition` argument to {@link ShardQueryMapBuilder.addRangeKeyCondition | `ShardQueryMapBuilder.addRangeKeyCondition`}.
+ *
+ * @remarks
+ * The `operator` property determines the condition type. Operators map to conditions as follows:
+ * - `begins_with` - {@link QueryConditionBeginsWith | `QueryConditionBeginsWith`}
+ * - `between` - {@link QueryConditionBetween | `QueryConditionBetween`}
+ * - `<`, `<=`, `=`, `>`, `>=`, `<>` - {@link QueryConditionComparison | `QueryConditionComparison`}
+ *
+ * For more info, see the DynamoDB [key condition expression documentation](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
  *
  * @category ShardQueryMapBuilder
  * @protected

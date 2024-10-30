@@ -20,10 +20,10 @@ import type { Item } from './Item';
  * @category ShardQueryMapBuilder
  */
 export interface ShardQueryMapBuilderOptions {
-  /** DynamoDB Document client. */
+  /** DynamoDB Document client. Normally you will be using {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} with an {@link EntityClient | `EntityClient`} instance, so use its {@link EntityClient.doc | `doc`} property. */
   doc: DynamoDBDocument;
 
-  /** Hash key token. */
+  /** The hash key token that defines the partition of the query. All `indexToken` values referenced in following {@link ShardQueryMapBuilder.addRangeKeyCondition | `addRangeKeyCondition`} and {@link ShardQueryMapBuilder.addFilterCondition | `addFilterCondition`} calls should reference indexes that include `hashKeyToken`. */
   hashKeyToken: string;
 
   /** Injected logger object. Must support `debug` and `error` methods. Default: `console` */
@@ -46,13 +46,19 @@ export class ShardQueryMapBuilder {
   readonly hashKeyToken: ShardQueryMapBuilderOptions['hashKeyToken'];
 
   /**
-   * About IndexParamsMap.
+   * Maps `indexToken` values to conditions added with {@link ShardQueryMapBuilder.addRangeKeyCondition | `addRangeKeyCondition`} and {@link ShardQueryMapBuilder.addFilterCondition | `addFilterCondition`}. Visible to enhance testability but should not normally be accessed directly.
    *
    * @protected
    */
   readonly indexParamsMap: Record<string, IndexParams> = {};
+
+  /** Logger object passed in {@link ShardQueryMapBuilderOptions.logger | `ShardQueryMapBuilderOptions`}. */
   readonly logger: NonNullable<ShardQueryMapBuilderOptions['logger']>;
+
+  /** Dehydrated page key passed in {@link ShardQueryMapBuilderOptions.pageKey | `ShardQueryMapBuilderOptions`}. */
   readonly pageKey: ShardQueryMapBuilderOptions['pageKey'];
+
+  /** Table name passed in {@link ShardQueryMapBuilderOptions.tableName | `ShardQueryMapBuilderOptions`}. */
   readonly tableName: ShardQueryMapBuilderOptions['tableName'];
 
   /** ShardQueryMapBuilder constructor. */
@@ -89,7 +95,7 @@ export class ShardQueryMapBuilder {
   }
 
   /**
-   * Adds a range key condition to a {@link ShardQueryMap | `ShardQueryMap`} index.
+   * Adds a range key condition to a {@link ShardQueryMap | `ShardQueryMap`} index. See the {@link RangeKeyCondition | `RangeKeyCondition`} type for more info.
    *
    * @param indexToken - The index token.
    * @param condition - The {@link RangeKeyCondition | `RangeKeyCondition`} object.
@@ -102,7 +108,7 @@ export class ShardQueryMapBuilder {
   }
 
   /**
-   * Adds a filter condition to a {@link ShardQueryMap | `ShardQueryMap`} index.
+   * Adds a filter condition to a {@link ShardQueryMap | `ShardQueryMap`} index.  See the {@link FilterCondition | `FilterCondition`} type for more info.
    *
    * @param indexToken - The index token.
    * @param condition - The {@link FilterCondition | `FilterCondition`} object.
@@ -115,7 +121,7 @@ export class ShardQueryMapBuilder {
   }
 
   /**
-   * Builds a {@link ShardQueryMap | `ShardQueryMap`} object.
+   * Builds a {@link ShardQueryMap | `ShardQueryMap`} object. Filter conditions created by multiple {@link ShardQueryMapBuilder.addFilterCondition | `addFilterCondition`} calls are combined with an `AND` operator.
    *
    * @returns - The {@link ShardQueryMap | `ShardQueryMap`} object.
    */
