@@ -10,6 +10,7 @@
     "@karmaniverous/entity-manager": "^6.4.10",
     "@karmaniverous/entity-tools": "^0.4.1",
     "aws-xray-sdk": "^3.10.1",
+    "nanoid": "^5.0.8",
     "radash": "^12.1.0"
   },
   "description": "Entity Manager integrated into a DynamoDB client wrapper.",
@@ -38,7 +39,6 @@
     "knip": "^5.34.2",
     "lefthook": "^1.8.2",
     "mocha": "^10.7.3",
-    "nanoid": "^5.0.8",
     "nyc": "^17.1.0",
     "prettier": "^3.3.3",
     "release-it": "^17.10.0",
