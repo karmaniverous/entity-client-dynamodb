@@ -76,7 +76,7 @@ export class EntityClient {
    *
    * @param options - {@link EntityClientOptions | `EntityClientOptions`} object.
    */
-  constructor(options: EntityClientOptions) {
+  constructor(options: EntityClientOptions = {}) {
     const {
       batchProcessOptions = {},
       enableXray = false,
