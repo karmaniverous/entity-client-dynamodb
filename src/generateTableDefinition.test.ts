@@ -133,9 +133,7 @@ const entityManager = new EntityManager(config);
 
 describe('generateTableDefinition', function () {
   it('should generate a table definition', function () {
-    const tableDefinition = generateTableDefinition(entityManager, {
-      timestamp: 'N',
-    });
+    const tableDefinition = generateTableDefinition(entityManager);
 
     console.log(inspect(tableDefinition, false, null));
 

@@ -1,13 +1,11 @@
-import type {
-  CreateTableCommandInput,
-  ScalarAttributeType,
-} from '@aws-sdk/client-dynamodb';
+import type { CreateTableCommandInput } from '@aws-sdk/client-dynamodb';
 import { EntityManager, type EntityMap } from '@karmaniverous/entity-manager';
 import type { TranscodeMap } from '@karmaniverous/entity-tools';
 
-export type TranscodeAttributeTypeMap<T extends TranscodeMap> = Partial<
-  Record<keyof T, ScalarAttributeType>
->;
+import {
+  defaultTranscodeAttributeTypeMap,
+  TranscodeAttributeTypeMap,
+} from './TranscodeAttributeTypeMap';
 
 /**
  * Generates a partial DynamoDB {@link CreateTableCommandInput | `CreateTableCommandInput`} object for a given EntityManager. Properties generated:
@@ -16,7 +14,7 @@ export type TranscodeAttributeTypeMap<T extends TranscodeMap> = Partial<
  * - `KeySchema`
  *
  * @param entityManager - {@link EntityManager | `EntityManager`} instance.
- * @param transcodeAtttributeTypeMap - {@link TranscodeAttributeTypeMap | `TranscodeAttributeTypeMap`} object linking non-string transcodes to a DynamoDB {@link ScalarAttributeType | `ScalarAttributeType`}.
+ * @param transcodeAtttributeTypeMap - {@link TranscodeAttributeTypeMap | `TranscodeAttributeTypeMap`} object linking non-string transcodes to a DynamoDB {@link ScalarAttributeType | `ScalarAttributeType`}. Defaults to {@link defaultTranscodeAttributeTypeMap | `defaultTranscodeAttributeTypeMap`}.
  *
  * @returns Partial DynamoDB CreateTableCommandInput object.
  *
@@ -36,7 +34,7 @@ export const generateTableDefinition = <
   T extends TranscodeMap,
 >(
   entityManager: EntityManager<M, HashKey, RangeKey, T>,
-  transcodeAtttributeTypeMap: TranscodeAttributeTypeMap<T> = {},
+  transcodeAtttributeTypeMap: TranscodeAttributeTypeMap<T> = defaultTranscodeAttributeTypeMap,
 ): Pick<
   CreateTableCommandInput,
   'AttributeDefinitions' | 'GlobalSecondaryIndexes' | 'KeySchema'
@@ -94,7 +92,9 @@ export const generateTableDefinition = <
             component in entity.generated
               ? 'S'
               : (transcodeAtttributeTypeMap[
-                  entity.elementTranscodes[component]
+                  entity.elementTranscodes[
+                    component
+                  ] as keyof TranscodeAttributeTypeMap<T>
                 ] ?? 'S'),
         });
       }

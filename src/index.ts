@@ -1,10 +1,7 @@
 export type { FilterCondition } from './addFilterCondition';
 export type { RangeKeyCondition } from './addRangeKeyCondition';
 export { EntityClient, type EntityClientOptions } from './EntityClient';
-export {
-  generateTableDefinition,
-  type TranscodeAttributeTypeMap,
-} from './generateTableDefinition';
+export { generateTableDefinition } from './generateTableDefinition';
 export type { GetItemOptions } from './GetItemOptions';
 export type { IndexParams } from './IndexParams';
 export type { Item } from './Item';
@@ -24,3 +21,7 @@ export {
   ShardQueryMapBuilder,
   type ShardQueryMapBuilderOptions,
 } from './ShardQueryMapBuilder';
+export {
+  defaultTranscodeAttributeTypeMap,
+  type TranscodeAttributeTypeMap,
+} from './TranscodeAttributeTypeMap';
