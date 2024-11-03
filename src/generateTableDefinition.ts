@@ -37,7 +37,10 @@ export const generateTableDefinition = <
 >(
   entityManager: EntityManager<M, HashKey, RangeKey, T>,
   transcodeAtttributeTypeMap: TranscodeAttributeTypeMap<T> = {},
-): Partial<CreateTableCommandInput> => {
+): Pick<
+  CreateTableCommandInput,
+  'AttributeDefinitions' | 'GlobalSecondaryIndexes' | 'KeySchema'
+> => {
   const {
     config: { entities, hashKey, rangeKey },
   } = entityManager;
@@ -99,7 +102,9 @@ export const generateTableDefinition = <
 
   return {
     AttributeDefinitions: attributeDefinitions,
-    GlobalSecondaryIndexes: globalSecondaryIndexes,
+    ...(globalSecondaryIndexes.length
+      ? { GlobalSecondaryIndexes: globalSecondaryIndexes }
+      : {}),
     KeySchema: [
       { AttributeName: hashKey, KeyType: 'HASH' },
       { AttributeName: rangeKey, KeyType: 'RANGE' },
