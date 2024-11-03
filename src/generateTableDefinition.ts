@@ -9,6 +9,26 @@ export type TranscodeAttributeTypeMap<T extends TranscodeMap> = Partial<
   Record<keyof T, ScalarAttributeType>
 >;
 
+/**
+ * Generates a partial DynamoDB {@link CreateTableCommandInput | `CreateTableCommandInput`} object for a given EntityManager. Properties generated:
+ * - `AttributeDefinitions`
+ * - `GlobalSecondaryIndexes`
+ * - `KeySchema`
+ *
+ * @param entityManager - {@link EntityManager | `EntityManager`} instance.
+ * @param transcodeAtttributeTypeMap - {@link TranscodeAttributeTypeMap | `TranscodeAttributeTypeMap`} object linking non-string transcodes to a DynamoDB {@link ScalarAttributeType | `ScalarAttributeType`}.
+ *
+ * @returns Partial DynamoDB CreateTableCommandInput object.
+ *
+ * @example
+ * ```ts
+ * const entityManager = new EntityManager(config);
+ * const entityClient = new EntityClient({region: 'us-east-1});
+ * const tableDefinition = generateTableDefinition(entityManager, { timestamp: 'N' });
+ *
+ * await entityClient.createTable({...tableDefinition, TableName: 'user'});
+ * ```
+ */
 export const generateTableDefinition = <
   M extends EntityMap,
   HashKey extends string,

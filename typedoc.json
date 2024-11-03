@@ -11,6 +11,7 @@
       "DeleteTableCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/DeleteTableCommandOutput",
       "DynamoDBClient": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/",
       "DynamoDBClientConfig": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/DynamoDBClientConfig",
+      "ScalarAttributeType": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/TypeAlias/ScalarAttributeType",
       "waitUntilTableExists": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Variable/waitUntilTableExists",
       "waitUntilTableNotExists": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Variable/waitUntilTableNotExists"
     },
@@ -35,6 +36,7 @@
       "BatchProcessOptions": "https://docs.karmanivero.us/batch-process/interfaces/batch_process.BatchProcessOptions.html"
     },
     "@karmaniverous/entity-manager": {
+      "EntityManager": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityManager.html",
       "ShardQueryMap": "https://docs.karmanivero.us/entity-manager/types/entity_manager.ShardQueryMap.html"
     },
     "@karmaniverous/entity-tools": {
