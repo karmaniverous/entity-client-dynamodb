@@ -22,10 +22,12 @@ import {
  * ```ts
  * const entityManager = new EntityManager(config);
  * const entityClient = new EntityClient({region: 'us-east-1});
- * const tableDefinition = generateTableDefinition(entityManager, { timestamp: 'N' });
+ * const tableDefinition = generateTableDefinition(entityManager);
  *
  * await entityClient.createTable({...tableDefinition, TableName: 'user'});
  * ```
+ *
+ * @category Tables
  */
 export const generateTableDefinition = <
   M extends EntityMap,
