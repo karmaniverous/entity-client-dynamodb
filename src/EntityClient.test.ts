@@ -1,12 +1,23 @@
 import { type CreateTableCommandInput } from '@aws-sdk/client-dynamodb';
+import {
+  dynamoDbLocalReady,
+  setupDynamoDbLocal,
+  teardownDynamoDbLocal,
+} from '@karmaniverous/dynamodb-local';
 import { expect } from 'chai';
 import { nanoid } from 'nanoid';
 import { pick, range } from 'radash';
 
 import { EntityClient } from './EntityClient';
+import { env } from './env';
 
 const dynamoDbClient = new EntityClient({
-  region: process.env.AWS_DEFAULT_REGION,
+  credentials: {
+    accessKeyId: 'fakeAccessKeyId',
+    secretAccessKey: 'fakeSecretAccessKey',
+  },
+  endpoint: 'http://localhost:8000',
+  region: 'local',
 });
 
 const tableOptions: Omit<CreateTableCommandInput, 'TableName'> = {
@@ -22,6 +33,11 @@ const tableOptions: Omit<CreateTableCommandInput, 'TableName'> = {
 };
 
 describe('EntityClient', function () {
+  before(async function () {
+    await setupDynamoDbLocal(env.dynamoDbLocalPort);
+    await dynamoDbLocalReady(dynamoDbClient.client);
+  });
+
   describe('constructor', function () {
     it('should create a EntityClient instance', function () {
       expect(dynamoDbClient).to.be.an.instanceof(EntityClient);
@@ -290,5 +306,9 @@ describe('EntityClient', function () {
         });
       });
     });
+  });
+
+  after(async function () {
+    await teardownDynamoDbLocal();
   });
 });

@@ -1,3 +1,5 @@
+import type { Entity } from '@karmaniverous/entity-tools';
+
 import type {
   ComposeCondition,
   QueryCondition,
@@ -5,11 +7,14 @@ import type {
 } from './QueryCondition';
 import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
-export const addQueryConditionNot = <T extends QueryCondition>(
-  builder: ShardQueryMapBuilder,
+export const addQueryConditionNot = <
+  T extends QueryCondition,
+  Item extends Entity,
+>(
+  builder: ShardQueryMapBuilder<Item>,
   indexToken: string,
   { operator, condition }: QueryConditionNot<T>,
-  composeCondition: ComposeCondition<T>,
+  composeCondition: ComposeCondition<T, Item>,
 ): string | undefined => {
   const conditionString = composeCondition(builder, indexToken, condition);
 

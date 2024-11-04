@@ -1,3 +1,5 @@
+import type { Entity } from '@karmaniverous/entity-tools';
+
 import { addQueryConditionBeginsWith } from './addQueryConditionBeginsWith';
 import { addQueryConditionBetween } from './addQueryConditionBetween';
 import { addQueryConditionComparison } from './addQueryConditionComparison';
@@ -29,48 +31,48 @@ export type RangeKeyCondition =
   | QueryConditionComparison<string | number>;
 
 /**
- * Recursively compose condition string and add expression attribute names & values to builder.
- *
- * @param builder - {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} instance.
- * @param indexToken - Index token in {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} `indexParamsMap`.
- * @param condition - {@link RangeKeyCondition | `RangeKeyCondition`} object.
- *
- * @returns - Condition string or `undefined`.
- */
-const composeCondition: ComposeCondition<RangeKeyCondition> = (
-  builder,
-  indexToken,
-  condition,
-): string | undefined => {
-  switch (condition.operator) {
-    case 'begins_with':
-      return addQueryConditionBeginsWith(builder, indexToken, condition);
-    case 'between':
-      return addQueryConditionBetween(builder, indexToken, condition);
-    case '<':
-    case '<=':
-    case '=':
-    case '>':
-    case '>=':
-    case '<>':
-      return addQueryConditionComparison(builder, indexToken, condition);
-    default:
-      throw new Error('invalid operator');
-  }
-};
-
-/**
  * Add range key condition to builder.
  *
  * @param builder - {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} instance.
  * @param indexToken - Index token in {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} `indexParamsMap`.
  * @param condition - {@link RangeKeyCondition | `RangeKeyCondition`} object.
  */
-export const addRangeKeyCondition = (
-  builder: ShardQueryMapBuilder,
+export const addRangeKeyCondition = <Item extends Entity>(
+  builder: ShardQueryMapBuilder<Item>,
   indexToken: string,
   condition: RangeKeyCondition,
 ): void => {
+  /**
+   * Recursively compose condition string and add expression attribute names & values to builder.
+   *
+   * @param builder - {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} instance.
+   * @param indexToken - Index token in {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} `indexParamsMap`.
+   * @param condition - {@link RangeKeyCondition | `RangeKeyCondition`} object.
+   *
+   * @returns - Condition string or `undefined`.
+   */
+  const composeCondition: ComposeCondition<RangeKeyCondition, Item> = (
+    builder,
+    indexToken,
+    condition,
+  ): string | undefined => {
+    switch (condition.operator) {
+      case 'begins_with':
+        return addQueryConditionBeginsWith(builder, indexToken, condition);
+      case 'between':
+        return addQueryConditionBetween(builder, indexToken, condition);
+      case '<':
+      case '<=':
+      case '=':
+      case '>':
+      case '>=':
+      case '<>':
+        return addQueryConditionComparison(builder, indexToken, condition);
+      default:
+        throw new Error('invalid operator');
+    }
+  };
+
   try {
     // Default index map value.
     builder.indexParamsMap[indexToken] ??= {

@@ -1,11 +1,15 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
+import type { Entity } from '@karmaniverous/entity-tools';
 
 import { attributeValueAlias } from './attributeValueAlias';
 import type { QueryConditionContains } from './QueryCondition';
 import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
-export const addQueryConditionContains = <T extends NativeScalarAttributeValue>(
-  builder: ShardQueryMapBuilder,
+export const addQueryConditionContains = <
+  T extends NativeScalarAttributeValue,
+  Item extends Entity,
+>(
+  builder: ShardQueryMapBuilder<Item>,
   indexToken: string,
   { operator, property, value }: QueryConditionContains<T>,
 ): string | undefined => {

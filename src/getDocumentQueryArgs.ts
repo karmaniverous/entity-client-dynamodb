@@ -1,20 +1,20 @@
 import type { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
+import type { Entity } from '@karmaniverous/entity-tools';
 import { shake, sift } from 'radash';
 
 import type { IndexParams } from './IndexParams';
-import type { Item } from './Item';
 
-export interface GetDynamoDbDocumentQueryArgsParams {
+export interface GetDynamoDbDocumentQueryArgsParams<Item extends Entity> {
   indexParamsMap: Record<string, IndexParams>;
   indexToken: string;
-  hashKeyToken: string;
+  hashKeyToken: keyof Item & string;
   hashKey: string;
-  pageKey?: Item;
+  pageKey?: Partial<Item>;
   pageSize?: number;
   tableName: string;
 }
 
-export const getDocumentQueryArgs = ({
+export const getDocumentQueryArgs = <Item extends Entity>({
   indexParamsMap,
   indexToken,
   hashKeyToken,
@@ -22,7 +22,7 @@ export const getDocumentQueryArgs = ({
   pageKey,
   pageSize,
   tableName,
-}: GetDynamoDbDocumentQueryArgsParams): QueryCommandInput => {
+}: GetDynamoDbDocumentQueryArgsParams<Item>): QueryCommandInput => {
   const {
     expressionAttributeNames,
     expressionAttributeValues,

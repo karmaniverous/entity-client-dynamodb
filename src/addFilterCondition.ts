@@ -1,4 +1,5 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
+import type { Entity } from '@karmaniverous/entity-tools';
 
 import { addQueryConditionBeginsWith } from './addQueryConditionBeginsWith';
 import { addQueryConditionBetween } from './addQueryConditionBetween';
@@ -54,70 +55,70 @@ export type FilterCondition =
   | QueryConditionNot<FilterCondition>;
 
 /**
- * Recursively compose condition string and add expression attribute names & values to builder.
- *
- * @param builder - {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} instance.
- * @param indexToken - Index token in {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} `indexParamsMap`.
- * @param condition - {@link FilterCondition | `FilterCondition`} object.
- *
- * @returns - Condition string or `undefined`.
- */
-const composeCondition: ComposeCondition<FilterCondition> = (
-  builder,
-  indexToken,
-  condition,
-): string | undefined => {
-  switch (condition.operator) {
-    case 'begins_with':
-      return addQueryConditionBeginsWith(builder, indexToken, condition);
-    case 'between':
-      return addQueryConditionBetween(builder, indexToken, condition);
-    case '<':
-    case '<=':
-    case '=':
-    case '>':
-    case '>=':
-    case '<>':
-      return addQueryConditionComparison(builder, indexToken, condition);
-    case 'contains':
-      return addQueryConditionContains(builder, indexToken, condition);
-    case 'attribute_exists':
-    case 'attribute_not_exists':
-      return addQueryConditionExists(builder, indexToken, condition);
-    case 'in':
-      return addQueryConditionIn(builder, indexToken, condition);
-    case 'and':
-    case 'or':
-      return addQueryConditionGroup(
-        builder,
-        indexToken,
-        condition,
-        composeCondition,
-      );
-    case 'not':
-      return addQueryConditionNot(
-        builder,
-        indexToken,
-        condition,
-        composeCondition,
-      );
-    default:
-      throw new Error('invalid operator');
-  }
-};
-
-/**
  * Add filter condition to builder.
  *
  * @param builder - {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} instance.
  * @param indexToken - Index token in {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} `indexParamsMap`.
  * @param condition - {@link FilterCondition | `FilterCondition`} object.
  */
-export const addFilterCondition = (
-  builder: ShardQueryMapBuilder,
+export const addFilterCondition = <Item extends Entity>(
+  builder: ShardQueryMapBuilder<Item>,
   indexToken: string,
   condition: FilterCondition,
 ): void => {
+  /**
+   * Recursively compose condition string and add expression attribute names & values to builder.
+   *
+   * @param builder - {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} instance.
+   * @param indexToken - Index token in {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} `indexParamsMap`.
+   * @param condition - {@link FilterCondition | `FilterCondition`} object.
+   *
+   * @returns - Condition string or `undefined`.
+   */
+  const composeCondition: ComposeCondition<FilterCondition, Item> = (
+    builder,
+    indexToken,
+    condition,
+  ): string | undefined => {
+    switch (condition.operator) {
+      case 'begins_with':
+        return addQueryConditionBeginsWith(builder, indexToken, condition);
+      case 'between':
+        return addQueryConditionBetween(builder, indexToken, condition);
+      case '<':
+      case '<=':
+      case '=':
+      case '>':
+      case '>=':
+      case '<>':
+        return addQueryConditionComparison(builder, indexToken, condition);
+      case 'contains':
+        return addQueryConditionContains(builder, indexToken, condition);
+      case 'attribute_exists':
+      case 'attribute_not_exists':
+        return addQueryConditionExists(builder, indexToken, condition);
+      case 'in':
+        return addQueryConditionIn(builder, indexToken, condition);
+      case 'and':
+      case 'or':
+        return addQueryConditionGroup(
+          builder,
+          indexToken,
+          condition,
+          composeCondition,
+        );
+      case 'not':
+        return addQueryConditionNot(
+          builder,
+          indexToken,
+          condition,
+          composeCondition,
+        );
+      default:
+        throw new Error('invalid operator');
+    }
+  };
+
   try {
     // Default index map value.
     builder.indexParamsMap[indexToken] ??= {

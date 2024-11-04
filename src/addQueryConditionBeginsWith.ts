@@ -1,9 +1,11 @@
+import type { Entity } from '@karmaniverous/entity-tools';
+
 import { attributeValueAlias } from './attributeValueAlias';
 import type { QueryConditionBeginsWith } from './QueryCondition';
 import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
-export const addQueryConditionBeginsWith = (
-  builder: ShardQueryMapBuilder,
+export const addQueryConditionBeginsWith = <Item extends Entity>(
+  builder: ShardQueryMapBuilder<Item>,
   indexToken: string,
   { operator, property, value }: QueryConditionBeginsWith,
 ): string | undefined => {

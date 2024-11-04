@@ -3,6 +3,7 @@ import type {
   ShardQueryFunction,
   ShardQueryMap,
 } from '@karmaniverous/entity-manager';
+import type { Entity } from '@karmaniverous/entity-tools';
 import { mapValues } from 'radash';
 
 import { addFilterCondition, type FilterCondition } from './addFilterCondition';
@@ -12,19 +13,18 @@ import {
 } from './addRangeKeyCondition';
 import { getDocumentQueryArgs } from './getDocumentQueryArgs';
 import type { IndexParams } from './IndexParams';
-import type { Item } from './Item';
 
 /**
  * Options for {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} constructor.
  *
  * @category ShardQueryMapBuilder
  */
-export interface ShardQueryMapBuilderOptions {
+export interface ShardQueryMapBuilderOptions<Item extends Entity> {
   /** DynamoDB Document client. Normally you will be using {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} with an {@link EntityClient | `EntityClient`} instance, so use its {@link EntityClient.doc | `doc`} property. */
   doc: DynamoDBDocument;
 
   /** The hash key token that defines the partition of the query. All `indexToken` values referenced in following {@link ShardQueryMapBuilder.addRangeKeyCondition | `addRangeKeyCondition`} and {@link ShardQueryMapBuilder.addFilterCondition | `addFilterCondition`} calls should reference indexes that include `hashKeyToken`. */
-  hashKeyToken: string;
+  hashKeyToken: keyof Item & string;
 
   /** Injected logger object. Must support `debug` and `error` methods. Default: `console` */
   logger?: Pick<Console, 'debug' | 'error'>;
@@ -41,9 +41,9 @@ export interface ShardQueryMapBuilderOptions {
  *
  * @category ShardQueryMapBuilder
  */
-export class ShardQueryMapBuilder {
-  readonly doc: ShardQueryMapBuilderOptions['doc'];
-  readonly hashKeyToken: ShardQueryMapBuilderOptions['hashKeyToken'];
+export class ShardQueryMapBuilder<Item extends Entity> {
+  readonly doc: ShardQueryMapBuilderOptions<Item>['doc'];
+  readonly hashKeyToken: ShardQueryMapBuilderOptions<Item>['hashKeyToken'];
 
   /**
    * Maps `indexToken` values to conditions added with {@link ShardQueryMapBuilder.addRangeKeyCondition | `addRangeKeyCondition`} and {@link ShardQueryMapBuilder.addFilterCondition | `addFilterCondition`}. Visible to enhance testability but should not normally be accessed directly.
@@ -53,16 +53,16 @@ export class ShardQueryMapBuilder {
   readonly indexParamsMap: Record<string, IndexParams> = {};
 
   /** Logger object passed in {@link ShardQueryMapBuilderOptions.logger | `ShardQueryMapBuilderOptions`}. */
-  readonly logger: NonNullable<ShardQueryMapBuilderOptions['logger']>;
+  readonly logger: NonNullable<ShardQueryMapBuilderOptions<Item>['logger']>;
 
   /** Dehydrated page key passed in {@link ShardQueryMapBuilderOptions.pageKey | `ShardQueryMapBuilderOptions`}. */
-  readonly pageKey: ShardQueryMapBuilderOptions['pageKey'];
+  readonly pageKey: ShardQueryMapBuilderOptions<Item>['pageKey'];
 
   /** Table name passed in {@link ShardQueryMapBuilderOptions.tableName | `ShardQueryMapBuilderOptions`}. */
-  readonly tableName: ShardQueryMapBuilderOptions['tableName'];
+  readonly tableName: ShardQueryMapBuilderOptions<Item>['tableName'];
 
   /** ShardQueryMapBuilder constructor. */
-  constructor(options: ShardQueryMapBuilderOptions) {
+  constructor(options: ShardQueryMapBuilderOptions<Item>) {
     const { doc, hashKeyToken, logger = console, pageKey, tableName } = options;
 
     this.doc = doc;
@@ -73,7 +73,11 @@ export class ShardQueryMapBuilder {
   }
 
   #getShardQueryFunction(indexToken: string): ShardQueryFunction<Item> {
-    return async (hashKey: string, pageKey?: Item, pageSize?: number) => {
+    return async (
+      hashKey: string,
+      pageKey?: Partial<Item>,
+      pageSize?: number,
+    ) => {
       const {
         Count: count = 0,
         Items: items = [],
@@ -90,7 +94,11 @@ export class ShardQueryMapBuilder {
         }),
       );
 
-      return { count, items, pageKey: newPageKey };
+      return {
+        count,
+        items: items as Item[],
+        pageKey: newPageKey as Partial<Item>,
+      };
     };
   }
 

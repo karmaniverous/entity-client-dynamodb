@@ -1,5 +1,5 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
-import { isNil } from '@karmaniverous/entity-tools';
+import { type Entity, isNil } from '@karmaniverous/entity-tools';
 
 import { attributeValueAlias } from './attributeValueAlias';
 import type { QueryConditionComparison } from './QueryCondition';
@@ -7,8 +7,9 @@ import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
 export const addQueryConditionComparison = <
   T extends Exclude<NativeScalarAttributeValue, object>,
+  Item extends Entity,
 >(
-  builder: ShardQueryMapBuilder,
+  builder: ShardQueryMapBuilder<Item>,
   indexToken: string,
   { operator, property, value }: QueryConditionComparison<T>,
 ): string | undefined => {

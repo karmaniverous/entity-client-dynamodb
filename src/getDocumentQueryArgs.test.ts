@@ -5,7 +5,10 @@ import {
   type GetDynamoDbDocumentQueryArgsParams,
 } from './getDocumentQueryArgs';
 
-let defaultArgs: GetDynamoDbDocumentQueryArgsParams;
+let defaultArgs: GetDynamoDbDocumentQueryArgsParams<{
+  hashKeyToken: string;
+  rangeKeyToken: string;
+}>;
 
 describe('getDocumentQueryArgs', function () {
   beforeEach(function () {

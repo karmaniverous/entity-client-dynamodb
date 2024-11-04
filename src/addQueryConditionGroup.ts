@@ -1,3 +1,4 @@
+import type { Entity } from '@karmaniverous/entity-tools';
 import { sift } from 'radash';
 
 import type {
@@ -7,11 +8,14 @@ import type {
 } from './QueryCondition';
 import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
-export const addQueryConditionGroup = <T extends QueryCondition>(
-  builder: ShardQueryMapBuilder,
+export const addQueryConditionGroup = <
+  T extends QueryCondition,
+  Item extends Entity,
+>(
+  builder: ShardQueryMapBuilder<Item>,
   indexToken: string,
   { operator, conditions }: QueryConditionGroup<T>,
-  composeCondition: ComposeCondition<T>,
+  composeCondition: ComposeCondition<T, Item>,
 ): string | undefined => {
   const conditionStrings = sift(
     conditions.map((condition) =>

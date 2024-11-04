@@ -7,7 +7,7 @@ const entityManagerClient = new EntityClient({
   region: process.env.AWS_DEFAULT_REGION,
 });
 
-let builder: ShardQueryMapBuilder;
+let builder: ShardQueryMapBuilder<{ hashKey2: string }>;
 
 describe('ShardQueryMapBuilder - addFilterCondition', function () {
   beforeEach(function () {

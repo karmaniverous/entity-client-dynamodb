@@ -1,4 +1,5 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
+import type { Entity } from '@karmaniverous/entity-tools';
 
 import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
@@ -119,8 +120,8 @@ export interface QueryConditionNot<T extends QueryCondition> {
   condition: T;
 }
 
-export type ComposeCondition<T extends QueryCondition> = (
-  builder: ShardQueryMapBuilder,
+export type ComposeCondition<T extends QueryCondition, Item extends Entity> = (
+  builder: ShardQueryMapBuilder<Item>,
   indexToken: string,
   condition: T,
 ) => string | undefined;
