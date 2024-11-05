@@ -1,21 +1,31 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
-import { type Entity, isNil } from '@karmaniverous/entity-tools';
+import type { EntityMap, ItemMap } from '@karmaniverous/entity-manager';
+import {
+  type Exactify,
+  isNil,
+  type TranscodeMap,
+} from '@karmaniverous/entity-tools';
 
 import { attributeValueAlias } from './attributeValueAlias';
 import type { QueryConditionBetween } from './QueryCondition';
 import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
 export const addQueryConditionBetween = <
-  T extends Exclude<NativeScalarAttributeValue, object>,
-  Item extends Entity,
+  V extends Exclude<NativeScalarAttributeValue, object>,
+  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
+  EntityToken extends keyof Exactify<M> & string,
+  M extends EntityMap,
+  HashKey extends string,
+  RangeKey extends string,
+  T extends TranscodeMap,
 >(
-  builder: ShardQueryMapBuilder<Item>,
+  builder: ShardQueryMapBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
   indexToken: string,
   {
     operator,
     property,
     value: { from: valueFrom, to: valueTo },
-  }: QueryConditionBetween<T>,
+  }: QueryConditionBetween<V>,
 ): string | undefined => {
   if (isNil(valueFrom) && isNil(valueTo)) return;
 

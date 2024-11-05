@@ -1,20 +1,24 @@
 import { expect } from 'chai';
 
+import type { MyEntityMap, UserItem } from '../test/entityManager';
 import {
   getDocumentQueryArgs,
-  type GetDynamoDbDocumentQueryArgsParams,
+  type GetDocumentQueryArgsParams,
 } from './getDocumentQueryArgs';
 
-let defaultArgs: GetDynamoDbDocumentQueryArgsParams<{
-  hashKeyToken: string;
-  rangeKeyToken: string;
-}>;
+let defaultArgs: GetDocumentQueryArgsParams<
+  UserItem,
+  'user',
+  MyEntityMap,
+  'hashKey2',
+  'rangeKey'
+>;
 
 describe('getDocumentQueryArgs', function () {
   beforeEach(function () {
     defaultArgs = {
       hashKey: 'hashKey',
-      hashKeyToken: 'hashKeyToken',
+      hashKeyToken: 'hashKey2',
       indexParamsMap: {
         index1: {
           expressionAttributeNames: {
@@ -36,7 +40,7 @@ describe('getDocumentQueryArgs', function () {
       },
       indexToken: 'index1',
       tableName: 'tableName',
-      pageKey: { hashKeyToken: 'hashKey', rangeKeyToken: 'rangeKeyValue' },
+      pageKey: { hashKey2: 'hashKey', rangeKey: 'rangeKeyValue' },
       pageSize: 10,
     };
   });
@@ -46,11 +50,11 @@ describe('getDocumentQueryArgs', function () {
 
     expect(result).to.deep.equal({
       ExclusiveStartKey: {
-        hashKeyToken: 'hashKey',
-        rangeKeyToken: 'rangeKeyValue',
+        hashKey2: 'hashKey',
+        rangeKey: 'rangeKeyValue',
       },
       ExpressionAttributeNames: {
-        '#hashKeyToken': 'hashKeyToken',
+        '#hashKey2': 'hashKey2',
         '#propertyToken': 'propertyToken',
         '#rangeKeyToken': 'rangeKeyToken',
       },
@@ -64,7 +68,7 @@ describe('getDocumentQueryArgs', function () {
         '(#propertyToken > :propertyValue1) AND (#propertyToken < :propertyValue2)',
       IndexName: 'index1',
       KeyConditionExpression:
-        '#hashKeyToken = :hashKey AND #rangeKeyToken = :rangeKeyValue',
+        '#hashKey2 = :hashKey AND #rangeKeyToken = :rangeKeyValue',
       Limit: 10,
       ScanIndexForward: true,
       TableName: 'tableName',
@@ -84,13 +88,13 @@ describe('getDocumentQueryArgs', function () {
 
     expect(result).to.deep.equal({
       ExpressionAttributeNames: {
-        '#hashKeyToken': 'hashKeyToken',
+        '#hashKey2': 'hashKey2',
       },
       ExpressionAttributeValues: {
         ':hashKey': 'hashKey',
       },
       IndexName: 'index1',
-      KeyConditionExpression: '#hashKeyToken = :hashKey',
+      KeyConditionExpression: '#hashKey2 = :hashKey',
       TableName: 'tableName',
     });
   });

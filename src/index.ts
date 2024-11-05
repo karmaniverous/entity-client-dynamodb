@@ -17,10 +17,7 @@ export type {
   QueryConditionIn,
   QueryConditionNot,
 } from './QueryCondition';
-export {
-  ShardQueryMapBuilder,
-  type ShardQueryMapBuilderOptions,
-} from './ShardQueryMapBuilder';
+export { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 export {
   defaultTranscodeAttributeTypeMap,
   type TranscodeAttributeTypeMap,

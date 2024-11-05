@@ -1,78 +1,61 @@
-import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
-import type {
-  ShardQueryFunction,
-  ShardQueryMap,
+import {
+  BaseShardQueryMapBuilder,
+  type EntityManager,
+  type EntityMap,
+  type ItemMap,
+  type ShardQueryFunction,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  type ShardQueryMap,
 } from '@karmaniverous/entity-manager';
-import type { Entity } from '@karmaniverous/entity-tools';
-import { mapValues } from 'radash';
+import type {
+  Exactify,
+  PropertiesOfType,
+  TranscodeMap,
+} from '@karmaniverous/entity-tools';
 
 import { addFilterCondition, type FilterCondition } from './addFilterCondition';
 import {
   addRangeKeyCondition,
   type RangeKeyCondition,
 } from './addRangeKeyCondition';
+import { EntityClient } from './EntityClient';
 import { getDocumentQueryArgs } from './getDocumentQueryArgs';
 import type { IndexParams } from './IndexParams';
-
-/**
- * Options for {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} constructor.
- *
- * @category ShardQueryMapBuilder
- */
-export interface ShardQueryMapBuilderOptions<Item extends Entity> {
-  /** DynamoDB Document client. Normally you will be using {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} with an {@link EntityClient | `EntityClient`} instance, so use its {@link EntityClient.doc | `doc`} property. */
-  doc: DynamoDBDocument;
-
-  /** The hash key token that defines the partition of the query. All `indexToken` values referenced in following {@link ShardQueryMapBuilder.addRangeKeyCondition | `addRangeKeyCondition`} and {@link ShardQueryMapBuilder.addFilterCondition | `addFilterCondition`} calls should reference indexes that include `hashKeyToken`. */
-  hashKeyToken: keyof Item & string;
-
-  /** Injected logger object. Must support `debug` and `error` methods. Default: `console` */
-  logger?: Pick<Console, 'debug' | 'error'>;
-
-  /** Dehydrated page key from the previous query data page. */
-  pageKey?: string;
-
-  /** Table name. */
-  tableName: string;
-}
 
 /**
  * Provides a fluent API for building a {@link ShardQueryMap | `ShardQueryMap`} using a DynamoDB Document client.
  *
  * @category ShardQueryMapBuilder
  */
-export class ShardQueryMapBuilder<Item extends Entity> {
-  readonly doc: ShardQueryMapBuilderOptions<Item>['doc'];
-  readonly hashKeyToken: ShardQueryMapBuilderOptions<Item>['hashKeyToken'];
-
-  /**
-   * Maps `indexToken` values to conditions added with {@link ShardQueryMapBuilder.addRangeKeyCondition | `addRangeKeyCondition`} and {@link ShardQueryMapBuilder.addFilterCondition | `addFilterCondition`}. Visible to enhance testability but should not normally be accessed directly.
-   *
-   * @protected
-   */
-  readonly indexParamsMap: Record<string, IndexParams> = {};
-
-  /** Logger object passed in {@link ShardQueryMapBuilderOptions.logger | `ShardQueryMapBuilderOptions`}. */
-  readonly logger: NonNullable<ShardQueryMapBuilderOptions<Item>['logger']>;
-
-  /** Dehydrated page key passed in {@link ShardQueryMapBuilderOptions.pageKey | `ShardQueryMapBuilderOptions`}. */
-  readonly pageKey: ShardQueryMapBuilderOptions<Item>['pageKey'];
-
-  /** Table name passed in {@link ShardQueryMapBuilderOptions.tableName | `ShardQueryMapBuilderOptions`}. */
-  readonly tableName: ShardQueryMapBuilderOptions<Item>['tableName'];
-
+export class ShardQueryMapBuilder<
+  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
+  EntityToken extends keyof Exactify<M> & string,
+  M extends EntityMap,
+  HashKey extends string,
+  RangeKey extends string,
+  T extends TranscodeMap,
+> extends BaseShardQueryMapBuilder<
+  IndexParams,
+  Item,
+  EntityToken,
+  M,
+  HashKey,
+  RangeKey,
+  T
+> {
   /** ShardQueryMapBuilder constructor. */
-  constructor(options: ShardQueryMapBuilderOptions<Item>) {
-    const { doc, hashKeyToken, logger = console, pageKey, tableName } = options;
-
-    this.doc = doc;
-    this.hashKeyToken = hashKeyToken;
-    this.logger = logger;
-    this.pageKey = pageKey;
-    this.tableName = tableName;
+  constructor(
+    public readonly entityClient: EntityClient,
+    public readonly tableName: string,
+    entityManager: EntityManager<M, HashKey, RangeKey, T>,
+    entityToken: EntityToken,
+    hashKeyToken: PropertiesOfType<M[EntityToken], never> | HashKey,
+    pageKey?: string,
+  ) {
+    super(entityManager, entityToken, hashKeyToken, pageKey);
   }
 
-  #getShardQueryFunction(indexToken: string): ShardQueryFunction<Item> {
+  getShardQueryFunction(indexToken: string): ShardQueryFunction<Item> {
     return async (
       hashKey: string,
       pageKey?: Partial<Item>,
@@ -82,8 +65,8 @@ export class ShardQueryMapBuilder<Item extends Entity> {
         Count: count = 0,
         Items: items = [],
         LastEvaluatedKey: newPageKey,
-      } = await this.doc.query(
-        getDocumentQueryArgs({
+      } = await this.entityClient.doc.query(
+        getDocumentQueryArgs<Item, EntityToken, M, HashKey, RangeKey>({
           hashKey,
           hashKeyToken: this.hashKeyToken,
           indexParamsMap: this.indexParamsMap,
@@ -123,19 +106,11 @@ export class ShardQueryMapBuilder<Item extends Entity> {
    *
    * @returns - The modified {@link ShardQueryMap | `ShardQueryMap`} instance.
    */
-  addFilterCondition(indexToken: string, condition: FilterCondition): this {
+  addFilterCondition(
+    indexToken: string,
+    condition: FilterCondition<Item, EntityToken, M, HashKey, RangeKey, T>,
+  ): this {
     addFilterCondition(this, indexToken, condition);
     return this;
-  }
-
-  /**
-   * Builds a {@link ShardQueryMap | `ShardQueryMap`} object. Filter conditions created by multiple {@link ShardQueryMapBuilder.addFilterCondition | `addFilterCondition`} calls are combined with an `AND` operator.
-   *
-   * @returns - The {@link ShardQueryMap | `ShardQueryMap`} object.
-   */
-  build(): ShardQueryMap<Item> {
-    return mapValues(this.indexParamsMap, (indexConfig, indexToken) =>
-      this.#getShardQueryFunction(indexToken),
-    );
   }
 }

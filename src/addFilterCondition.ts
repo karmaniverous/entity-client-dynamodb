@@ -1,5 +1,6 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
-import type { Entity } from '@karmaniverous/entity-tools';
+import type { EntityMap, ItemMap } from '@karmaniverous/entity-manager';
+import type { Exactify, TranscodeMap } from '@karmaniverous/entity-tools';
 
 import { addQueryConditionBeginsWith } from './addQueryConditionBeginsWith';
 import { addQueryConditionBetween } from './addQueryConditionBetween';
@@ -44,15 +45,26 @@ import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
  * @category ShardQueryMapBuilder
  * @protected
  */
-export type FilterCondition =
+export type FilterCondition<
+  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
+  EntityToken extends keyof Exactify<M> & string,
+  M extends EntityMap,
+  HashKey extends string,
+  RangeKey extends string,
+  T extends TranscodeMap,
+> =
   | QueryConditionBeginsWith
   | QueryConditionBetween<ActuallyScalarAttributeValue>
   | QueryConditionComparison<ActuallyScalarAttributeValue>
   | QueryConditionContains<NativeScalarAttributeValue>
   | QueryConditionExists
   | QueryConditionIn<ActuallyScalarAttributeValue>
-  | QueryConditionGroup<FilterCondition>
-  | QueryConditionNot<FilterCondition>;
+  | QueryConditionGroup<
+      FilterCondition<Item, EntityToken, M, HashKey, RangeKey, T>
+    >
+  | QueryConditionNot<
+      FilterCondition<Item, EntityToken, M, HashKey, RangeKey, T>
+    >;
 
 /**
  * Add filter condition to builder.
@@ -61,10 +73,17 @@ export type FilterCondition =
  * @param indexToken - Index token in {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} `indexParamsMap`.
  * @param condition - {@link FilterCondition | `FilterCondition`} object.
  */
-export const addFilterCondition = <Item extends Entity>(
-  builder: ShardQueryMapBuilder<Item>,
+export const addFilterCondition = <
+  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
+  EntityToken extends keyof Exactify<M> & string,
+  M extends EntityMap,
+  HashKey extends string,
+  RangeKey extends string,
+  T extends TranscodeMap,
+>(
+  builder: ShardQueryMapBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
   indexToken: string,
-  condition: FilterCondition,
+  condition: FilterCondition<Item, EntityToken, M, HashKey, RangeKey, T>,
 ): void => {
   /**
    * Recursively compose condition string and add expression attribute names & values to builder.
@@ -75,11 +94,15 @@ export const addFilterCondition = <Item extends Entity>(
    *
    * @returns - Condition string or `undefined`.
    */
-  const composeCondition: ComposeCondition<FilterCondition, Item> = (
-    builder,
-    indexToken,
-    condition,
-  ): string | undefined => {
+  const composeCondition: ComposeCondition<
+    FilterCondition<Item, EntityToken, M, HashKey, RangeKey, T>,
+    Item,
+    EntityToken,
+    M,
+    HashKey,
+    RangeKey,
+    T
+  > = (builder, indexToken, condition): string | undefined => {
     switch (condition.operator) {
       case 'begins_with':
         return addQueryConditionBeginsWith(builder, indexToken, condition);
@@ -130,7 +153,7 @@ export const addFilterCondition = <Item extends Entity>(
     // Compose condition string.
     const conditionString = composeCondition(builder, indexToken, condition);
 
-    builder.logger.debug(
+    builder.entityClient.logger.debug(
       conditionString === undefined
         ? 'no filter condition added'
         : 'added filter condition',
@@ -146,7 +169,7 @@ export const addFilterCondition = <Item extends Entity>(
       builder.indexParamsMap[indexToken].filterConditions.push(conditionString);
   } catch (error) {
     if (error instanceof Error)
-      builder.logger.error(error.message, {
+      builder.entityClient.logger.error(error.message, {
         indexToken,
         condition,
       });

@@ -1,4 +1,5 @@
-import type { Entity } from '@karmaniverous/entity-tools';
+import type { EntityMap, ItemMap } from '@karmaniverous/entity-manager';
+import type { Exactify, TranscodeMap } from '@karmaniverous/entity-tools';
 
 import { addQueryConditionBeginsWith } from './addQueryConditionBeginsWith';
 import { addQueryConditionBetween } from './addQueryConditionBetween';
@@ -37,8 +38,15 @@ export type RangeKeyCondition =
  * @param indexToken - Index token in {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} `indexParamsMap`.
  * @param condition - {@link RangeKeyCondition | `RangeKeyCondition`} object.
  */
-export const addRangeKeyCondition = <Item extends Entity>(
-  builder: ShardQueryMapBuilder<Item>,
+export const addRangeKeyCondition = <
+  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
+  EntityToken extends keyof Exactify<M> & string,
+  M extends EntityMap,
+  HashKey extends string,
+  RangeKey extends string,
+  T extends TranscodeMap,
+>(
+  builder: ShardQueryMapBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
   indexToken: string,
   condition: RangeKeyCondition,
 ): void => {
@@ -51,11 +59,15 @@ export const addRangeKeyCondition = <Item extends Entity>(
    *
    * @returns - Condition string or `undefined`.
    */
-  const composeCondition: ComposeCondition<RangeKeyCondition, Item> = (
-    builder,
-    indexToken,
-    condition,
-  ): string | undefined => {
+  const composeCondition: ComposeCondition<
+    RangeKeyCondition,
+    Item,
+    EntityToken,
+    M,
+    HashKey,
+    RangeKey,
+    T
+  > = (builder, indexToken, condition): string | undefined => {
     switch (condition.operator) {
       case 'begins_with':
         return addQueryConditionBeginsWith(builder, indexToken, condition);
@@ -88,7 +100,7 @@ export const addRangeKeyCondition = <Item extends Entity>(
     // Compose condition string.
     const conditionString = composeCondition(builder, indexToken, condition);
 
-    builder.logger.debug(
+    builder.entityClient.logger.debug(
       conditionString === undefined
         ? 'no range key condition added'
         : 'added range key condition',
@@ -104,7 +116,7 @@ export const addRangeKeyCondition = <Item extends Entity>(
       builder.indexParamsMap[indexToken].rangeKeyCondition = conditionString;
   } catch (error) {
     if (error instanceof Error)
-      builder.logger.error(error.message, {
+      builder.entityClient.logger.error(error.message, {
         indexToken,
         condition,
       });

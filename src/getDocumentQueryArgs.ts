@@ -1,10 +1,17 @@
 import type { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
-import type { Entity } from '@karmaniverous/entity-tools';
+import type { EntityMap, ItemMap } from '@karmaniverous/entity-manager';
+import type { Exactify } from '@karmaniverous/entity-tools';
 import { shake, sift } from 'radash';
 
 import type { IndexParams } from './IndexParams';
 
-export interface GetDynamoDbDocumentQueryArgsParams<Item extends Entity> {
+export interface GetDocumentQueryArgsParams<
+  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
+  EntityToken extends keyof Exactify<M> & string,
+  M extends EntityMap,
+  HashKey extends string,
+  RangeKey extends string,
+> {
   indexParamsMap: Record<string, IndexParams>;
   indexToken: string;
   hashKeyToken: keyof Item & string;
@@ -14,7 +21,13 @@ export interface GetDynamoDbDocumentQueryArgsParams<Item extends Entity> {
   tableName: string;
 }
 
-export const getDocumentQueryArgs = <Item extends Entity>({
+export const getDocumentQueryArgs = <
+  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
+  EntityToken extends keyof Exactify<M> & string,
+  M extends EntityMap,
+  HashKey extends string,
+  RangeKey extends string,
+>({
   indexParamsMap,
   indexToken,
   hashKeyToken,
@@ -22,7 +35,13 @@ export const getDocumentQueryArgs = <Item extends Entity>({
   pageKey,
   pageSize,
   tableName,
-}: GetDynamoDbDocumentQueryArgsParams<Item>): QueryCommandInput => {
+}: GetDocumentQueryArgsParams<
+  Item,
+  EntityToken,
+  M,
+  HashKey,
+  RangeKey
+>): QueryCommandInput => {
   const {
     expressionAttributeNames,
     expressionAttributeValues,

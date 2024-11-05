@@ -1,17 +1,23 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
-import type { Entity } from '@karmaniverous/entity-tools';
+import type { EntityMap, ItemMap } from '@karmaniverous/entity-manager';
+import type { Exactify, TranscodeMap } from '@karmaniverous/entity-tools';
 
 import { attributeValueAlias } from './attributeValueAlias';
 import type { QueryConditionContains } from './QueryCondition';
 import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
 export const addQueryConditionContains = <
-  T extends NativeScalarAttributeValue,
-  Item extends Entity,
+  V extends NativeScalarAttributeValue,
+  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
+  EntityToken extends keyof Exactify<M> & string,
+  M extends EntityMap,
+  HashKey extends string,
+  RangeKey extends string,
+  T extends TranscodeMap,
 >(
-  builder: ShardQueryMapBuilder<Item>,
+  builder: ShardQueryMapBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
   indexToken: string,
-  { operator, property, value }: QueryConditionContains<T>,
+  { operator, property, value }: QueryConditionContains<V>,
 ): string | undefined => {
   if (value === undefined) return;
 

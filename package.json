@@ -7,15 +7,15 @@
     "@aws-sdk/client-dynamodb": "^3.682.0",
     "@aws-sdk/lib-dynamodb": "^3.685.0",
     "@karmaniverous/batch-process": "^0.1.0",
-    "@karmaniverous/entity-manager": "^6.6.0",
-    "@karmaniverous/entity-tools": "^0.4.3",
+    "@karmaniverous/entity-manager": "^6.7.0",
+    "@karmaniverous/entity-tools": "^0.4.4",
     "aws-xray-sdk": "^3.10.1",
     "nanoid": "^5.0.8",
     "radash": "^12.1.0"
   },
   "description": "Entity Manager integrated into a DynamoDB client wrapper.",
   "devDependencies": {
-    "@dotenvx/dotenvx": "^1.21.1",
+    "@dotenvx/dotenvx": "^1.22.0",
     "@eslint/js": "^9.14.0",
     "@karmaniverous/dynamodb-local": "^0.0.1",
     "@rollup/plugin-alias": "^5.1.1",
@@ -28,7 +28,7 @@
     "@types/eslint-config-prettier": "^6.11.3",
     "@types/eslint-plugin-mocha": "^10.4.0",
     "@types/mocha": "^10.0.9",
-    "@types/node": "^22.8.7",
+    "@types/node": "^22.9.0",
     "auto-changelog": "^2.5.0",
     "chai": "^5.1.2",
     "eslint": "^9.14.0",
@@ -44,7 +44,7 @@
     "prettier": "^3.3.3",
     "release-it": "^17.10.0",
     "rimraf": "^6.0.1",
-    "rollup": "^4.24.3",
+    "rollup": "^4.24.4",
     "rollup-plugin-dts": "^6.1.1",
     "source-map-support": "^0.5.21",
     "ts-node": "^10.9.2",
@@ -53,7 +53,7 @@
     "typedoc-plugin-mdn-links": "^3.3.6",
     "typedoc-plugin-replace-text": "^4.0.0",
     "typescript": "^5.6.3",
-    "typescript-eslint": "^8.12.2"
+    "typescript-eslint": "^8.13.0"
   },
   "exports": {
     ".": {

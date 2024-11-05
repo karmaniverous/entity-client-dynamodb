@@ -27,12 +27,19 @@ import {
   batchProcess,
   type BatchProcessOptions,
 } from '@karmaniverous/batch-process';
-import type { WithRequiredAndNonNullable } from '@karmaniverous/entity-tools';
+import { EntityManager, type EntityMap } from '@karmaniverous/entity-manager';
+import type {
+  Exactify,
+  PropertiesOfType,
+  TranscodeMap,
+  WithRequiredAndNonNullable,
+} from '@karmaniverous/entity-tools';
 import AWSXray from 'aws-xray-sdk';
 import { isArray, isString, pick, sift, zipToObject } from 'radash';
 
 import type { GetItemOptions } from './GetItemOptions';
 import type { Item } from './Item';
+import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
 /**
  * DynamoDB EntityClient options. Extends {@link DynamoDBClientConfig | `DynamoDBClientConfig`} with the following additional properties:
@@ -787,5 +794,28 @@ export class EntityClient {
 
       throw error;
     }
+  }
+
+  shardQueryMapBuilder<
+    EntityToken extends keyof Exactify<M> & string,
+    M extends EntityMap,
+    HashKey extends string,
+    RangeKey extends string,
+    T extends TranscodeMap,
+  >(
+    tableName: string,
+    entityManager: EntityManager<M, HashKey, RangeKey, T>,
+    entityToken: EntityToken,
+    hashKeyToken: PropertiesOfType<M[EntityToken], never> | HashKey,
+    pageKey?: string,
+  ) {
+    return new ShardQueryMapBuilder(
+      this,
+      tableName,
+      entityManager,
+      entityToken,
+      hashKeyToken,
+      pageKey,
+    );
   }
 }

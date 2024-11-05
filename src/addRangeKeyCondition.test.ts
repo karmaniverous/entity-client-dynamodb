@@ -1,21 +1,30 @@
 import { expect } from 'chai';
 
+import { entityManager } from '../test/entityManager';
 import { EntityClient } from './EntityClient';
 import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
-const entityManagerClient = new EntityClient({
+const entityClient = new EntityClient({
   region: process.env.AWS_DEFAULT_REGION,
 });
 
-let builder: ShardQueryMapBuilder<{ hashKey2: string }>;
+let builder = new ShardQueryMapBuilder(
+  entityClient,
+  'UserTable',
+  entityManager,
+  'user',
+  'hashKey2',
+);
 
 describe('ShardQueryMapBuilder - addRangeKeyCondition', function () {
   beforeEach(function () {
-    builder = new ShardQueryMapBuilder({
-      doc: entityManagerClient.doc,
-      hashKeyToken: 'hashKey2',
-      tableName: 'UserTable',
-    });
+    builder = new ShardQueryMapBuilder(
+      entityClient,
+      'UserTable',
+      entityManager,
+      'user',
+      'hashKey2',
+    );
   });
 
   it('<', function () {

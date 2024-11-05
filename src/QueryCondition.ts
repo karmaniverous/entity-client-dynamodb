@@ -1,5 +1,6 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
-import type { Entity } from '@karmaniverous/entity-tools';
+import type { EntityMap, ItemMap } from '@karmaniverous/entity-manager';
+import type { Exactify, TranscodeMap } from '@karmaniverous/entity-tools';
 
 import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
@@ -38,11 +39,11 @@ export interface QueryConditionBeginsWith extends QueryCondition {
  * @category ShardQueryMapBuilder
  * @protected
  */
-export interface QueryConditionBetween<T extends ActuallyScalarAttributeValue>
+export interface QueryConditionBetween<V extends ActuallyScalarAttributeValue>
   extends QueryCondition {
   property: string;
   operator: 'between';
-  value: { from?: T; to?: T };
+  value: { from?: V; to?: V };
 }
 
 /**
@@ -52,11 +53,11 @@ export interface QueryConditionBetween<T extends ActuallyScalarAttributeValue>
  * @protected
  */
 export interface QueryConditionComparison<
-  T extends ActuallyScalarAttributeValue,
+  V extends ActuallyScalarAttributeValue,
 > extends QueryCondition {
   property: string;
   operator: '<' | '<=' | '<>' | '=' | '>' | '>=';
-  value?: T;
+  value?: V;
 }
 
 /**
@@ -65,11 +66,11 @@ export interface QueryConditionComparison<
  * @category ShardQueryMapBuilder
  * @protected
  */
-export interface QueryConditionContains<T extends NativeScalarAttributeValue>
+export interface QueryConditionContains<V extends NativeScalarAttributeValue>
   extends QueryCondition {
   property: string;
   operator: 'contains';
-  value?: T;
+  value?: V;
 }
 
 /**
@@ -90,11 +91,11 @@ export interface QueryConditionExists extends QueryCondition {
  * @category ShardQueryMapBuilder
  * @protected
  */
-export interface QueryConditionIn<T extends NativeScalarAttributeValue>
+export interface QueryConditionIn<V extends NativeScalarAttributeValue>
   extends QueryCondition {
   property: string;
   operator: 'in';
-  value?: T[] | Set<T>;
+  value?: V[] | Set<V>;
 }
 
 /**
@@ -104,9 +105,9 @@ export interface QueryConditionIn<T extends NativeScalarAttributeValue>
  * @category ShardQueryMapBuilder
  * @protected
  */
-export interface QueryConditionGroup<T extends QueryCondition> {
+export interface QueryConditionGroup<C extends QueryCondition> {
   operator: 'and' | 'or';
-  conditions: T[];
+  conditions: C[];
 }
 
 /**
@@ -115,13 +116,21 @@ export interface QueryConditionGroup<T extends QueryCondition> {
  * @category ShardQueryMapBuilder
  * @protected
  */
-export interface QueryConditionNot<T extends QueryCondition> {
+export interface QueryConditionNot<C extends QueryCondition> {
   operator: 'not';
-  condition: T;
+  condition: C;
 }
 
-export type ComposeCondition<T extends QueryCondition, Item extends Entity> = (
-  builder: ShardQueryMapBuilder<Item>,
+export type ComposeCondition<
+  C extends QueryCondition,
+  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
+  EntityToken extends keyof Exactify<M> & string,
+  M extends EntityMap,
+  HashKey extends string,
+  RangeKey extends string,
+  T extends TranscodeMap,
+> = (
+  builder: ShardQueryMapBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
   indexToken: string,
-  condition: T,
+  condition: C,
 ) => string | undefined;
