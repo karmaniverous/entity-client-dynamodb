@@ -807,7 +807,7 @@ export class EntityClient {
     entityManager: EntityManager<M, HashKey, RangeKey, T>,
     entityToken: EntityToken,
     hashKeyToken: PropertiesOfType<M[EntityToken], never> | HashKey,
-    pageKey?: string,
+    pageKeyMap?: string,
   ) {
     return new ShardQueryMapBuilder(
       this,
@@ -815,7 +815,7 @@ export class EntityClient {
       entityManager,
       entityToken,
       hashKeyToken,
-      pageKey,
+      pageKeyMap,
     );
   }
 }

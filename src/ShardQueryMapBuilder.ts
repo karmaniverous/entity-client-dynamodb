@@ -50,9 +50,9 @@ export class ShardQueryMapBuilder<
     entityManager: EntityManager<M, HashKey, RangeKey, T>,
     entityToken: EntityToken,
     hashKeyToken: PropertiesOfType<M[EntityToken], never> | HashKey,
-    pageKey?: string,
+    pageKeyMap?: string,
   ) {
-    super(entityManager, entityToken, hashKeyToken, pageKey);
+    super(entityManager, entityToken, hashKeyToken, pageKeyMap);
   }
 
   getShardQueryFunction(indexToken: string): ShardQueryFunction<Item> {
