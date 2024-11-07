@@ -8,7 +8,6 @@ import {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   type DeleteTableCommandOutput,
   DynamoDBClient,
-  type DynamoDBClientConfig,
   waitUntilTableExists,
   waitUntilTableNotExists,
 } from '@aws-sdk/client-dynamodb';
@@ -23,60 +22,37 @@ import {
   type PutCommandOutput,
   type TransactWriteCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
+import { batchProcess } from '@karmaniverous/batch-process';
 import {
-  batchProcess,
-  type BatchProcessOptions,
-} from '@karmaniverous/batch-process';
-import { EntityManager, type EntityMap } from '@karmaniverous/entity-manager';
+  BaseEntityClient,
+  type EntityMap,
+  type ItemMap,
+} from '@karmaniverous/entity-manager';
 import type {
   Exactify,
-  PropertiesOfType,
   TranscodeMap,
   WithRequiredAndNonNullable,
 } from '@karmaniverous/entity-tools';
 import AWSXray from 'aws-xray-sdk';
 import { isArray, isString, pick, sift, zipToObject } from 'radash';
 
+import type { EntityClientOptions } from './EntityClientOptions';
 import type { GetItemOptions } from './GetItemOptions';
 import type { Item } from './Item';
 import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
+import type { ShardQueryMapBuilderOptions } from './ShardQueryMapBuilderOptions';
 
 /**
- * DynamoDB EntityClient options. Extends {@link DynamoDBClientConfig | `DynamoDBClientConfig`} with the following additional properties:
- * - `batchProcessOptions` - Default batch process options.
- * - `enableXray` - Activates AWS Xray for internal DynamoDb client when `true` and running in a Lambda environment.
- * - `logger` - Injected logger object. Must support `debug` and `error` methods. Default: `console`.
- *
- * @category EntityClient
- */
-export interface EntityClientOptions
-  extends Omit<DynamoDBClientConfig, 'logger'> {
-  /** Default batch process options. */
-  batchProcessOptions?: Omit<
-    BatchProcessOptions<unknown, unknown>,
-    'batchHandler' | 'unprocessedItemExtractor'
-  >;
-
-  /** Activates AWS Xray for internal DynamoDb client when `true` and running in a Lambda environment. */
-  enableXray?: boolean;
-
-  /** Injected logger object. Must support `debug` and `error` methods. Default: `console` */
-  logger?: Pick<Console, 'debug' | 'error'>;
-}
-
-/**
- * Convenience wrapper around the AWS SDK {@link DynamoDBClient | `DynamoDBClient`} and {@link DynamoDBDocument | `DynamoDBDocument`} classes with enhanced batch processing.
+ * Convenience wrapper around the AWS DynamoDB SDK in addition to {@link BaseEntityClient | `BaseEntityClient`} functionality.
  *
  * @remarks
- * This class provides a number of enhanced methods. For everything else, both the {@link DynamoDBClient | `DynamoDBClient`} and {@link DynamoDBDocument | `DynamoDBDocument`} instances are exposed for direct access on the {@link EntityClient.client | `client`} and {@link EntityClient.doc | `doc`} properties, respectively.
+ * This class provides a number of enhanced AWS DynamoDB SDK methods. For everything else, both the {@link DynamoDBClient | `DynamoDBClient`} and {@link DynamoDBDocument | `DynamoDBDocument`} instances are exposed for direct access on the {@link EntityClient.client | `client`} and {@link EntityClient.doc | `doc`} properties, respectively.
  *
  * @category EntityClient
  */
-export class EntityClient {
-  #batchProcessOptions: NonNullable<EntityClientOptions['batchProcessOptions']>;
-  #client: DynamoDBClient;
-  #doc: DynamoDBDocument;
-  #logger: NonNullable<EntityClientOptions['logger']>;
+export class EntityClient extends BaseEntityClient<EntityClientOptions> {
+  public readonly client: DynamoDBClient;
+  public readonly doc: DynamoDBDocument;
 
   /**
    * DynamoDB EntityClient constructor.
@@ -85,54 +61,24 @@ export class EntityClient {
    */
   constructor(options: EntityClientOptions = {}) {
     const {
-      batchProcessOptions = {},
+      batchProcessOptions,
       enableXray = false,
-      logger = console,
+      logger,
       ...dynamoDbClientConfig
     } = options;
 
-    this.#batchProcessOptions = batchProcessOptions;
+    super({ batchProcessOptions, logger });
 
     const client = new DynamoDBClient(dynamoDbClientConfig);
 
-    this.#client =
+    this.client =
       enableXray && process.env.AWS_XRAY_DAEMON_ADDRESS
         ? AWSXray.captureAWSv3Client(client)
         : client;
 
-    this.#doc = DynamoDBDocument.from(this.#client, {
+    this.doc = DynamoDBDocument.from(this.client, {
       marshallOptions: { removeUndefinedValues: true },
     });
-
-    this.#logger = logger;
-  }
-
-  /**
-   * Returns the default {@link BatchProcessOptions | batch process options}, not including handler functions.
-   */
-  get batchProcessOptions() {
-    return this.#batchProcessOptions;
-  }
-
-  /**
-   * Returns the internal AWS SDK DynamoDBClient instance.
-   */
-  get client() {
-    return this.#client;
-  }
-
-  /**
-   * Returns the internal AWS SDK DynamoDBDocument instance.
-   */
-  get doc() {
-    return this.#doc;
-  }
-
-  /**
-   * Returns the injected logger instance.
-   */
-  get logger() {
-    return this.#logger;
   }
 
   /* eslint-disable tsdoc/syntax */
@@ -797,25 +743,28 @@ export class EntityClient {
   }
 
   shardQueryMapBuilder<
+    Options extends ShardQueryMapBuilderOptions<
+      EntityToken,
+      M,
+      HashKey,
+      RangeKey,
+      T
+    >,
+    Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
     EntityToken extends keyof Exactify<M> & string,
     M extends EntityMap,
     HashKey extends string,
     RangeKey extends string,
     T extends TranscodeMap,
-  >(
-    tableName: string,
-    entityManager: EntityManager<M, HashKey, RangeKey, T>,
-    entityToken: EntityToken,
-    hashKeyToken: PropertiesOfType<M[EntityToken], never> | HashKey,
-    pageKeyMap?: string,
-  ) {
-    return new ShardQueryMapBuilder(
-      this,
-      tableName,
-      entityManager,
-      entityToken,
-      hashKeyToken,
-      pageKeyMap,
-    );
+  >(options: Omit<Options, 'entityClient'>) {
+    return new ShardQueryMapBuilder<
+      Options,
+      Item,
+      EntityToken,
+      M,
+      HashKey,
+      RangeKey,
+      T
+    >({ ...options, entityClient: this } as unknown as Options);
   }
 }
