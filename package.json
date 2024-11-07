@@ -4,10 +4,10 @@
     "url": "https://github.com/karmaniverous/entity-client-dynamodb/issues"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.682.0",
-    "@aws-sdk/lib-dynamodb": "^3.685.0",
+    "@aws-sdk/client-dynamodb": "^3.686.0",
+    "@aws-sdk/lib-dynamodb": "^3.686.0",
     "@karmaniverous/batch-process": "^0.1.0",
-    "@karmaniverous/entity-manager": "^6.7.0",
+    "@karmaniverous/entity-manager": "^6.7.2",
     "@karmaniverous/entity-tools": "^0.4.4",
     "aws-xray-sdk": "^3.10.1",
     "nanoid": "^5.0.8",
@@ -37,7 +37,7 @@
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-tsdoc": "^0.3.0",
     "jsdom-global": "^3.0.2",
-    "knip": "^5.36.2",
+    "knip": "^5.36.3",
     "lefthook": "^1.8.2",
     "mocha": "^10.8.2",
     "nyc": "^17.1.0",
@@ -94,6 +94,7 @@
       "after:init": [
         "npm run lint",
         "npm run test",
+        "npm run knip",
         "npm run build"
       ],
       "before:npm:release": [
