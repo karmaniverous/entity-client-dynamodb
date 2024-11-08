@@ -8,23 +8,23 @@ const entityClient = new EntityClient({
   region: process.env.AWS_DEFAULT_REGION,
 });
 
-let builder = new ShardQueryMapBuilder(
+let builder = new ShardQueryMapBuilder({
   entityClient,
-  'UserTable',
   entityManager,
-  'user',
-  'hashKey2',
-);
+  entityToken: 'user',
+  hashKeyToken: 'hashKey2',
+  tableName: 'UserTable',
+});
 
 describe('ShardQueryMapBuilder - constructor', function () {
   beforeEach(function () {
-    builder = new ShardQueryMapBuilder(
+    builder = new ShardQueryMapBuilder({
       entityClient,
-      'UserTable',
       entityManager,
-      'user',
-      'hashKey2',
-    );
+      entityToken: 'user',
+      hashKeyToken: 'hashKey2',
+      tableName: 'UserTable',
+    });
   });
 
   it('should create a ShardQueryMapBuilder instance', function () {

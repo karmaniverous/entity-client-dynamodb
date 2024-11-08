@@ -8,23 +8,23 @@ const entityClient = new EntityClient({
   region: process.env.AWS_DEFAULT_REGION,
 });
 
-let builder = new ShardQueryMapBuilder(
+let builder = new ShardQueryMapBuilder({
   entityClient,
-  'UserTable',
+  tableName: 'UserTable',
   entityManager,
-  'user',
-  'hashKey2',
-);
+  entityToken: 'user',
+  hashKeyToken: 'hashKey2',
+});
 
 describe('ShardQueryMapBuilder - addRangeKeyCondition', function () {
   beforeEach(function () {
-    builder = new ShardQueryMapBuilder(
+    builder = new ShardQueryMapBuilder({
       entityClient,
-      'UserTable',
+      tableName: 'UserTable',
       entityManager,
-      'user',
-      'hashKey2',
-    );
+      entityToken: 'user',
+      hashKeyToken: 'hashKey2',
+    });
   });
 
   it('<', function () {

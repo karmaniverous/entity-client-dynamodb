@@ -5,7 +5,6 @@ import type {
 import type { Exactify, TranscodeMap } from '@karmaniverous/entity-tools';
 
 import { EntityClient } from './EntityClient';
-import { EntityClientOptions } from './EntityClientOptions';
 
 /**
  * {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} constructor options.
@@ -18,7 +17,6 @@ export interface ShardQueryMapBuilderOptions<
   T extends TranscodeMap,
 > extends BaseShardQueryMapBuilderOptions<
     EntityClient,
-    EntityClientOptions,
     EntityToken,
     M,
     HashKey,
@@ -26,5 +24,5 @@ export interface ShardQueryMapBuilderOptions<
     T
   > {
   /** Table name. */
-  tableName?: string;
+  tableName: string;
 }

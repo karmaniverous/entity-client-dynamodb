@@ -14,7 +14,6 @@ import {
   type RangeKeyCondition,
 } from './addRangeKeyCondition';
 import { EntityClient } from './EntityClient';
-import type { EntityClientOptions } from './EntityClientOptions';
 import { getDocumentQueryArgs } from './getDocumentQueryArgs';
 import type { IndexParams } from './IndexParams';
 import type { ShardQueryMapBuilderOptions } from './ShardQueryMapBuilderOptions';
@@ -25,13 +24,6 @@ import type { ShardQueryMapBuilderOptions } from './ShardQueryMapBuilderOptions'
  * @category ShardQueryMapBuilder
  */
 export class ShardQueryMapBuilder<
-  Options extends ShardQueryMapBuilderOptions<
-    EntityToken,
-    M,
-    HashKey,
-    RangeKey,
-    T
-  >,
   Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
   EntityToken extends keyof Exactify<M> & string,
   M extends EntityMap,
@@ -40,9 +32,7 @@ export class ShardQueryMapBuilder<
   T extends TranscodeMap,
 > extends BaseShardQueryMapBuilder<
   IndexParams,
-  Options,
   EntityClient,
-  EntityClientOptions,
   Item,
   EntityToken,
   M,
@@ -51,13 +41,23 @@ export class ShardQueryMapBuilder<
   T
 > {
   /** Table name. */
-  public readonly tableName: NonNullable<Options['tableName']>;
+  public readonly tableName: NonNullable<
+    ShardQueryMapBuilderOptions<
+      EntityToken,
+      M,
+      HashKey,
+      RangeKey,
+      T
+    >['tableName']
+  >;
 
   /** ShardQueryMapBuilder constructor. */
-  constructor(options: Options) {
-    super(options);
+  constructor(
+    options: ShardQueryMapBuilderOptions<EntityToken, M, HashKey, RangeKey, T>,
+  ) {
+    const { tableName, ...baseOptions } = options;
 
-    const { tableName } = options;
+    super(baseOptions);
 
     if (!tableName) {
       throw new Error('Table name is required.');

@@ -1,6 +1,7 @@
 export type { FilterCondition } from './addFilterCondition';
 export type { RangeKeyCondition } from './addRangeKeyCondition';
-export { EntityClient, type EntityClientOptions } from './EntityClient';
+export { EntityClient } from './EntityClient';
+export type { EntityClientOptions } from './EntityClientOptions';
 export { generateTableDefinition } from './generateTableDefinition';
 export type { GetItemOptions } from './GetItemOptions';
 export type { IndexParams } from './IndexParams';

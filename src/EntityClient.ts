@@ -23,24 +23,14 @@ import {
   type TransactWriteCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 import { batchProcess } from '@karmaniverous/batch-process';
-import {
-  BaseEntityClient,
-  type EntityMap,
-  type ItemMap,
-} from '@karmaniverous/entity-manager';
-import type {
-  Exactify,
-  TranscodeMap,
-  WithRequiredAndNonNullable,
-} from '@karmaniverous/entity-tools';
+import { BaseEntityClient } from '@karmaniverous/entity-manager';
+import type { WithRequiredAndNonNullable } from '@karmaniverous/entity-tools';
 import AWSXray from 'aws-xray-sdk';
 import { isArray, isString, pick, sift, zipToObject } from 'radash';
 
 import type { EntityClientOptions } from './EntityClientOptions';
 import type { GetItemOptions } from './GetItemOptions';
 import type { Item } from './Item';
-import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
-import type { ShardQueryMapBuilderOptions } from './ShardQueryMapBuilderOptions';
 
 /**
  * Convenience wrapper around the AWS DynamoDB SDK in addition to {@link BaseEntityClient | `BaseEntityClient`} functionality.
@@ -50,7 +40,7 @@ import type { ShardQueryMapBuilderOptions } from './ShardQueryMapBuilderOptions'
  *
  * @category EntityClient
  */
-export class EntityClient extends BaseEntityClient<EntityClientOptions> {
+export class EntityClient extends BaseEntityClient {
   public readonly client: DynamoDBClient;
   public readonly doc: DynamoDBDocument;
 
@@ -740,31 +730,5 @@ export class EntityClient extends BaseEntityClient<EntityClientOptions> {
 
       throw error;
     }
-  }
-
-  shardQueryMapBuilder<
-    Options extends ShardQueryMapBuilderOptions<
-      EntityToken,
-      M,
-      HashKey,
-      RangeKey,
-      T
-    >,
-    Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
-    EntityToken extends keyof Exactify<M> & string,
-    M extends EntityMap,
-    HashKey extends string,
-    RangeKey extends string,
-    T extends TranscodeMap,
-  >(options: Omit<Options, 'entityClient'>) {
-    return new ShardQueryMapBuilder<
-      Options,
-      Item,
-      EntityToken,
-      M,
-      HashKey,
-      RangeKey,
-      T
-    >({ ...options, entityClient: this } as unknown as Options);
   }
 }
