@@ -7,8 +7,8 @@ import {
 } from '@karmaniverous/entity-tools';
 
 import { attributeValueAlias } from './attributeValueAlias';
+import { QueryBuilder } from './QueryBuilder';
 import type { QueryConditionComparison } from './QueryCondition';
-import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
 export const addQueryConditionComparison = <
   V extends Exclude<NativeScalarAttributeValue, object>,
@@ -19,7 +19,7 @@ export const addQueryConditionComparison = <
   RangeKey extends string,
   T extends TranscodeMap,
 >(
-  builder: ShardQueryMapBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
+  builder: QueryBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
   indexToken: string,
   { operator, property, value }: QueryConditionComparison<V>,
 ): string | undefined => {

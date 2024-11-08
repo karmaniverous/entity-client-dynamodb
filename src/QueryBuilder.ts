@@ -1,5 +1,5 @@
 import {
-  BaseShardQueryMapBuilder,
+  BaseQueryBuilder,
   type EntityMap,
   type ItemMap,
   type ShardQueryFunction,
@@ -16,21 +16,21 @@ import {
 import { EntityClient } from './EntityClient';
 import { getDocumentQueryArgs } from './getDocumentQueryArgs';
 import type { IndexParams } from './IndexParams';
-import type { ShardQueryMapBuilderOptions } from './ShardQueryMapBuilderOptions';
+import type { QueryBuilderOptions } from './QueryBuilderOptions';
 
 /**
  * Provides a fluent API for building a {@link ShardQueryMap | `ShardQueryMap`} using a DynamoDB Document client.
  *
- * @category ShardQueryMapBuilder
+ * @category QueryBuilder
  */
-export class ShardQueryMapBuilder<
+export class QueryBuilder<
   Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
   EntityToken extends keyof Exactify<M> & string,
   M extends EntityMap,
   HashKey extends string,
   RangeKey extends string,
   T extends TranscodeMap,
-> extends BaseShardQueryMapBuilder<
+> extends BaseQueryBuilder<
   IndexParams,
   EntityClient,
   Item,
@@ -42,18 +42,12 @@ export class ShardQueryMapBuilder<
 > {
   /** Table name. */
   public readonly tableName: NonNullable<
-    ShardQueryMapBuilderOptions<
-      EntityToken,
-      M,
-      HashKey,
-      RangeKey,
-      T
-    >['tableName']
+    QueryBuilderOptions<EntityToken, M, HashKey, RangeKey, T>['tableName']
   >;
 
-  /** ShardQueryMapBuilder constructor. */
+  /** QueryBuilder constructor. */
   constructor(
-    options: ShardQueryMapBuilderOptions<EntityToken, M, HashKey, RangeKey, T>,
+    options: QueryBuilderOptions<EntityToken, M, HashKey, RangeKey, T>,
   ) {
     const { tableName, ...baseOptions } = options;
 

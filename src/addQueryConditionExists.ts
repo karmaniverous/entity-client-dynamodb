@@ -1,8 +1,8 @@
 import type { EntityMap, ItemMap } from '@karmaniverous/entity-manager';
 import type { Exactify, TranscodeMap } from '@karmaniverous/entity-tools';
 
+import { QueryBuilder } from './QueryBuilder';
 import type { QueryConditionExists } from './QueryCondition';
-import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
 export const addQueryConditionExists = <
   Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
@@ -12,7 +12,7 @@ export const addQueryConditionExists = <
   RangeKey extends string,
   T extends TranscodeMap,
 >(
-  builder: ShardQueryMapBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
+  builder: QueryBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
   indexToken: string,
   { operator, property }: QueryConditionExists,
 ): string | undefined => {

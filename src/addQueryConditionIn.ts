@@ -3,8 +3,8 @@ import type { EntityMap, ItemMap } from '@karmaniverous/entity-manager';
 import type { Exactify, TranscodeMap } from '@karmaniverous/entity-tools';
 
 import { attributeValueAlias } from './attributeValueAlias';
+import { QueryBuilder } from './QueryBuilder';
 import type { QueryConditionIn } from './QueryCondition';
-import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
 export const addQueryConditionIn = <
   V extends Exclude<NativeScalarAttributeValue, object>,
@@ -15,7 +15,7 @@ export const addQueryConditionIn = <
   RangeKey extends string,
   T extends TranscodeMap,
 >(
-  builder: ShardQueryMapBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
+  builder: QueryBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
   indexToken: string,
   { operator, property, value }: QueryConditionIn<V>,
 ): string | undefined => {

@@ -4,16 +4,16 @@ import type { Exactify, TranscodeMap } from '@karmaniverous/entity-tools';
 import { addQueryConditionBeginsWith } from './addQueryConditionBeginsWith';
 import { addQueryConditionBetween } from './addQueryConditionBetween';
 import { addQueryConditionComparison } from './addQueryConditionComparison';
+import { QueryBuilder } from './QueryBuilder';
 import type {
   ComposeCondition,
   QueryConditionBeginsWith,
   QueryConditionBetween,
   QueryConditionComparison,
 } from './QueryCondition';
-import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
 /**
- * Passed as `condition` argument to {@link ShardQueryMapBuilder.addRangeKeyCondition | `ShardQueryMapBuilder.addRangeKeyCondition`}.
+ * Passed as `condition` argument to {@link QueryBuilder.addRangeKeyCondition | `QueryBuilder.addRangeKeyCondition`}.
  *
  * @remarks
  * The `operator` property determines the condition type. Operators map to conditions as follows:
@@ -23,7 +23,7 @@ import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
  *
  * For more info, see the DynamoDB [key condition expression documentation](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
  *
- * @category ShardQueryMapBuilder
+ * @category QueryBuilder
  * @protected
  */
 export type RangeKeyCondition =
@@ -34,8 +34,8 @@ export type RangeKeyCondition =
 /**
  * Add range key condition to builder.
  *
- * @param builder - {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} instance.
- * @param indexToken - Index token in {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} `indexParamsMap`.
+ * @param builder - {@link QueryBuilder | `QueryBuilder`} instance.
+ * @param indexToken - Index token in {@link QueryBuilder | `QueryBuilder`} `indexParamsMap`.
  * @param condition - {@link RangeKeyCondition | `RangeKeyCondition`} object.
  */
 export const addRangeKeyCondition = <
@@ -46,15 +46,15 @@ export const addRangeKeyCondition = <
   RangeKey extends string,
   T extends TranscodeMap,
 >(
-  builder: ShardQueryMapBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
+  builder: QueryBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
   indexToken: string,
   condition: RangeKeyCondition,
 ): void => {
   /**
    * Recursively compose condition string and add expression attribute names & values to builder.
    *
-   * @param builder - {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} instance.
-   * @param indexToken - Index token in {@link ShardQueryMapBuilder | `ShardQueryMapBuilder`} `indexParamsMap`.
+   * @param builder - {@link QueryBuilder | `QueryBuilder`} instance.
+   * @param indexToken - Index token in {@link QueryBuilder | `QueryBuilder`} `indexParamsMap`.
    * @param condition - {@link RangeKeyCondition | `RangeKeyCondition`} object.
    *
    * @returns - Condition string or `undefined`.

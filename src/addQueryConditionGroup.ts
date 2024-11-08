@@ -2,12 +2,12 @@ import type { EntityMap, ItemMap } from '@karmaniverous/entity-manager';
 import type { Exactify, TranscodeMap } from '@karmaniverous/entity-tools';
 import { sift } from 'radash';
 
+import { QueryBuilder } from './QueryBuilder';
 import type {
   ComposeCondition,
   QueryCondition,
   QueryConditionGroup,
 } from './QueryCondition';
-import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
 export const addQueryConditionGroup = <
   C extends QueryCondition,
@@ -18,7 +18,7 @@ export const addQueryConditionGroup = <
   RangeKey extends string,
   T extends TranscodeMap,
 >(
-  builder: ShardQueryMapBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
+  builder: QueryBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
   indexToken: string,
   { operator, conditions }: QueryConditionGroup<C>,
   composeCondition: ComposeCondition<

@@ -6,6 +6,7 @@ export { generateTableDefinition } from './generateTableDefinition';
 export type { GetItemOptions } from './GetItemOptions';
 export type { IndexParams } from './IndexParams';
 export type { Item } from './Item';
+export { QueryBuilder } from './QueryBuilder';
 export type {
   ActuallyScalarAttributeValue,
   QueryCondition,
@@ -18,7 +19,6 @@ export type {
   QueryConditionIn,
   QueryConditionNot,
 } from './QueryCondition';
-export { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 export {
   defaultTranscodeAttributeTypeMap,
   type TranscodeAttributeTypeMap,

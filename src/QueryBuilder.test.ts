@@ -2,13 +2,13 @@ import { expect } from 'chai';
 
 import { entityManager } from '../test/entityManager';
 import { EntityClient } from './EntityClient';
-import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
+import { QueryBuilder } from './QueryBuilder';
 
 const entityClient = new EntityClient({
   region: process.env.AWS_DEFAULT_REGION,
 });
 
-let builder = new ShardQueryMapBuilder({
+let builder = new QueryBuilder({
   entityClient,
   entityManager,
   entityToken: 'user',
@@ -16,9 +16,9 @@ let builder = new ShardQueryMapBuilder({
   tableName: 'UserTable',
 });
 
-describe('ShardQueryMapBuilder - constructor', function () {
+describe('QueryBuilder - constructor', function () {
   beforeEach(function () {
-    builder = new ShardQueryMapBuilder({
+    builder = new QueryBuilder({
       entityClient,
       entityManager,
       entityToken: 'user',
@@ -27,7 +27,7 @@ describe('ShardQueryMapBuilder - constructor', function () {
     });
   });
 
-  it('should create a ShardQueryMapBuilder instance', function () {
-    expect(builder).to.be.an.instanceof(ShardQueryMapBuilder);
+  it('should create a QueryBuilder instance', function () {
+    expect(builder).to.be.an.instanceof(QueryBuilder);
   });
 });

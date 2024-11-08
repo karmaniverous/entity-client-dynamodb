@@ -7,8 +7,8 @@ import {
 } from '@karmaniverous/entity-tools';
 
 import { attributeValueAlias } from './attributeValueAlias';
+import { QueryBuilder } from './QueryBuilder';
 import type { QueryConditionBetween } from './QueryCondition';
-import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
 export const addQueryConditionBetween = <
   V extends Exclude<NativeScalarAttributeValue, object>,
@@ -19,7 +19,7 @@ export const addQueryConditionBetween = <
   RangeKey extends string,
   T extends TranscodeMap,
 >(
-  builder: ShardQueryMapBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
+  builder: QueryBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
   indexToken: string,
   {
     operator,

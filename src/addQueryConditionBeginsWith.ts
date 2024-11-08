@@ -2,8 +2,8 @@ import type { EntityMap, ItemMap } from '@karmaniverous/entity-manager';
 import type { Exactify, TranscodeMap } from '@karmaniverous/entity-tools';
 
 import { attributeValueAlias } from './attributeValueAlias';
+import { QueryBuilder } from './QueryBuilder';
 import type { QueryConditionBeginsWith } from './QueryCondition';
-import { ShardQueryMapBuilder } from './ShardQueryMapBuilder';
 
 export const addQueryConditionBeginsWith = <
   Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
@@ -13,7 +13,7 @@ export const addQueryConditionBeginsWith = <
   RangeKey extends string,
   T extends TranscodeMap,
 >(
-  builder: ShardQueryMapBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
+  builder: QueryBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
   indexToken: string,
   { operator, property, value }: QueryConditionBeginsWith,
 ): string | undefined => {
