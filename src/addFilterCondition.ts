@@ -1,6 +1,5 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
-import type { EntityMap, ItemMap } from '@karmaniverous/entity-manager';
-import type { Exactify, TranscodeMap } from '@karmaniverous/entity-tools';
+import type { BaseConfigMap } from '@karmaniverous/entity-manager';
 
 import { addQueryConditionBeginsWith } from './addQueryConditionBeginsWith';
 import { addQueryConditionBetween } from './addQueryConditionBetween';
@@ -45,26 +44,15 @@ import type {
  * @category QueryBuilder
  * @protected
  */
-export type FilterCondition<
-  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
-  EntityToken extends keyof Exactify<M> & string,
-  M extends EntityMap,
-  HashKey extends string,
-  RangeKey extends string,
-  T extends TranscodeMap,
-> =
+export type FilterCondition<C extends BaseConfigMap> =
   | QueryConditionBeginsWith
   | QueryConditionBetween<ActuallyScalarAttributeValue>
   | QueryConditionComparison<ActuallyScalarAttributeValue>
   | QueryConditionContains<NativeScalarAttributeValue>
   | QueryConditionExists
   | QueryConditionIn<ActuallyScalarAttributeValue>
-  | QueryConditionGroup<
-      FilterCondition<Item, EntityToken, M, HashKey, RangeKey, T>
-    >
-  | QueryConditionNot<
-      FilterCondition<Item, EntityToken, M, HashKey, RangeKey, T>
-    >;
+  | QueryConditionGroup<FilterCondition<C>>
+  | QueryConditionNot<FilterCondition<C>>;
 
 /**
  * Add filter condition to builder.
@@ -73,17 +61,10 @@ export type FilterCondition<
  * @param indexToken - Index token in {@link QueryBuilder | `QueryBuilder`} `indexParamsMap`.
  * @param condition - {@link FilterCondition | `FilterCondition`} object.
  */
-export const addFilterCondition = <
-  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
-  EntityToken extends keyof Exactify<M> & string,
-  M extends EntityMap,
-  HashKey extends string,
-  RangeKey extends string,
-  T extends TranscodeMap,
->(
-  builder: QueryBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
+export const addFilterCondition = <C extends BaseConfigMap>(
+  builder: QueryBuilder<C>,
   indexToken: string,
-  condition: FilterCondition<Item, EntityToken, M, HashKey, RangeKey, T>,
+  condition: FilterCondition<C>,
 ): void => {
   /**
    * Recursively compose condition string and add expression attribute names & values to builder.
@@ -94,15 +75,11 @@ export const addFilterCondition = <
    *
    * @returns - Condition string or `undefined`.
    */
-  const composeCondition: ComposeCondition<
-    FilterCondition<Item, EntityToken, M, HashKey, RangeKey, T>,
-    Item,
-    EntityToken,
-    M,
-    HashKey,
-    RangeKey,
-    T
-  > = (builder, indexToken, condition): string | undefined => {
+  const composeCondition: ComposeCondition<C, FilterCondition<C>> = (
+    builder,
+    indexToken,
+    condition,
+  ): string | undefined => {
     switch (condition.operator) {
       case 'begins_with':
         return addQueryConditionBeginsWith(builder, indexToken, condition);

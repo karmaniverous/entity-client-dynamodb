@@ -1,18 +1,12 @@
 import { expect } from 'chai';
 
-import type { MyEntityMap, UserItem } from '../test/entityManager';
+import type { MyConfigMap } from '../test/entityManager';
 import {
   getDocumentQueryArgs,
   type GetDocumentQueryArgsParams,
 } from './getDocumentQueryArgs';
 
-let defaultArgs: GetDocumentQueryArgsParams<
-  UserItem,
-  'user',
-  MyEntityMap,
-  'hashKey2',
-  'rangeKey'
->;
+let defaultArgs: GetDocumentQueryArgsParams<MyConfigMap>;
 
 describe('getDocumentQueryArgs', function () {
   beforeEach(function () {

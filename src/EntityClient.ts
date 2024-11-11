@@ -23,14 +23,20 @@ import {
   type TransactWriteCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 import { batchProcess } from '@karmaniverous/batch-process';
-import { BaseEntityClient } from '@karmaniverous/entity-manager';
+import {
+  type BaseConfigMap,
+  BaseEntityClient,
+  type EntityItem,
+} from '@karmaniverous/entity-manager';
 import type { WithRequiredAndNonNullable } from '@karmaniverous/entity-tools';
 import AWSXray from 'aws-xray-sdk';
-import { isArray, isString, pick, sift, zipToObject } from 'radash';
+import { isArray, isString, pick, zipToObject } from 'radash';
 
 import type { EntityClientOptions } from './EntityClientOptions';
+import type { EntityKey } from './EntityKey';
+import type { EntityRecord } from './EntityRecord';
 import type { GetItemOptions } from './GetItemOptions';
-import type { Item } from './Item';
+import type { ReplaceKey } from './ReplaceKey';
 
 /**
  * Convenience wrapper around the AWS DynamoDB SDK in addition to {@link BaseEntityClient | `BaseEntityClient`} functionality.
@@ -38,9 +44,11 @@ import type { Item } from './Item';
  * @remarks
  * This class provides a number of enhanced AWS DynamoDB SDK methods. For everything else, both the {@link DynamoDBClient | `DynamoDBClient`} and {@link DynamoDBDocument | `DynamoDBDocument`} instances are exposed for direct access on the {@link EntityClient.client | `client`} and {@link EntityClient.doc | `doc`} properties, respectively.
  *
+ * For query operations, use the {@link QueryBuilder | `QueryBuilder`} class!
+ *
  * @category EntityClient
  */
-export class EntityClient extends BaseEntityClient {
+export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
   public readonly client: DynamoDBClient;
   public readonly doc: DynamoDBDocument;
 
@@ -186,7 +194,10 @@ export class EntityClient extends BaseEntityClient {
    *
    * @overload
    */
-  async putItem(tableName: string, item: Item): Promise<PutCommandOutput>;
+  async putItem(
+    tableName: string,
+    item: EntityRecord<C>,
+  ): Promise<PutCommandOutput>;
   /**
    * Puts an item to a DynamoDB table.
    *
@@ -197,18 +208,27 @@ export class EntityClient extends BaseEntityClient {
    * @overload
    */
   async putItem(
-    options: WithRequiredAndNonNullable<PutCommandInput, 'Item' | 'TableName'>,
+    options: ReplaceKey<
+      WithRequiredAndNonNullable<PutCommandInput, 'TableName'>,
+      'Item',
+      EntityRecord<C>
+    >,
   ): Promise<PutCommandOutput>;
   async putItem(
     optionsOrTableName:
-      | WithRequiredAndNonNullable<PutCommandInput, 'Item' | 'TableName'>
+      | ReplaceKey<
+          WithRequiredAndNonNullable<PutCommandInput, 'TableName'>,
+          'Item',
+          EntityRecord<C>
+        >
       | string,
-    item?: Item,
+    item?: EntityRecord<C>,
   ): Promise<PutCommandOutput> {
     // Normalize params.
-    let options: WithRequiredAndNonNullable<
-      PutCommandInput,
-      'Item' | 'TableName'
+    let options: ReplaceKey<
+      WithRequiredAndNonNullable<PutCommandInput, 'TableName'>,
+      'Item',
+      EntityRecord<C>
     >;
 
     if (isString(optionsOrTableName)) {
@@ -259,7 +279,10 @@ export class EntityClient extends BaseEntityClient {
    *
    * @overload
    */
-  async deleteItem(tableName: string, key: Item): Promise<DeleteCommandOutput>;
+  async deleteItem(
+    tableName: string,
+    key: EntityKey<C>,
+  ): Promise<DeleteCommandOutput>;
   /**
    * Deletes an item from a DynamoDB table.
    * @param options - {@link DeleteCommandInput | `DeleteCommandInput`} object with the `Key` & `TableName` properties required and non-nullable.
@@ -276,7 +299,7 @@ export class EntityClient extends BaseEntityClient {
     optionsOrTableName:
       | WithRequiredAndNonNullable<DeleteCommandInput, 'Key' | 'TableName'>
       | string,
-    key?: Item,
+    key?: EntityKey<C>,
   ): Promise<DeleteCommandOutput> {
     // Normalize params.
     let options: WithRequiredAndNonNullable<
@@ -333,14 +356,14 @@ export class EntityClient extends BaseEntityClient {
    */
   async putItems(
     tableName: string,
-    items: Item[],
+    items: EntityRecord<C>[],
     batchProcessOptions: EntityClientOptions['batchProcessOptions'] = {},
   ): Promise<BatchWriteCommandOutput[]> {
     // Validate options.
     if (!tableName) throw new Error('tableName is required');
 
     try {
-      const batchHandler = async (batch: Item[]) =>
+      const batchHandler = async (batch: EntityRecord<C>[]) =>
         await this.doc.batchWrite({
           RequestItems: {
             [tableName]: batch.map((item) => ({
@@ -350,7 +373,7 @@ export class EntityClient extends BaseEntityClient {
         });
 
       const unprocessedItemExtractor = (output: BatchWriteCommandOutput) =>
-        output.UnprocessedItems?.[tableName];
+        output.UnprocessedItems?.[tableName] as EntityRecord<C>[];
 
       const outputs = await batchProcess(items, {
         batchHandler,
@@ -389,14 +412,14 @@ export class EntityClient extends BaseEntityClient {
    */
   async deleteItems(
     tableName: string,
-    keys: Item[],
+    keys: EntityKey<C>[],
     batchProcessOptions: EntityClientOptions['batchProcessOptions'] = {},
   ): Promise<BatchWriteCommandOutput[]> {
     // Validate options.
     if (!tableName) throw new Error('tableName is required');
 
     try {
-      const batchHandler = async (batch: Item[]) =>
+      const batchHandler = async (batch: EntityKey<C>[]) =>
         await this.doc.batchWrite({
           RequestItems: {
             [tableName]: batch.map((key) => ({
@@ -406,7 +429,7 @@ export class EntityClient extends BaseEntityClient {
         });
 
       const unprocessedItemExtractor = (output: BatchWriteCommandOutput) =>
-        output.UnprocessedItems?.[tableName];
+        output.UnprocessedItems?.[tableName] as EntityKey<C>[];
 
       const outputs = await batchProcess(keys, {
         batchHandler,
@@ -446,8 +469,8 @@ export class EntityClient extends BaseEntityClient {
    */
   async purgeItems(
     tableName: string,
-    hashKey: string,
-    rangeKey?: string,
+    hashKey: C['HashKey'],
+    rangeKey: C['RangeKey'],
     batchProcessOptions: EntityClientOptions['batchProcessOptions'] = {},
   ): Promise<number> {
     try {
@@ -456,8 +479,8 @@ export class EntityClient extends BaseEntityClient {
       if (!hashKey) throw new Error('hashKey is required');
 
       let purged = 0;
-      let items: Item[] = [];
-      let lastEvaluatedKey: Item | undefined = undefined;
+      let items: Record<string, unknown>[] = [];
+      let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
 
       do {
         ({ Items: items = [], LastEvaluatedKey: lastEvaluatedKey } =
@@ -468,8 +491,8 @@ export class EntityClient extends BaseEntityClient {
 
         if (items.length) {
           const itemKeys = items.map((item) =>
-            pick(item, sift([hashKey, rangeKey])),
-          );
+            pick(item, [hashKey, rangeKey]),
+          ) as EntityKey<C>[];
 
           await this.deleteItems(tableName, itemKeys, batchProcessOptions);
 
@@ -509,7 +532,7 @@ export class EntityClient extends BaseEntityClient {
    */
   async transactPutItems(
     tableName: string,
-    items: Item[],
+    items: EntityItem<C>[],
   ): Promise<TransactWriteCommandOutput> {
     try {
       // Validate options.
@@ -549,7 +572,7 @@ export class EntityClient extends BaseEntityClient {
    */
   async transactDeleteItems(
     tableName: string,
-    keys: Item[],
+    keys: EntityItem<C>[],
   ): Promise<TransactWriteCommandOutput> {
     try {
       // Validate options.
@@ -592,7 +615,7 @@ export class EntityClient extends BaseEntityClient {
    */
   async getItem(
     tableName: string,
-    key: Item,
+    key: EntityItem<C>,
     options?: GetItemOptions,
   ): Promise<GetCommandOutput>;
   /**
@@ -609,13 +632,13 @@ export class EntityClient extends BaseEntityClient {
    */
   async getItem(
     tableName: string,
-    key: Item,
+    key: EntityItem<C>,
     attributes: string[],
     options?: Omit<GetItemOptions, 'attributes'>,
   ): Promise<GetCommandOutput>;
   async getItem(
     tableName: string,
-    key: Item,
+    key: EntityItem<C>,
     attributesOrOptions?: string[] | GetItemOptions,
     remainingOptions?: Omit<GetItemOptions, 'attributes'>,
   ): Promise<GetCommandOutput> {
@@ -684,14 +707,14 @@ export class EntityClient extends BaseEntityClient {
    */
   async getItems(
     tableName: string,
-    keys: Item[],
+    keys: EntityItem<C>[],
     batchProcessOptions: EntityClientOptions['batchProcessOptions'] = {},
-  ): Promise<{ items: Item[]; outputs: BatchGetCommandOutput[] }> {
+  ): Promise<{ items: EntityItem<C>[]; outputs: BatchGetCommandOutput[] }> {
     // Validate options.
     if (!tableName) throw new Error('tableName is required');
 
     try {
-      const batchHandler = async (batch: Item[]) =>
+      const batchHandler = async (batch: EntityItem<C>[]) =>
         await this.doc.batchGet({
           RequestItems: {
             [tableName]: {

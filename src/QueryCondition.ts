@@ -1,6 +1,5 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
-import type { EntityMap, ItemMap } from '@karmaniverous/entity-manager';
-import type { Exactify, TranscodeMap } from '@karmaniverous/entity-tools';
+import type { BaseConfigMap } from '@karmaniverous/entity-manager';
 
 import { QueryBuilder } from './QueryBuilder';
 
@@ -122,15 +121,10 @@ export interface QueryConditionNot<C extends QueryCondition> {
 }
 
 export type ComposeCondition<
-  C extends QueryCondition,
-  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
-  EntityToken extends keyof Exactify<M> & string,
-  M extends EntityMap,
-  HashKey extends string,
-  RangeKey extends string,
-  T extends TranscodeMap,
+  C extends BaseConfigMap,
+  Q extends QueryCondition,
 > = (
-  builder: QueryBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
+  builder: QueryBuilder<C>,
   indexToken: string,
-  condition: C,
+  condition: Q,
 ) => string | undefined;

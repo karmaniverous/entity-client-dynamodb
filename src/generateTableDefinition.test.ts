@@ -1,9 +1,13 @@
 import {
   type Config,
+  ConfigMap,
   EntityManager,
-  type EntityMap,
 } from '@karmaniverous/entity-manager';
-import type { Entity } from '@karmaniverous/entity-tools';
+import {
+  defaultTranscodes,
+  type Entity,
+  type EntityMap,
+} from '@karmaniverous/entity-tools';
 import { expect } from 'chai';
 import { inspect } from 'util';
 
@@ -12,7 +16,6 @@ import { generateTableDefinition } from './generateTableDefinition';
 interface Email extends Entity {
   created: number;
   email: string;
-  userHashKey: never; // generated
   userId: string;
 }
 
@@ -21,14 +24,10 @@ interface User extends Entity {
   created: number;
   firstName: string;
   firstNameCanonical: string;
-  firstNameRangeKey: never; // generated
   lastName: string;
   lastNameCanonical: string;
-  lastNameRangeKey: never; // generated
   phone?: string;
   updated: number;
-  userBeneficiaryHashKey: never; // generated
-  userHashKey: never; // generated
   userId: string;
 }
 
@@ -37,95 +36,89 @@ interface MyEntityMap extends EntityMap {
   user: User;
 }
 
+type MyConfigMap = ConfigMap<{
+  EntityMap: MyEntityMap;
+  ShardedKeys: 'userHashKey' | 'userBeneficiaryHashKey';
+  UnshardedKeys: 'firstNameRangeKey' | 'lastNameRangeKey';
+  TranscodedProperties:
+    | 'beneficiaryId'
+    | 'created'
+    | 'email'
+    | 'firstNameCanonical'
+    | 'lastNameCanonical'
+    | 'phone'
+    | 'updated'
+    | 'userId';
+}>;
+
 const now = Date.now();
 
-const config: Config<MyEntityMap> = {
-  hashKey: 'hashKey',
-  rangeKey: 'rangeKey',
+const config: Config<MyConfigMap> = {
   entities: {
     email: {
       uniqueProperty: 'email',
       timestampProperty: 'created',
       shardBumps: [{ timestamp: now, charBits: 2, chars: 1 }],
-      generated: {
-        userHashKey: {
-          atomic: true,
-          elements: ['userId'],
-          sharded: true,
-        },
-      },
-      indexes: {
-        created: { hashKey: 'hashKey', rangeKey: 'created' },
-        userCreated: { hashKey: 'userHashKey', rangeKey: 'created' },
-      },
-      elementTranscodes: {
-        created: 'timestamp',
-        userId: 'string',
-      },
     },
     user: {
       uniqueProperty: 'userId',
       timestampProperty: 'created',
       shardBumps: [{ timestamp: now, charBits: 2, chars: 1 }],
-      generated: {
-        firstNameRangeKey: {
-          atomic: true,
-          elements: ['firstNameCanonical', 'lastNameCanonical', 'created'],
-        },
-        lastNameRangeKey: {
-          atomic: true,
-          elements: ['lastNameCanonical', 'firstNameCanonical', 'created'],
-        },
-        userBeneficiaryHashKey: {
-          atomic: true,
-          elements: ['beneficiaryId'],
-          sharded: true,
-        },
-        userHashKey: {
-          atomic: true,
-          elements: ['userId'],
-          sharded: true,
-        },
-      },
-      indexes: {
-        created: { hashKey: 'hashKey', rangeKey: 'created' },
-        firstName: { hashKey: 'hashKey', rangeKey: 'firstNameRangeKey' },
-        lastName: { hashKey: 'hashKey', rangeKey: 'lastNameRangeKey' },
-        phone: { hashKey: 'hashKey', rangeKey: 'phone' },
-        updated: { hashKey: 'hashKey', rangeKey: 'updated' },
-        userBeneficiaryCreated: {
-          hashKey: 'userBeneficiaryHashKey',
-          rangeKey: 'created',
-          projections: ['someProperty', 'someOtherProperty'],
-        },
-        userBeneficiaryFirstName: {
-          hashKey: 'userBeneficiaryHashKey',
-          rangeKey: 'firstNameRangeKey',
-        },
-        userBeneficiaryLastName: {
-          hashKey: 'userBeneficiaryHashKey',
-          rangeKey: 'lastNameRangeKey',
-        },
-        userBeneficiaryPhone: {
-          hashKey: 'userBeneficiaryHashKey',
-          rangeKey: 'phone',
-        },
-        userBeneficiaryUpdated: {
-          hashKey: 'userBeneficiaryHashKey',
-          rangeKey: 'updated',
-        },
-      },
-      elementTranscodes: {
-        beneficiaryId: 'string',
-        created: 'timestamp',
-        firstNameCanonical: 'string',
-        lastNameCanonical: 'string',
-        phone: 'string',
-        updated: 'timestamp',
-        userId: 'string',
-      },
     },
   },
+  generatedProperties: {
+    sharded: {
+      userBeneficiaryHashKey: ['beneficiaryId'],
+      userHashKey: ['userId'],
+    },
+    unsharded: {
+      firstNameRangeKey: ['firstNameCanonical', 'lastNameCanonical', 'created'],
+      lastNameRangeKey: ['lastNameCanonical', 'firstNameCanonical', 'created'],
+    },
+  },
+  hashKey: 'hashKey',
+  indexes: {
+    created: { hashKey: 'hashKey', rangeKey: 'created' },
+    firstName: { hashKey: 'hashKey', rangeKey: 'firstNameRangeKey' },
+    lastName: { hashKey: 'hashKey', rangeKey: 'lastNameRangeKey' },
+    phone: { hashKey: 'hashKey', rangeKey: 'phone' },
+    updated: { hashKey: 'hashKey', rangeKey: 'updated' },
+    userBeneficiaryCreated: {
+      hashKey: 'userBeneficiaryHashKey',
+      rangeKey: 'created',
+      projections: ['someProperty', 'someOtherProperty'],
+    },
+    userBeneficiaryFirstName: {
+      hashKey: 'userBeneficiaryHashKey',
+      rangeKey: 'firstNameRangeKey',
+    },
+    userBeneficiaryLastName: {
+      hashKey: 'userBeneficiaryHashKey',
+      rangeKey: 'lastNameRangeKey',
+    },
+    userBeneficiaryPhone: {
+      hashKey: 'userBeneficiaryHashKey',
+      rangeKey: 'phone',
+    },
+    userBeneficiaryUpdated: {
+      hashKey: 'userBeneficiaryHashKey',
+      rangeKey: 'updated',
+    },
+    userCreated: { hashKey: 'userHashKey', rangeKey: 'created' },
+  },
+  propertyTranscodes: {
+    beneficiaryId: 'string',
+    created: 'timestamp',
+    email: 'string',
+    firstNameCanonical: 'string',
+    lastNameCanonical: 'string',
+    phone: 'string',
+    updated: 'timestamp',
+    userId: 'string',
+  },
+
+  rangeKey: 'rangeKey',
+  transcodes: defaultTranscodes,
 };
 
 // Configure & export EntityManager instance.
@@ -152,10 +145,6 @@ describe('generateTableDefinition', function () {
           AttributeType: 'N',
         },
         {
-          AttributeName: 'userHashKey',
-          AttributeType: 'S',
-        },
-        {
           AttributeName: 'firstNameRangeKey',
           AttributeType: 'S',
         },
@@ -175,20 +164,16 @@ describe('generateTableDefinition', function () {
           AttributeName: 'userBeneficiaryHashKey',
           AttributeType: 'S',
         },
+        {
+          AttributeName: 'userHashKey',
+          AttributeType: 'S',
+        },
       ],
       GlobalSecondaryIndexes: [
         {
           IndexName: 'created',
           KeySchema: [
             { AttributeName: 'hashKey', KeyType: 'HASH' },
-            { AttributeName: 'created', KeyType: 'RANGE' },
-          ],
-          Projection: { ProjectionType: 'ALL' },
-        },
-        {
-          IndexName: 'userCreated',
-          KeySchema: [
-            { AttributeName: 'userHashKey', KeyType: 'HASH' },
             { AttributeName: 'created', KeyType: 'RANGE' },
           ],
           Projection: { ProjectionType: 'ALL' },
@@ -265,6 +250,14 @@ describe('generateTableDefinition', function () {
           KeySchema: [
             { AttributeName: 'userBeneficiaryHashKey', KeyType: 'HASH' },
             { AttributeName: 'updated', KeyType: 'RANGE' },
+          ],
+          Projection: { ProjectionType: 'ALL' },
+        },
+        {
+          IndexName: 'userCreated',
+          KeySchema: [
+            { AttributeName: 'userHashKey', KeyType: 'HASH' },
+            { AttributeName: 'created', KeyType: 'RANGE' },
           ],
           Projection: { ProjectionType: 'ALL' },
         },

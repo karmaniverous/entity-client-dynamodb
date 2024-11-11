@@ -1,10 +1,13 @@
 import {
   type Config,
+  ConfigMap,
   EntityManager,
-  type EntityMap,
-  type ItemMap,
 } from '@karmaniverous/entity-manager';
-import type { Entity } from '@karmaniverous/entity-tools';
+import {
+  defaultTranscodes,
+  type Entity,
+  type EntityMap,
+} from '@karmaniverous/entity-tools';
 
 const now = Date.now();
 const day = 24 * 60 * 60 * 1000;
@@ -12,14 +15,10 @@ const day = 24 * 60 * 60 * 1000;
 export interface User extends Entity {
   created: number;
   firstNameCanonical: string;
-  firstNameRK?: never;
   lastNameCanonical: string;
-  lastNameRK?: never;
   phone?: string;
-  phoneRK?: never;
   updated: number;
   userId: string;
-  userPK?: never;
 }
 
 export interface Email extends Entity {
@@ -33,52 +32,28 @@ export interface MyEntityMap extends EntityMap {
   email: Email;
 }
 
-const config: Config<MyEntityMap, 'hashKey2'> = {
+export type MyConfigMap = ConfigMap<{
+  EntityMap: MyEntityMap;
+  HashKey: 'hashKey2';
+  ShardedKeys: 'userPK';
+  UnshardedKeys: 'firstNameRK' | 'lastNameRK' | 'phoneRK';
+  TranscodedProperties:
+    | 'created'
+    | 'email'
+    | 'firstNameCanonical'
+    | 'lastNameCanonical'
+    | 'phone'
+    | 'updated'
+    | 'userId';
+}>;
+
+const config: Config<MyConfigMap> = {
   entities: {
     email: {
-      elementTranscodes: {
-        created: 'int',
-        email: 'string',
-        userId: 'string',
-      },
-      indexes: {
-        userId: { hashKey: 'hashKey2', rangeKey: 'userId' },
-      },
       timestampProperty: 'created',
       uniqueProperty: 'email',
     },
     user: {
-      indexes: {
-        created: { hashKey: 'hashKey2', rangeKey: 'created' },
-        firstName: { hashKey: 'hashKey2', rangeKey: 'firstNameRK' },
-        lastName: { hashKey: 'hashKey2', rangeKey: 'lastNameRK' },
-        phone: { hashKey: 'hashKey2', rangeKey: 'phone' },
-        updated: { hashKey: 'hashKey2', rangeKey: 'updated' },
-      },
-      generated: {
-        firstNameRK: {
-          elements: ['firstNameCanonical', 'lastNameCanonical'],
-        },
-        lastNameRK: {
-          elements: ['lastNameCanonical', 'firstNameCanonical'],
-        },
-        phoneRK: {
-          atomic: true,
-          elements: ['phone', 'created'],
-        },
-        userPK: {
-          elements: ['userId'],
-          sharded: true,
-        },
-      },
-      elementTranscodes: {
-        created: 'int',
-        firstNameCanonical: 'string',
-        lastNameCanonical: 'string',
-        phone: 'string',
-        updated: 'int',
-        userId: 'string',
-      },
       shardBumps: [
         { timestamp: now + day, charBits: 2, chars: 1 },
         { timestamp: now + day * 2, charBits: 2, chars: 2 },
@@ -87,10 +62,34 @@ const config: Config<MyEntityMap, 'hashKey2'> = {
       uniqueProperty: 'userId',
     },
   },
+  generatedProperties: {
+    sharded: { userPK: ['userId'] },
+    unsharded: {
+      firstNameRK: ['firstNameCanonical', 'lastNameCanonical'],
+      lastNameRK: ['lastNameCanonical', 'firstNameCanonical'],
+      phoneRK: ['phone', 'created'],
+    },
+  },
+  indexes: {
+    created: { hashKey: 'hashKey2', rangeKey: 'created' },
+    firstName: { hashKey: 'hashKey2', rangeKey: 'firstNameRK' },
+    lastName: { hashKey: 'hashKey2', rangeKey: 'lastNameRK' },
+    phone: { hashKey: 'hashKey2', rangeKey: 'phone' },
+    updated: { hashKey: 'hashKey2', rangeKey: 'updated' },
+    userId: { hashKey: 'hashKey2', rangeKey: 'userId' },
+  },
   hashKey: 'hashKey2',
+  propertyTranscodes: {
+    created: 'int',
+    email: 'string',
+    firstNameCanonical: 'string',
+    lastNameCanonical: 'string',
+    phone: 'string',
+    updated: 'int',
+    userId: 'string',
+  },
   rangeKey: 'rangeKey',
+  transcodes: defaultTranscodes,
 };
-
-export type UserItem = ItemMap<MyEntityMap, 'hashKey2'>['user'];
 
 export const entityManager = new EntityManager(config);

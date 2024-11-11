@@ -1,5 +1,4 @@
-import type { EntityMap, ItemMap } from '@karmaniverous/entity-manager';
-import type { Exactify, TranscodeMap } from '@karmaniverous/entity-tools';
+import type { BaseConfigMap } from '@karmaniverous/entity-manager';
 
 import { addQueryConditionBeginsWith } from './addQueryConditionBeginsWith';
 import { addQueryConditionBetween } from './addQueryConditionBetween';
@@ -38,15 +37,8 @@ export type RangeKeyCondition =
  * @param indexToken - Index token in {@link QueryBuilder | `QueryBuilder`} `indexParamsMap`.
  * @param condition - {@link RangeKeyCondition | `RangeKeyCondition`} object.
  */
-export const addRangeKeyCondition = <
-  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
-  EntityToken extends keyof Exactify<M> & string,
-  M extends EntityMap,
-  HashKey extends string,
-  RangeKey extends string,
-  T extends TranscodeMap,
->(
-  builder: QueryBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
+export const addRangeKeyCondition = <C extends BaseConfigMap>(
+  builder: QueryBuilder<C>,
   indexToken: string,
   condition: RangeKeyCondition,
 ): void => {
@@ -59,15 +51,11 @@ export const addRangeKeyCondition = <
    *
    * @returns - Condition string or `undefined`.
    */
-  const composeCondition: ComposeCondition<
-    RangeKeyCondition,
-    Item,
-    EntityToken,
-    M,
-    HashKey,
-    RangeKey,
-    T
-  > = (builder, indexToken, condition): string | undefined => {
+  const composeCondition: ComposeCondition<C, RangeKeyCondition> = (
+    builder,
+    indexToken,
+    condition,
+  ): string | undefined => {
     switch (condition.operator) {
       case 'begins_with':
         return addQueryConditionBeginsWith(builder, indexToken, condition);

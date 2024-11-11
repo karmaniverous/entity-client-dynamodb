@@ -7,6 +7,7 @@ export type { GetItemOptions } from './GetItemOptions';
 export type { IndexParams } from './IndexParams';
 export type { Item } from './Item';
 export { QueryBuilder } from './QueryBuilder';
+export type { QueryBuilderOptions } from './QueryBuilderOptions';
 export type {
   ActuallyScalarAttributeValue,
   QueryCondition,

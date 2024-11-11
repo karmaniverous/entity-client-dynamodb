@@ -1,8 +1,7 @@
 import type { CreateTableCommandInput } from '@aws-sdk/client-dynamodb';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { ScalarAttributeType } from '@aws-sdk/client-dynamodb';
-import { EntityManager, type EntityMap } from '@karmaniverous/entity-manager';
-import type { TranscodeMap } from '@karmaniverous/entity-tools';
+import { BaseConfigMap, EntityManager } from '@karmaniverous/entity-manager';
 
 import {
   defaultTranscodeAttributeTypeMap,
@@ -31,20 +30,23 @@ import {
  *
  * @category Tables
  */
-export const generateTableDefinition = <
-  M extends EntityMap,
-  HashKey extends string,
-  RangeKey extends string,
-  T extends TranscodeMap,
->(
-  entityManager: EntityManager<M, HashKey, RangeKey, T>,
-  transcodeAtttributeTypeMap: TranscodeAttributeTypeMap<T> = defaultTranscodeAttributeTypeMap,
+export const generateTableDefinition = <C extends BaseConfigMap>(
+  entityManager: EntityManager<C>,
+  transcodeAtttributeTypeMap: TranscodeAttributeTypeMap<
+    C['TranscodeMap']
+  > = defaultTranscodeAttributeTypeMap,
 ): Pick<
   CreateTableCommandInput,
   'AttributeDefinitions' | 'GlobalSecondaryIndexes' | 'KeySchema'
 > => {
   const {
-    config: { entities, hashKey, rangeKey },
+    config: {
+      generatedProperties: { sharded, unsharded },
+      hashKey,
+      indexes,
+      rangeKey,
+      propertyTranscodes,
+    },
   } = entityManager;
 
   // Attribute definitions always include hashKey & rangeKey.
@@ -54,55 +56,46 @@ export const generateTableDefinition = <
       { AttributeName: rangeKey, AttributeType: 'S' },
     ];
 
+  // Create global secondary indexes.
   const globalSecondaryIndexes: CreateTableCommandInput['GlobalSecondaryIndexes'] =
-    [];
+    Object.entries(indexes).map(
+      ([indexToken, { hashKey, rangeKey, projections }]) => {
+        // Iterate across every index component.
+        for (const component of [hashKey, rangeKey]) {
+          // If the component is already in the attribute definitions, skip it.
+          if (attributeDefinitions.find((a) => a.AttributeName === component))
+            continue;
 
-  // Iterate across every entity index.
-  for (const entity of Object.values(entities))
-    for (const [
-      indexToken,
-      { hashKey, rangeKey, projections },
-    ] of Object.entries(entity.indexes)) {
-      // If the index is already in the global secondary index definitions,
-      // skip it.
-      if (globalSecondaryIndexes.find((i) => i.IndexName === indexToken))
-        continue;
+          // All generated properties are strings. Properties whose transcodes
+          // are not included in the transcodeAtttributeTypeMap are assumed to
+          // be strings.
+          attributeDefinitions.push({
+            AttributeName: component,
+            AttributeType:
+              component in sharded || component in unsharded
+                ? 'S'
+                : (transcodeAtttributeTypeMap[
+                    propertyTranscodes[
+                      component
+                    ] as keyof TranscodeAttributeTypeMap<C['TranscodeMap']>
+                  ] ?? 'S'),
+          });
+        }
 
-      // Create the global secondary index.
-      globalSecondaryIndexes.push({
-        IndexName: indexToken,
-        KeySchema: [
-          { AttributeName: hashKey, KeyType: 'HASH' },
-          { AttributeName: rangeKey, KeyType: 'RANGE' },
-        ],
-        Projection: {
-          ProjectionType: projections ? 'INCLUDE' : 'ALL',
-          ...(projections ? { NonKeyAttributes: projections } : {}),
-        },
-      });
-
-      // Iterate across every index component.
-      for (const component of [hashKey, rangeKey]) {
-        // If the component is already in the attribute definitions, skip it.
-        if (attributeDefinitions.find((a) => a.AttributeName === component))
-          continue;
-
-        // All generated properties are strings. Properties whose transcodes
-        // are not included in the transcodeAtttributeTypeMap are assumed to
-        // be strings.
-        attributeDefinitions.push({
-          AttributeName: component,
-          AttributeType:
-            component in entity.generated
-              ? 'S'
-              : (transcodeAtttributeTypeMap[
-                  entity.elementTranscodes[
-                    component
-                  ] as keyof TranscodeAttributeTypeMap<T>
-                ] ?? 'S'),
-        });
-      }
-    }
+        // Return the global secondary index object.
+        return {
+          IndexName: indexToken,
+          KeySchema: [
+            { AttributeName: hashKey, KeyType: 'HASH' },
+            { AttributeName: rangeKey, KeyType: 'RANGE' },
+          ],
+          Projection: {
+            ProjectionType: projections ? 'INCLUDE' : 'ALL',
+            ...(projections ? { NonKeyAttributes: projections } : {}),
+          },
+        };
+      },
+    );
 
   return {
     AttributeDefinitions: attributeDefinitions,

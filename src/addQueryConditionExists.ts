@@ -1,18 +1,10 @@
-import type { EntityMap, ItemMap } from '@karmaniverous/entity-manager';
-import type { Exactify, TranscodeMap } from '@karmaniverous/entity-tools';
+import type { BaseConfigMap } from '@karmaniverous/entity-manager';
 
 import { QueryBuilder } from './QueryBuilder';
 import type { QueryConditionExists } from './QueryCondition';
 
-export const addQueryConditionExists = <
-  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
-  EntityToken extends keyof Exactify<M> & string,
-  M extends EntityMap,
-  HashKey extends string,
-  RangeKey extends string,
-  T extends TranscodeMap,
->(
-  builder: QueryBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
+export const addQueryConditionExists = <C extends BaseConfigMap>(
+  builder: QueryBuilder<C>,
   indexToken: string,
   { operator, property }: QueryConditionExists,
 ): string | undefined => {

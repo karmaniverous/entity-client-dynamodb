@@ -1,12 +1,12 @@
 import {
+  type BaseConfigMap,
   BaseQueryBuilder,
-  type EntityMap,
-  type ItemMap,
+  type EntityItem,
+  type PageKey,
   type ShardQueryFunction,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   type ShardQueryMap,
 } from '@karmaniverous/entity-manager';
-import type { Exactify, TranscodeMap } from '@karmaniverous/entity-tools';
 
 import { addFilterCondition, type FilterCondition } from './addFilterCondition';
 import {
@@ -23,32 +23,16 @@ import type { QueryBuilderOptions } from './QueryBuilderOptions';
  *
  * @category QueryBuilder
  */
-export class QueryBuilder<
-  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
-  EntityToken extends keyof Exactify<M> & string,
-  M extends EntityMap,
-  HashKey extends string,
-  RangeKey extends string,
-  T extends TranscodeMap,
-> extends BaseQueryBuilder<
-  IndexParams,
+export class QueryBuilder<C extends BaseConfigMap> extends BaseQueryBuilder<
+  C,
   EntityClient,
-  Item,
-  EntityToken,
-  M,
-  HashKey,
-  RangeKey,
-  T
+  IndexParams
 > {
   /** Table name. */
-  public readonly tableName: NonNullable<
-    QueryBuilderOptions<EntityToken, M, HashKey, RangeKey, T>['tableName']
-  >;
+  public readonly tableName: NonNullable<QueryBuilderOptions<C>['tableName']>;
 
   /** QueryBuilder constructor. */
-  constructor(
-    options: QueryBuilderOptions<EntityToken, M, HashKey, RangeKey, T>,
-  ) {
+  constructor(options: QueryBuilderOptions<C>) {
     const { tableName, ...baseOptions } = options;
 
     super(baseOptions);
@@ -60,18 +44,14 @@ export class QueryBuilder<
     this.tableName = tableName;
   }
 
-  getShardQueryFunction(indexToken: string): ShardQueryFunction<Item> {
-    return async (
-      hashKey: string,
-      pageKey?: Partial<Item>,
-      pageSize?: number,
-    ) => {
+  getShardQueryFunction(indexToken: string): ShardQueryFunction<C> {
+    return async (hashKey: string, pageKey?: PageKey<C>, pageSize?: number) => {
       const {
         Count: count = 0,
         Items: items = [],
         LastEvaluatedKey: newPageKey,
       } = await this.entityClient.doc.query(
-        getDocumentQueryArgs<Item, EntityToken, M, HashKey, RangeKey>({
+        getDocumentQueryArgs<C>({
           hashKey,
           hashKeyToken: this.hashKeyToken,
           indexParamsMap: this.indexParamsMap,
@@ -84,8 +64,8 @@ export class QueryBuilder<
 
       return {
         count,
-        items: items as Item[],
-        pageKey: newPageKey as Partial<Item>,
+        items: items as EntityItem<C>[],
+        pageKey: newPageKey as PageKey<C>,
       };
     };
   }
@@ -111,10 +91,7 @@ export class QueryBuilder<
    *
    * @returns - The modified {@link ShardQueryMap | `ShardQueryMap`} instance.
    */
-  addFilterCondition(
-    indexToken: string,
-    condition: FilterCondition<Item, EntityToken, M, HashKey, RangeKey, T>,
-  ): this {
+  addFilterCondition(indexToken: string, condition: FilterCondition<C>): this {
     addFilterCondition(this, indexToken, condition);
     return this;
   }

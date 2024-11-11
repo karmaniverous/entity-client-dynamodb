@@ -36,7 +36,11 @@
       "BatchProcessOptions": "https://docs.karmanivero.us/batch-process/interfaces/batch_process.BatchProcessOptions.html"
     },
     "@karmaniverous/entity-manager": {
+      "BaseEntityClient": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.BaseEntityClient.html",
+      "BaseEntityClientOptions": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.BaseEntityClientOptions.html",
+      "EntityItemize": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityItemize.html",
       "EntityManager": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityManager.html",
+      "EntityToken": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityToken.html",
       "ShardQueryMap": "https://docs.karmanivero.us/entity-manager/types/entity_manager.ShardQueryMap.html"
     },
     "@karmaniverous/entity-tools": {

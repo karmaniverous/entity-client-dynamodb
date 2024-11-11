@@ -1,21 +1,15 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
-import type { EntityMap, ItemMap } from '@karmaniverous/entity-manager';
-import type { Exactify, TranscodeMap } from '@karmaniverous/entity-tools';
+import type { BaseConfigMap } from '@karmaniverous/entity-manager';
 
 import { attributeValueAlias } from './attributeValueAlias';
 import { QueryBuilder } from './QueryBuilder';
 import type { QueryConditionIn } from './QueryCondition';
 
 export const addQueryConditionIn = <
+  C extends BaseConfigMap,
   V extends Exclude<NativeScalarAttributeValue, object>,
-  Item extends ItemMap<M, HashKey, RangeKey>[EntityToken],
-  EntityToken extends keyof Exactify<M> & string,
-  M extends EntityMap,
-  HashKey extends string,
-  RangeKey extends string,
-  T extends TranscodeMap,
 >(
-  builder: QueryBuilder<Item, EntityToken, M, HashKey, RangeKey, T>,
+  builder: QueryBuilder<C>,
   indexToken: string,
   { operator, property, value }: QueryConditionIn<V>,
 ): string | undefined => {
