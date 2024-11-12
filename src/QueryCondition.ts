@@ -3,6 +3,12 @@ import type { BaseConfigMap } from '@karmaniverous/entity-manager';
 
 import { QueryBuilder } from './QueryBuilder';
 
+/**
+ * Eliminates object types from the `NativeScalarAttributeValue` type.
+ *
+ * @category QueryBuilder
+ * @protected
+ */
 export type ActuallyScalarAttributeValue = Exclude<
   NativeScalarAttributeValue,
   object
