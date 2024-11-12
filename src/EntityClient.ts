@@ -584,7 +584,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
    * @param attributes - Item attributes to retrieve.
    * @param options - {@link GetCommandInput | `GetCommandInput`} object with `Key` & projection-related properties omitted and `TableName` optional. If provided, `TableName` will override `this.tableName`.
    *
-   * @returns `GetCommandOutput` object, where `Item` key is replaced by an {@link EntityRecord | `EntityRecord`}.
+   * @returns `GetCommandOutput` object, where the `Item` key is replaced by an {@link EntityRecord | `EntityRecord`}.
    *
    * @overload
    */
@@ -601,33 +601,33 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
       >,
       'TableName'
     >,
-  ): Promise<ReplaceKey<GetCommandOutput, 'Item', EntityRecord<C>>>;
+  ): Promise<ReplaceKey<GetCommandOutput, 'Item', EntityRecord<C> | undefined>>;
   /**
    * Get item from a DynamoDB table.
    *
    * @param key - {@link EntityKey | `EntityKey`} object.
    * @param options - {@link GetCommandInput | `GetCommandInput`} object with `Key` omitted and `TableName` optional. If provided, `TableName` will override `this.tableName`.
    *
-   * @returns The resulting {@link GetCommandOutput | `GetCommandOutput`} object.
+   * @returns `GetCommandOutput` object, where the `Item` key is replaced by an {@link EntityRecord | `EntityRecord`}.
    *
    * @overload
    */
   async getItem(
     key: EntityKey<C>,
     options?: MakeOptional<Omit<GetCommandInput, 'Key'>, 'TableName'>,
-  ): Promise<ReplaceKey<GetCommandOutput, 'Item', EntityRecord<C>>>;
+  ): Promise<ReplaceKey<GetCommandOutput, 'Item', EntityRecord<C> | undefined>>;
   /**
    * Get item from a DynamoDB table.
    *
    * @param options - {@link GetCommandInput | `GetCommandInput`} object with `TableName` optional. If provided, `TableName` will override `this.tableName`.
    *
-   * @returns The resulting {@link GetCommandOutput | `GetCommandOutput`} object.
+   * @returns `GetCommandOutput` object, where the `Item` key is replaced by an {@link EntityRecord | `EntityRecord`}.
    *
    * @overload
    */
   async getItem(
     options: MakeOptional<GetCommandInput, 'TableName'>,
-  ): Promise<ReplaceKey<GetCommandOutput, 'Item', EntityRecord<C>>>;
+  ): Promise<ReplaceKey<GetCommandOutput, 'Item', EntityRecord<C> | undefined>>;
   async getItem(
     keyOrOptions: EntityKey<C> | MakeOptional<GetCommandInput, 'TableName'>,
     attributesOrOptions?:
@@ -643,7 +643,9 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
       >,
       'TableName'
     >,
-  ): Promise<GetCommandOutput> {
+  ): Promise<
+    ReplaceKey<GetCommandOutput, 'Item', EntityRecord<C> | undefined>
+  > {
     // Resolve options.
     const { hashKey, rangeKey } = this.entityManager.config;
 
@@ -674,7 +676,11 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     };
 
     try {
-      const output = await this.doc.get(input);
+      const output = (await this.doc.get(input)) as ReplaceKey<
+        GetCommandOutput,
+        'Item',
+        EntityRecord<C> | undefined
+      >;
 
       this.logger.debug('got item from table', {
         keyOrOptions,
