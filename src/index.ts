@@ -1,11 +1,11 @@
 export type { FilterCondition } from './addFilterCondition';
 export type { RangeKeyCondition } from './addRangeKeyCondition';
+export type { BatchGetOptions } from './BatchGetOptions';
+export type { BatchWriteOptions } from './BatchWriteOptions';
 export { EntityClient } from './EntityClient';
 export type { EntityClientOptions } from './EntityClientOptions';
 export { generateTableDefinition } from './generateTableDefinition';
-export type { GetItemOptions } from './GetItemOptions';
 export type { IndexParams } from './IndexParams';
-export type { Item } from './Item';
 export { QueryBuilder } from './QueryBuilder';
 export type { QueryBuilderOptions } from './QueryBuilderOptions';
 export type {
@@ -24,3 +24,4 @@ export {
   defaultTranscodeAttributeTypeMap,
   type TranscodeAttributeTypeMap,
 } from './TranscodeAttributeTypeMap';
+export type { WaiterConfig } from './WaiterConfig';

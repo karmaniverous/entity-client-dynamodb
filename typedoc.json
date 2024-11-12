@@ -21,6 +21,7 @@
       "DeleteCommandInput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/DeleteCommandInput",
       "DeleteCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/DeleteCommandOutput",
       "DynamoDBDocument": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/Class/DynamoDBDocument/",
+      "GetCommandInput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/GetCommandInput",
       "GetCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/GetCommandOutput",
       "PutCommandInput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandInput",
       "PutCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandOutput",
@@ -38,8 +39,9 @@
     "@karmaniverous/entity-manager": {
       "BaseEntityClient": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.BaseEntityClient.html",
       "BaseEntityClientOptions": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.BaseEntityClientOptions.html",
-      "EntityItemize": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityItemize.html",
+      "EntityKey": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityKey.html",
       "EntityManager": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityManager.html",
+      "EntityRecord": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityRecord.html",
       "EntityToken": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityToken.html",
       "ShardQueryMap": "https://docs.karmanivero.us/entity-manager/types/entity_manager.ShardQueryMap.html"
     },

@@ -17,6 +17,7 @@ import {
   type DeleteCommandInput,
   type DeleteCommandOutput,
   DynamoDBDocument,
+  type GetCommandInput,
   type GetCommandOutput,
   type PutCommandInput,
   type PutCommandOutput,
@@ -26,17 +27,17 @@ import { batchProcess } from '@karmaniverous/batch-process';
 import {
   type BaseConfigMap,
   BaseEntityClient,
-  type EntityItem,
+  type EntityKey,
+  type EntityRecord,
 } from '@karmaniverous/entity-manager';
-import type { WithRequiredAndNonNullable } from '@karmaniverous/entity-tools';
+import type { MakeOptional, ReplaceKey } from '@karmaniverous/entity-tools';
 import AWSXray from 'aws-xray-sdk';
-import { isArray, isString, pick, zipToObject } from 'radash';
+import { pick, zipToObject } from 'radash';
 
+import type { BatchGetOptions } from './BatchGetOptions';
+import type { BatchWriteOptions } from './BatchWriteOptions';
 import type { EntityClientOptions } from './EntityClientOptions';
-import type { EntityKey } from './EntityKey';
-import type { EntityRecord } from './EntityRecord';
-import type { GetItemOptions } from './GetItemOptions';
-import type { ReplaceKey } from './ReplaceKey';
+import type { WaiterConfig } from './WaiterConfig';
 
 /**
  * Convenience wrapper around the AWS DynamoDB SDK in addition to {@link BaseEntityClient | `BaseEntityClient`} functionality.
@@ -48,24 +49,32 @@ import type { ReplaceKey } from './ReplaceKey';
  *
  * @category EntityClient
  */
-export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
-  public readonly client: DynamoDBClient;
-  public readonly doc: DynamoDBDocument;
+export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
+  /** AWS SDK {@link DynamoDBClient | `DynamoDBClient`} instance. */
+  readonly client: DynamoDBClient;
+
+  /** AWS SDK {@link DynamoDBDocument | `DynamoDBDocument`} instance. */
+  readonly doc: DynamoDBDocument;
+
+  /** Table name. */
+  readonly tableName: EntityClientOptions<C>['tableName'];
 
   /**
    * DynamoDB EntityClient constructor.
    *
    * @param options - {@link EntityClientOptions | `EntityClientOptions`} object.
    */
-  constructor(options: EntityClientOptions = {}) {
+  constructor(options: EntityClientOptions<C>) {
     const {
       batchProcessOptions,
       enableXray = false,
+      entityManager,
       logger,
+      tableName,
       ...dynamoDbClientConfig
     } = options;
 
-    super({ batchProcessOptions, logger });
+    super({ batchProcessOptions, entityManager, logger });
 
     const client = new DynamoDBClient(dynamoDbClientConfig);
 
@@ -77,31 +86,32 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
     this.doc = DynamoDBDocument.from(this.client, {
       marshallOptions: { removeUndefinedValues: true },
     });
+
+    this.tableName = tableName;
   }
 
-  /* eslint-disable tsdoc/syntax */
   /**
    * Creates a DynamoDB table using {@link CreateTableCommand | `CreateTableCommand`} and waits for the table to be created and available using {@link waitUntilTableExists | `waitUntilTableExists`}.
    *
-   * @param options - {@link CreateTableCommandInput | `CreateTableCommandInput`} object with the `TableName` property required and non-nullable.
-   * @param waiterConfig - {@link smithy!waiter | `WaiterConfiguration`} with `client` parameter omitted & `maxWaitTime` defaulted to 60s.
+   * @param options - {@link CreateTableCommandInput | `CreateTableCommandInput`} object. If `TableName` is provided it will override `this.tableName`.
+   * @param waiterConfig - {@link WaiterConfig | `WaiterConfig`} with `maxWaitTime` defaulted to 60s.
    *
    * @returns An object containing the resulting {@link CreateTableCommandOutput | `CreateTableCommandOutput`} and {@link smithy!WaiterResult | `WaiterResult`} objects.
    */
-  /* eslint-enable tsdoc/syntax */
   async createTable(
-    options: WithRequiredAndNonNullable<CreateTableCommandInput, 'TableName'>,
-    waiterConfig: Omit<Parameters<typeof waitUntilTableExists>[0], 'client'> = {
-      maxWaitTime: 60,
-    },
+    options: MakeOptional<CreateTableCommandInput, 'TableName'>,
+    waiterConfig: WaiterConfig = { maxWaitTime: 60 },
   ) {
     try {
-      // Validate options.
-      if (!options.TableName) throw new Error('TableName is required');
+      // Resolve options.
+      const resolvedOptions: CreateTableCommandInput = {
+        TableName: this.tableName,
+        ...options,
+      };
 
       // Send command.
       const createTableCommandOutput = await this.client.send(
-        new CreateTableCommand(options),
+        new CreateTableCommand(resolvedOptions),
       );
 
       if (!createTableCommandOutput.TableDescription?.TableStatus) {
@@ -113,11 +123,12 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
       // Await table creation.
       const waiterResult = await waitUntilTableExists(
         { client: this.client, ...waiterConfig },
-        { TableName: options.TableName },
+        { TableName: resolvedOptions.TableName },
       );
 
       this.logger.debug('created table', {
         options,
+        resolvedOptions,
         createTableCommandOutput,
         waiterResult,
       });
@@ -130,32 +141,28 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
     }
   }
 
-  /* eslint-disable tsdoc/syntax */
   /**
    * Deletes a DynamoDB table using {@link DeleteTableCommand | `DeleteTableCommand`} and waits for the table to be confirmed deleted with {@link waitUntilTableNotExists | `waitUntilTableNotExists`}.
    *
-   * @param options - {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/DeleteTableCommandInput | `DeleteTableCommandInput`} object with the `TableName` property required and non-nullable.
-   * @param waiterConfig - {@link smithy!waiter | `WaiterConfiguration`} with `client` parameter omitted & `maxWaitTime` defaulted to 60s.
+   * @param options - {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/DeleteTableCommandInput | `DeleteTableCommandInput`} object. If `TableName` is provided it will override `this.tableName`.
+   * @param waiterConfig - {@link WaiterConfig | `WaiterConfig`} with `maxWaitTime` defaulted to 60s.
    *
    * @returns An object containing the resulting {@link DeleteTableCommandOutput | `DeleteTableCommandOutput`} and {@link smithy!WaiterResult | `WaiterResult`} objects.
    */
-  /* eslint-enable tsdoc/syntax */
   async deleteTable(
-    options: WithRequiredAndNonNullable<DeleteTableCommandInput, 'TableName'>,
-    waiterConfig: Omit<
-      Parameters<typeof waitUntilTableNotExists>[0],
-      'client'
-    > = {
-      maxWaitTime: 60,
-    },
+    options: MakeOptional<DeleteTableCommandInput, 'TableName'> = {},
+    waiterConfig: WaiterConfig = { maxWaitTime: 60 },
   ) {
     try {
-      // Validate options.
-      if (!options.TableName) throw new Error('TableName is required');
+      // Resolve options.
+      const resolvedOptions = {
+        TableName: this.tableName,
+        ...options,
+      } as CreateTableCommandInput;
 
       // Send command.
       const deleteTableCommandOutput = await this.client.send(
-        new DeleteTableCommand(options),
+        new DeleteTableCommand(resolvedOptions),
       );
 
       if (!deleteTableCommandOutput.TableDescription?.TableStatus) {
@@ -167,11 +174,12 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
       // Await table deletion.
       const waiterResult = await waitUntilTableNotExists(
         { client: this.client, ...waiterConfig },
-        { TableName: options.TableName },
+        { TableName: resolvedOptions.TableName },
       );
 
       this.logger.debug('deleted table', {
         options,
+        resolvedOptions,
         deleteTableCommandOutput,
         waiterResult,
       });
@@ -187,72 +195,64 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
   /**
    * Puts an item to a DynamoDB table.
    *
-   * @param tableName - Table name.
-   * @param item - Item.
+   * @param item - {@link EntityRecord | `EntityRecord`} object.
+   * @param options - {@link PutCommandInput | `PutCommandInput`} object with `Item` omitted and `TableName` optional. If provided, `TableName` will override `this.tableName`.
    *
    * @returns The resulting {@link PutCommandOutput | `PutCommandOutput`} object.
    *
    * @overload
    */
   async putItem(
-    tableName: string,
     item: EntityRecord<C>,
+    options?: MakeOptional<Omit<PutCommandInput, 'Item'>, 'TableName'>,
   ): Promise<PutCommandOutput>;
   /**
    * Puts an item to a DynamoDB table.
    *
-   * @param options - {@link PutCommandInput | `PutCommandInput`} object with the `Item` & `TableName` properties required and non-nullable.
+   * @param options - {@link PutCommandInput | `PutCommandInput`} object with `TableName` optional. If provided, `TableName` will override `this.tableName`.
    *
    * @returns The resulting {@link PutCommandOutput | `PutCommandOutput`} object.
    *
    * @overload
    */
   async putItem(
-    options: ReplaceKey<
-      WithRequiredAndNonNullable<PutCommandInput, 'TableName'>,
-      'Item',
-      EntityRecord<C>
+    options: MakeOptional<
+      ReplaceKey<PutCommandInput, 'Item', EntityRecord<C>>,
+      'TableName'
     >,
   ): Promise<PutCommandOutput>;
   async putItem(
-    optionsOrTableName:
-      | ReplaceKey<
-          WithRequiredAndNonNullable<PutCommandInput, 'TableName'>,
-          'Item',
-          EntityRecord<C>
-        >
-      | string,
-    item?: EntityRecord<C>,
+    itemOrOptions:
+      | EntityRecord<C>
+      | MakeOptional<
+          ReplaceKey<PutCommandInput, 'Item', EntityRecord<C>>,
+          'TableName'
+        >,
+    options: MakeOptional<Omit<PutCommandInput, 'Item'>, 'TableName'> = {},
   ): Promise<PutCommandOutput> {
-    // Normalize params.
-    let options: ReplaceKey<
-      WithRequiredAndNonNullable<PutCommandInput, 'TableName'>,
-      'Item',
-      EntityRecord<C>
-    >;
+    // Resolve options.
+    const { hashKey, rangeKey } = this.entityManager.config;
 
-    if (isString(optionsOrTableName)) {
-      if (!optionsOrTableName) throw new Error('tableName is required');
-      if (!item) throw new Error('item is required');
-
-      options = { Item: item, TableName: optionsOrTableName };
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (!optionsOrTableName.Item) throw new Error('options.Item is required');
-      if (!optionsOrTableName.TableName)
-        throw new Error('options.TableName is required');
-
-      options = optionsOrTableName;
-    }
+    const resolvedOptions = {
+      TableName: this.tableName,
+      ...(hashKey in itemOrOptions && rangeKey in itemOrOptions
+        ? {
+            Item: itemOrOptions as EntityRecord<C>,
+          }
+        : itemOrOptions),
+      ...options,
+    } as ReplaceKey<PutCommandInput, 'Item', EntityRecord<C>>;
 
     try {
       // Send command.
-      const response = await this.doc.put(options);
+      const response = await this.doc.put(resolvedOptions);
 
       // Evaluate response.
       if (response.$metadata.httpStatusCode === 200)
         this.logger.debug('put item to table', {
+          itemOrOptions,
           options,
+          resolvedOptions,
           response,
         });
       else {
@@ -263,7 +263,8 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
 
       return response;
     } catch (error) {
-      if (error instanceof Error) this.logger.error(error.message, options);
+      if (error instanceof Error)
+        this.logger.error(error.message, { itemOrOptions, options });
 
       throw error;
     }
@@ -272,74 +273,76 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
   /**
    * Deletes an item from a DynamoDB table.
    *
-   * @param tableName - Table name.
-   * @param key - Item key.
+   * @param key - {@link EntityKey | `EntityKey`} object.
+   * @param options - {@link DeleteCommandInput | `DeleteCommandInput`} object with `Key` omitted and `TableName` optional. If provided, `TableName` will override `this.tableName`.
    *
    * @returns The resulting {@link DeleteCommandOutput | `DeleteCommandOutput`} object.
    *
    * @overload
    */
   async deleteItem(
-    tableName: string,
     key: EntityKey<C>,
+    options?: MakeOptional<Omit<DeleteCommandInput, 'Item'>, 'TableName'>,
   ): Promise<DeleteCommandOutput>;
   /**
-   * Deletes an item from a DynamoDB table.
-   * @param options - {@link DeleteCommandInput | `DeleteCommandInput`} object with the `Key` & `TableName` properties required and non-nullable.
+   * Deletes an item to a DynamoDB table.
+   *
+   * @param options - {@link DeleteCommandInput | `DeleteCommandInput`} object with `TableName` optional. If provided, `TableName` will override `this.tableName`.
+   *
    * @returns The resulting {@link DeleteCommandOutput | `DeleteCommandOutput`} object.
+   *
    * @overload
    */
   async deleteItem(
-    options: WithRequiredAndNonNullable<
-      DeleteCommandInput,
-      'Key' | 'TableName'
+    options: MakeOptional<
+      ReplaceKey<DeleteCommandInput, 'Key', EntityKey<C>>,
+      'TableName'
     >,
   ): Promise<DeleteCommandOutput>;
   async deleteItem(
-    optionsOrTableName:
-      | WithRequiredAndNonNullable<DeleteCommandInput, 'Key' | 'TableName'>
-      | string,
-    key?: EntityKey<C>,
+    keyOrOptions:
+      | EntityKey<C>
+      | MakeOptional<
+          ReplaceKey<DeleteCommandInput, 'Key', EntityKey<C>>,
+          'TableName'
+        >,
+    options: MakeOptional<Omit<DeleteCommandInput, 'Key'>, 'TableName'> = {},
   ): Promise<DeleteCommandOutput> {
-    // Normalize params.
-    let options: WithRequiredAndNonNullable<
-      DeleteCommandInput,
-      'Key' | 'TableName'
-    >;
+    // Resolve options.
+    const { hashKey, rangeKey } = this.entityManager.config;
 
-    if (isString(optionsOrTableName)) {
-      if (!optionsOrTableName) throw new Error('tableName is required');
-      if (!key) throw new Error('key is required');
-
-      options = { Key: key, TableName: optionsOrTableName };
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (!optionsOrTableName.Key) throw new Error('options.Key is required');
-      if (!optionsOrTableName.TableName)
-        throw new Error('options.TableName is required');
-
-      options = optionsOrTableName;
-    }
+    const resolvedOptions = {
+      TableName: this.tableName,
+      ...(hashKey in keyOrOptions && rangeKey in keyOrOptions
+        ? {
+            Key: keyOrOptions as EntityRecord<C>,
+          }
+        : keyOrOptions),
+      ...options,
+    } as ReplaceKey<DeleteCommandInput, 'Key', EntityRecord<C>>;
 
     try {
       // Send command.
-      const response = await this.doc.delete(options);
+      const response = await this.doc.delete(resolvedOptions);
 
       // Evaluate response.
       if (response.$metadata.httpStatusCode === 200)
         this.logger.debug('deleted item from table', {
+          keyOrOptions,
           options,
+          resolvedOptions,
           response,
         });
       else {
         const msg = 'failed to delete item from table';
-        this.logger.error(msg, { options, response });
+        this.logger.error(msg, response);
         throw new Error(msg);
       }
 
       return response;
     } catch (error) {
-      if (error instanceof Error) this.logger.error(error.message, options);
+      if (error instanceof Error)
+        this.logger.error(error.message, { keyOrOptions, options });
 
       throw error;
     }
@@ -348,19 +351,20 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
   /**
    * Puts multiple items to a DynamoDB table in batches.
    *
-   * @param tableName - Table name.
-   * @param items - Array of items.
-   * @param batchProcessOptions - Batch process option overrides.
+   * @param items - Array of {@link EntityRecord | `EntityRecord`} objects.
+   * @param options - {@link BatchWriteOptions | `BatchWriteOptions`} object.
    *
    * @returns Array of {@link BatchWriteCommandOutput | `BatchWriteCommandOutput`} objects.
    */
   async putItems(
-    tableName: string,
     items: EntityRecord<C>[],
-    batchProcessOptions: EntityClientOptions['batchProcessOptions'] = {},
+    options: BatchWriteOptions = {},
   ): Promise<BatchWriteCommandOutput[]> {
-    // Validate options.
-    if (!tableName) throw new Error('tableName is required');
+    // Resolve options.
+    const { tableName, batchProcessOptions, ...input }: BatchWriteOptions = {
+      tableName: this.tableName,
+      ...options,
+    };
 
     try {
       const batchHandler = async (batch: EntityRecord<C>[]) =>
@@ -370,6 +374,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
               PutRequest: { Item: item },
             })),
           },
+          ...input,
         });
 
       const unprocessedItemExtractor = (output: BatchWriteCommandOutput) =>
@@ -378,24 +383,22 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
       const outputs = await batchProcess(items, {
         batchHandler,
         unprocessedItemExtractor,
-        ...Object.assign(batchProcessOptions, this.batchProcessOptions),
+        ...Object.assign({}, this.batchProcessOptions, batchProcessOptions),
       });
 
       this.logger.debug('put items to table', {
-        tableName,
         items,
+        options,
+        tableName,
         batchProcessOptions,
+        input,
         outputs,
       });
 
       return outputs;
     } catch (error) {
       if (error instanceof Error)
-        this.logger.error(error.message, {
-          tableName,
-          items,
-          batchProcessOptions,
-        });
+        this.logger.error(error.message, { items, options });
 
       throw error;
     }
@@ -404,19 +407,24 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
   /**
    * Deletes multiple items from a DynamoDB table in batches.
    *
-   * @param tableName - Table name.
-   * @param keys - Array of item keys.
-   * @param batchProcessOptions - Batch process option overrides.
+   * @param keys - Array of {@link EntityKey | `EntityKey`} objects.
+   * @param options - {@link BatchWriteOptions | `BatchWriteOptions`} object.
    *
    * @returns Array of {@link BatchWriteCommandOutput | `BatchWriteCommandOutput`} objects.
    */
   async deleteItems(
-    tableName: string,
     keys: EntityKey<C>[],
-    batchProcessOptions: EntityClientOptions['batchProcessOptions'] = {},
+    options: BatchWriteOptions = {},
   ): Promise<BatchWriteCommandOutput[]> {
-    // Validate options.
-    if (!tableName) throw new Error('tableName is required');
+    // Resolve options.
+    const {
+      tableName,
+      batchProcessOptions,
+      ...batchWritecommandInput
+    }: BatchWriteOptions = {
+      tableName: this.tableName,
+      ...options,
+    };
 
     try {
       const batchHandler = async (batch: EntityKey<C>[]) =>
@@ -426,6 +434,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
               DeleteRequest: { Key: key },
             })),
           },
+          ...batchWritecommandInput,
         });
 
       const unprocessedItemExtractor = (output: BatchWriteCommandOutput) =>
@@ -434,24 +443,22 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
       const outputs = await batchProcess(keys, {
         batchHandler,
         unprocessedItemExtractor,
-        ...Object.assign(batchProcessOptions, this.batchProcessOptions),
+        ...Object.assign({}, this.batchProcessOptions, batchProcessOptions),
       });
 
       this.logger.debug('deleted keys from table', {
-        tableName,
         keys,
+        options,
+        tableName,
         batchProcessOptions,
+        batchWritecommandInput,
         outputs,
       });
 
       return outputs;
     } catch (error) {
       if (error instanceof Error)
-        this.logger.error(error.message, {
-          tableName,
-          keys,
-          batchProcessOptions,
-        });
+        this.logger.error(error.message, { keys, options });
 
       throw error;
     }
@@ -460,27 +467,22 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
   /**
    * Purge all items from a DynamoDB table.
    *
-   * @param tableName - Table name.
-   * @param hashKey - Hash key name.
-   * @param rangeKey - Range key name.
-   * @param batchProcessOptions - Batch process option overrides.
+   * @param options - {@link BatchWriteOptions | `BatchWriteOptions`} object.
    *
    * @returns Number of items purged.
    */
-  async purgeItems(
-    tableName: string,
-    hashKey: C['HashKey'],
-    rangeKey: C['RangeKey'],
-    batchProcessOptions: EntityClientOptions['batchProcessOptions'] = {},
-  ): Promise<number> {
+  async purgeItems(options: BatchWriteOptions = {}): Promise<number> {
     try {
-      // Validate options.
-      if (!tableName) throw new Error('tableName is required');
-      if (!hashKey) throw new Error('hashKey is required');
+      // Resolve options.
+      const { tableName, ...batchWriteOptions }: BatchWriteOptions = {
+        tableName: this.tableName,
+        ...options,
+      };
 
       let purged = 0;
       let items: Record<string, unknown>[] = [];
       let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
+      const { hashKey, rangeKey } = this.entityManager.config;
 
       do {
         ({ Items: items = [], LastEvaluatedKey: lastEvaluatedKey } =
@@ -494,29 +496,25 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
             pick(item, [hashKey, rangeKey]),
           ) as EntityKey<C>[];
 
-          await this.deleteItems(tableName, itemKeys, batchProcessOptions);
+          await this.deleteItems(itemKeys, {
+            tableName,
+            ...batchWriteOptions,
+          });
 
           purged += items.length;
         }
       } while (items.length);
 
       this.logger.debug('purged items from table', {
+        options,
         tableName,
-        hashKey,
-        rangeKey,
-        batchProcessOptions,
+        batchWriteOptions,
         purged,
       });
 
       return purged;
     } catch (error) {
-      if (error instanceof Error)
-        this.logger.error(error.message, {
-          tableName,
-          hashKey,
-          rangeKey,
-          batchProcessOptions,
-        });
+      if (error instanceof Error) this.logger.error(error.message, { options });
 
       throw error;
     }
@@ -525,38 +523,25 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
   /**
    * Puts multiple items to a DynamoDB table as a single transaction.
    *
-   * @param tableName - Table name.
-   * @param items - Array of items.
+   * @param items - Array of {@link EntityRecord | `EntityRecord`} objects.
    *
-   * @returns `TransactWriteCommandOutput` object.
+   * @returns {@link TransactWriteCommandOutput | `TransactWriteCommandOutput`} object.
    */
   async transactPutItems(
-    tableName: string,
-    items: EntityItem<C>[],
+    items: EntityRecord<C>[],
   ): Promise<TransactWriteCommandOutput> {
     try {
-      // Validate options.
-      if (!tableName) throw new Error('tableName is required');
-
       const output = await this.doc.transactWrite({
         TransactItems: items.map((item) => ({
-          Put: { Item: item, TableName: tableName },
+          Put: { Item: item, TableName: this.tableName },
         })),
       });
 
-      this.logger.debug('put items to table as transaction', {
-        tableName,
-        items,
-        output,
-      });
+      this.logger.debug('put items to table as transaction', { items, output });
 
       return output;
     } catch (error) {
-      if (error instanceof Error)
-        this.logger.error(error.message, {
-          tableName,
-          items,
-        });
+      if (error instanceof Error) this.logger.error(error.message, { items });
 
       throw error;
     }
@@ -565,38 +550,28 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
   /**
    * Deletes multiple items from a DynamoDB table as a single transaction.
    *
-   * @param tableName - Table name.
-   * @param keys - Array of item keys.
+   * @param keys - Array of {@link EntityKey | `EntityKey`} objects.
    *
-   * @returns `TransactWriteCommandOutput` object.
+   * @returns {@link TransactWriteCommandOutput | `TransactWriteCommandOutput`} object.
    */
   async transactDeleteItems(
-    tableName: string,
-    keys: EntityItem<C>[],
+    keys: EntityKey<C>[],
   ): Promise<TransactWriteCommandOutput> {
     try {
-      // Validate options.
-      if (!tableName) throw new Error('tableName is required');
-
-      const transactWriteCommandOutput = await this.doc.transactWrite({
+      const output = await this.doc.transactWrite({
         TransactItems: keys.map((key) => ({
-          Delete: { Key: key, TableName: tableName },
+          Delete: { Key: key, TableName: this.tableName },
         })),
       });
 
       this.logger.debug('deleted items from table as transaction', {
-        tableName,
         keys,
-        transactWriteCommandOutput,
+        output,
       });
 
-      return transactWriteCommandOutput;
+      return output;
     } catch (error) {
-      if (error instanceof Error)
-        this.logger.error(error.message, {
-          tableName,
-          keys,
-        });
+      if (error instanceof Error) this.logger.error(error.message, { keys });
 
       throw error;
     }
@@ -605,91 +580,120 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
   /**
    * Get item from a DynamoDB table.
    *
-   * @param tableName - Table name.
-   * @param key - Item key.
-   * @param options - {@link GetItemOptions | `GetItemOptions`} object.
+   * @param key - {@link EntityKey | `EntityKey`} object.
+   * @param attributes - Item attributes to retrieve.
+   * @param options - {@link GetCommandInput | `GetCommandInput`} object with `Key` & projection-related properties omitted and `TableName` optional. If provided, `TableName` will override `this.tableName`.
    *
    * @returns `GetCommandOutput` object.
    *
    * @overload
    */
   async getItem(
-    tableName: string,
-    key: EntityItem<C>,
-    options?: GetItemOptions,
+    key: EntityKey<C>,
+    attributes: string[],
+    options?: MakeOptional<
+      Omit<
+        GetCommandInput,
+        | 'AttributesToGet'
+        | 'ExpressionAttributeNames'
+        | 'Key'
+        | 'ProjectionExpression'
+      >,
+      'TableName'
+    >,
   ): Promise<GetCommandOutput>;
   /**
    * Get item from a DynamoDB table.
    *
-   * @param tableName - Table name.
-   * @param key - Item key.
-   * @param attributes - Item attributes to retrieve.
-   * @param options - {@link GetItemOptions | `GetItemOptions`} object, omitting `attributes`.
+   * @param key - {@link EntityKey | `EntityKey`} object.
+   * @param options - {@link GetCommandInput | `GetCommandInput`} object with `Key` omitted and `TableName` optional. If provided, `TableName` will override `this.tableName`.
    *
-   * @returns `GetCommandOutput` object.
+   * @returns The resulting {@link GetCommandOutput | `GetCommandOutput`} object.
    *
    * @overload
    */
   async getItem(
-    tableName: string,
-    key: EntityItem<C>,
-    attributes: string[],
-    options?: Omit<GetItemOptions, 'attributes'>,
+    key: EntityKey<C>,
+    options?: MakeOptional<Omit<GetCommandInput, 'Key'>, 'TableName'>,
+  ): Promise<GetCommandOutput>;
+  /**
+   * Get item from a DynamoDB table.
+   *
+   * @param options - {@link GetCommandInput | `GetCommandInput`} object with `TableName` optional. If provided, `TableName` will override `this.tableName`.
+   *
+   * @returns The resulting {@link GetCommandOutput | `GetCommandOutput`} object.
+   *
+   * @overload
+   */
+  async getItem(
+    options: MakeOptional<GetCommandInput, 'TableName'>,
   ): Promise<GetCommandOutput>;
   async getItem(
-    tableName: string,
-    key: EntityItem<C>,
-    attributesOrOptions?: string[] | GetItemOptions,
-    remainingOptions?: Omit<GetItemOptions, 'attributes'>,
+    keyOrOptions: EntityKey<C> | MakeOptional<GetCommandInput, 'TableName'>,
+    attributesOrOptions?:
+      | string[]
+      | MakeOptional<Omit<GetCommandInput, 'Key'>, 'TableName'>,
+    options?: MakeOptional<
+      Omit<
+        GetCommandInput,
+        | 'AttributesToGet'
+        | 'ExpressionAttributeNames'
+        | 'Key'
+        | 'ProjectionExpression'
+      >,
+      'TableName'
+    >,
   ): Promise<GetCommandOutput> {
-    // Resolve params.
-    const attributes = isArray(attributesOrOptions)
-      ? attributesOrOptions
-      : attributesOrOptions?.attributes;
+    // Resolve options.
+    const { hashKey, rangeKey } = this.entityManager.config;
 
-    const { consistentRead, returnConsumedCapacity } = isArray(
-      attributesOrOptions,
-    )
-      ? (remainingOptions ?? {})
-      : (attributesOrOptions ?? {});
+    const { AttributesToGet: attributes, ...resolvedOptions } = {
+      TableName: this.tableName,
+      ...(hashKey in keyOrOptions && rangeKey in keyOrOptions
+        ? { Key: keyOrOptions as EntityKey<C> }
+        : keyOrOptions),
+      ...(Array.isArray(attributesOrOptions)
+        ? { AttributesToGet: attributesOrOptions }
+        : attributesOrOptions),
+      ...options,
+    } as ReplaceKey<GetCommandInput, 'Key', EntityKey<C>>;
 
-    const attributeExpressions = attributes?.map((a) => `#${a}`);
+    const attributeExpressions = attributes?.map((a) => `#${a.toString()}`);
+
+    const input: ReplaceKey<GetCommandInput, 'Key', EntityKey<C>> = {
+      ...(attributes && attributeExpressions
+        ? {
+            ExpressionAttributeNames: zipToObject(
+              attributeExpressions,
+              attributes,
+            ),
+            ProjectionExpression: attributeExpressions.join(','),
+          }
+        : {}),
+      ...resolvedOptions,
+    };
 
     try {
-      const getCommandOutput = await this.doc.get({
-        ConsistentRead: consistentRead,
-        Key: key,
-        ReturnConsumedCapacity: returnConsumedCapacity,
-        TableName: tableName,
-        ...(attributes && attributeExpressions
-          ? {
-              ExpressionAttributeNames: zipToObject(
-                attributeExpressions,
-                attributes,
-              ),
-              ProjectionExpression: attributeExpressions.join(','),
-            }
-          : {}),
-      });
+      const output = await this.doc.get(input);
 
       this.logger.debug('got item from table', {
-        tableName,
-        key,
+        keyOrOptions,
+        attributesOrOptions,
+        options,
         attributes,
-        consistentRead,
-        returnConsumedCapacity,
-        getCommandOutput,
+        resolvedOptions,
+        attributeExpressions,
+        input,
+        output,
       });
 
-      return getCommandOutput;
+      return output;
     } catch (error) {
       if (error instanceof Error)
         this.logger.error(error.message, {
-          tableName,
-          key,
-          attributes,
-          consistentRead,
-          returnConsumedCapacity,
+          keyOrOptions,
+          attributesOrOptions,
+          options,
         });
 
       throw error;
@@ -699,57 +703,59 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient {
   /**
    * Gets multiple items from a DynamoDB table in batches.
    *
-   * @param tableName - Table name.
-   * @param keys - Array of item keys.
-   * @param batchProcessOptions - Batch process option overrides.
+   * @param keys - Array of {@link EntityKey | `EntityKey`} objects.
+   * @param options - {@link BatchGetOptions | `BatchGetOptions`} object.
    *
    * @returns An object containing a flattened array of returned items and the array of returned {@link BatchGetCommandOutput | `BatchGetCommandOutput`} objects.
    */
   async getItems(
-    tableName: string,
-    keys: EntityItem<C>[],
-    batchProcessOptions: EntityClientOptions['batchProcessOptions'] = {},
-  ): Promise<{ items: EntityItem<C>[]; outputs: BatchGetCommandOutput[] }> {
-    // Validate options.
-    if (!tableName) throw new Error('tableName is required');
+    keys: EntityKey<C>[],
+    options: BatchGetOptions = {},
+  ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }> {
+    // Resolve options.
+    const { tableName, batchProcessOptions, ...input }: BatchGetOptions = {
+      tableName: this.tableName,
+      ...options,
+    };
 
     try {
-      const batchHandler = async (batch: EntityItem<C>[]) =>
+      const batchHandler = async (batch: EntityKey<C>[]) =>
         await this.doc.batchGet({
           RequestItems: {
             [tableName]: {
               Keys: batch,
             },
           },
+          ...input,
         });
 
       const unprocessedItemExtractor = (output: BatchGetCommandOutput) =>
-        output.UnprocessedKeys?.[tableName]?.Keys;
+        output.UnprocessedKeys?.[tableName]?.Keys as EntityKey<C>[];
 
       const outputs = await batchProcess(keys, {
         batchHandler,
         unprocessedItemExtractor,
-        ...Object.assign(batchProcessOptions, this.batchProcessOptions),
+        ...Object.assign({}, this.batchProcessOptions, batchProcessOptions),
       });
 
       this.logger.debug('got items from table', {
-        tableName,
         keys,
+        options,
+        tableName,
         batchProcessOptions,
+        input,
         outputs,
       });
 
       return {
-        items: outputs.flatMap((output) => output.Responses?.[tableName] ?? []),
+        items: outputs.flatMap(
+          (output) => output.Responses?.[tableName] ?? [],
+        ) as EntityRecord<C>[],
         outputs,
       };
     } catch (error) {
       if (error instanceof Error)
-        this.logger.error(error.message, {
-          tableName,
-          keys,
-          batchProcessOptions,
-        });
+        this.logger.error(error.message, { keys, options });
 
       throw error;
     }

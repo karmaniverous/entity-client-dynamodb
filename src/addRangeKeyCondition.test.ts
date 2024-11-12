@@ -5,13 +5,13 @@ import { EntityClient } from './EntityClient';
 import { QueryBuilder } from './QueryBuilder';
 
 const entityClient = new EntityClient({
+  entityManager,
   region: process.env.AWS_DEFAULT_REGION,
+  tableName: 'UserTable',
 });
 
 let builder = new QueryBuilder({
   entityClient,
-  tableName: 'UserTable',
-  entityManager,
   entityToken: 'user',
   hashKeyToken: 'hashKey2',
 });
@@ -20,8 +20,6 @@ describe('QueryBuilder - addRangeKeyCondition', function () {
   beforeEach(function () {
     builder = new QueryBuilder({
       entityClient,
-      tableName: 'UserTable',
-      entityManager,
       entityToken: 'user',
       hashKeyToken: 'hashKey2',
     });

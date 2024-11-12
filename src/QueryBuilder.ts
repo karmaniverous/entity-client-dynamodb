@@ -16,7 +16,6 @@ import {
 import { EntityClient } from './EntityClient';
 import { getDocumentQueryArgs } from './getDocumentQueryArgs';
 import type { IndexParams } from './IndexParams';
-import type { QueryBuilderOptions } from './QueryBuilderOptions';
 
 /**
  * Provides a fluent API for building a {@link ShardQueryMap | `ShardQueryMap`} using a DynamoDB Document client.
@@ -25,25 +24,9 @@ import type { QueryBuilderOptions } from './QueryBuilderOptions';
  */
 export class QueryBuilder<C extends BaseConfigMap> extends BaseQueryBuilder<
   C,
-  EntityClient,
+  EntityClient<C>,
   IndexParams
 > {
-  /** Table name. */
-  public readonly tableName: NonNullable<QueryBuilderOptions<C>['tableName']>;
-
-  /** QueryBuilder constructor. */
-  constructor(options: QueryBuilderOptions<C>) {
-    const { tableName, ...baseOptions } = options;
-
-    super(baseOptions);
-
-    if (!tableName) {
-      throw new Error('Table name is required.');
-    }
-
-    this.tableName = tableName;
-  }
-
   getShardQueryFunction(indexToken: string): ShardQueryFunction<C> {
     return async (hashKey: string, pageKey?: PageKey<C>, pageSize?: number) => {
       const {
@@ -58,7 +41,7 @@ export class QueryBuilder<C extends BaseConfigMap> extends BaseQueryBuilder<
           indexToken,
           pageKey,
           pageSize,
-          tableName: this.tableName,
+          tableName: this.entityClient.tableName,
         }),
       );
 

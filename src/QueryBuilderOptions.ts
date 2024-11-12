@@ -11,7 +11,7 @@ import { EntityClient } from './EntityClient';
  * @category QueryBuilder
  */
 export interface QueryBuilderOptions<C extends BaseConfigMap>
-  extends BaseQueryBuilderOptions<C, EntityClient> {
+  extends BaseQueryBuilderOptions<C, EntityClient<C>> {
   /** Table name. */
   tableName: string;
 }
