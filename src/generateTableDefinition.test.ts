@@ -91,6 +91,7 @@ const config: Config<MyConfigMap> = {
     userBeneficiaryFirstName: {
       hashKey: 'userBeneficiaryHashKey',
       rangeKey: 'firstNameRangeKey',
+      projections: [],
     },
     userBeneficiaryLastName: {
       hashKey: 'userBeneficiaryHashKey',
@@ -227,7 +228,7 @@ describe('generateTableDefinition', function () {
             { AttributeName: 'userBeneficiaryHashKey', KeyType: 'HASH' },
             { AttributeName: 'firstNameRangeKey', KeyType: 'RANGE' },
           ],
-          Projection: { ProjectionType: 'ALL' },
+          Projection: { ProjectionType: 'KEYS_ONLY' },
         },
         {
           IndexName: 'userBeneficiaryLastName',

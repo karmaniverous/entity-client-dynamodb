@@ -90,8 +90,12 @@ export const generateTableDefinition = <C extends BaseConfigMap>(
             { AttributeName: rangeKey, KeyType: 'RANGE' },
           ],
           Projection: {
-            ProjectionType: projections ? 'INCLUDE' : 'ALL',
-            ...(projections ? { NonKeyAttributes: projections } : {}),
+            ProjectionType: projections
+              ? projections.length
+                ? 'INCLUDE'
+                : 'KEYS_ONLY'
+              : 'ALL',
+            ...(projections?.length ? { NonKeyAttributes: projections } : {}),
           },
         };
       },
