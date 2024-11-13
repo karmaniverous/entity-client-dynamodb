@@ -2,11 +2,11 @@ import {
   CreateTableCommand,
   type CreateTableCommandInput,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  type CreateTableCommandOutput,
+  type CreateTableCommandOutput, // imported to support API docs
   DeleteTableCommand,
   type DeleteTableCommandInput,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  type DeleteTableCommandOutput,
+  type DeleteTableCommandOutput, // imported to support API docs
   DynamoDBClient,
   waitUntilTableExists,
   waitUntilTableNotExists,

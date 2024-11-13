@@ -5,7 +5,7 @@ import {
   type PageKey,
   type ShardQueryFunction,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  type ShardQueryMap,
+  type ShardQueryMap, // imported to support API docs
 } from '@karmaniverous/entity-manager';
 
 import { addFilterCondition, type FilterCondition } from './addFilterCondition';

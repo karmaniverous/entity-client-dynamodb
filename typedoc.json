@@ -56,7 +56,7 @@
     },
     "@karmaniverous/entity-tools": {
       "Exactify": "https://docs.karmanivero.us/entity-tools/types/entity_tools.Exactify.html",
-      "DefaultTranscodeMap": "https://docs.karmanivero.us/entity-tools/types/entity_tools.DefaultTranscodeMap.html",
+      "DefaultTranscodeMap": "https://docs.karmanivero.us/entity-tools/interfaces/entity_tools.DefaultTranscodeMap.html",
       "MakeOptional": "https://docs.karmanivero.us/entity-tools/types/entity_tools.MakeOptional.html",
       "ReplaceKey": "https://docs.karmanivero.us/entity-tools/types/entity_tools.ReplaceKey.html",
       "TranscodeMap": "https://docs.karmanivero.us/entity-tools/types/entity_tools.TranscodeMap.html",

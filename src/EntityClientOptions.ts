@@ -3,7 +3,7 @@ import {
   BaseConfigMap,
   BaseEntityClientOptions,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  type EntityManager,
+  type EntityManager, // imported to support API docs
 } from '@karmaniverous/entity-manager';
 
 /**
