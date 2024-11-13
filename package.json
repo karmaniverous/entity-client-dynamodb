@@ -7,15 +7,15 @@
     "@aws-sdk/client-dynamodb": "^3.687.0",
     "@aws-sdk/lib-dynamodb": "^3.689.0",
     "@karmaniverous/batch-process": "^0.1.0",
-    "@karmaniverous/entity-manager": "^6.11.4",
+    "@karmaniverous/entity-manager": "^6.12.0",
     "@karmaniverous/entity-tools": "^0.6.5",
-    "aws-xray-sdk": "^3.10.1",
+    "aws-xray-sdk": "^3.10.2",
     "nanoid": "^5.0.8",
     "radash": "^12.1.0"
   },
   "description": "Entity Manager integrated into a DynamoDB client wrapper.",
   "devDependencies": {
-    "@dotenvx/dotenvx": "^1.22.1",
+    "@dotenvx/dotenvx": "^1.23.0",
     "@eslint/js": "^9.14.0",
     "@karmaniverous/dynamodb-local": "^0.0.1",
     "@rollup/plugin-alias": "^5.1.1",
