@@ -525,7 +525,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
    *
    * @param items - Array of {@link EntityRecord | `EntityRecord`} objects.
    *
-   * @returns {@link TransactWriteCommandOutput | `TransactWriteCommandOutput`} object.
+   * @returns `TransactWriteCommandOutput` object.
    */
   async transactPutItems(
     items: EntityRecord<C>[],
@@ -552,7 +552,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
    *
    * @param keys - Array of {@link EntityKey | `EntityKey`} objects.
    *
-   * @returns {@link TransactWriteCommandOutput | `TransactWriteCommandOutput`} object.
+   * @returns `TransactWriteCommandOutput` object.
    */
   async transactDeleteItems(
     keys: EntityKey<C>[],

@@ -11,11 +11,14 @@
       "DeleteTableCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/DeleteTableCommandOutput",
       "DynamoDBClient": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/",
       "DynamoDBClientConfig": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/DynamoDBClientConfig",
+      "ReturnConsumedCapacity": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/TypeAlias/ReturnConsumedCapacity",
+      "ReturnItemCollectionMetrics": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/TypeAlias/ReturnItemCollectionMetrics",
       "ScalarAttributeType": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/TypeAlias/ScalarAttributeType",
       "waitUntilTableExists": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Variable/waitUntilTableExists",
       "waitUntilTableNotExists": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Variable/waitUntilTableNotExists"
     },
     "@aws-sdk/lib-dynamodb": {
+      "BatchGetCommandInput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchGetCommandInput",
       "BatchGetCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchGetCommandOutput",
       "BatchWriteCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/BatchWriteCommandOutput",
       "DeleteCommandInput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/DeleteCommandInput",
@@ -37,20 +40,33 @@
       "BatchProcessOptions": "https://docs.karmanivero.us/batch-process/interfaces/batch_process.BatchProcessOptions.html"
     },
     "@karmaniverous/entity-manager": {
+      "BaseConfigMap": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.BaseConfigMap.html",
       "BaseEntityClient": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.BaseEntityClient.html",
       "BaseEntityClientOptions": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.BaseEntityClientOptions.html",
+      "BaseQueryBuilder": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.BaseQueryBuilder.html",
+      "BaseQueryBuilderOptions": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.BaseQueryBuilderOptions.html",
       "EntityKey": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityKey.html",
       "EntityManager": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityManager.html",
       "EntityRecord": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityRecord.html",
       "EntityToken": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityToken.html",
+      "QueryBuilderQueryOptions": "https://docs.karmanivero.us/entity-manager/types/entity_manager.QueryBuilderQueryOptions.html",
+      "QueryResult": "https://docs.karmanivero.us/entity-manager/types/entity_manager.QueryResult.html",
+      "ShardQueryFunction": "https://docs.karmanivero.us/entity-manager/types/entity_manager.ShardQueryFunction.html",
       "ShardQueryMap": "https://docs.karmanivero.us/entity-manager/types/entity_manager.ShardQueryMap.html"
     },
     "@karmaniverous/entity-tools": {
+      "Exactify": "https://docs.karmanivero.us/entity-tools/types/entity_tools.Exactify.html",
       "DefaultTranscodeMap": "https://docs.karmanivero.us/entity-tools/types/entity_tools.DefaultTranscodeMap.html",
+      "MakeOptional": "https://docs.karmanivero.us/entity-tools/types/entity_tools.MakeOptional.html",
+      "ReplaceKey": "https://docs.karmanivero.us/entity-tools/types/entity_tools.ReplaceKey.html",
+      "TranscodeMap": "https://docs.karmanivero.us/entity-tools/types/entity_tools.TranscodeMap.html",
       "WithRequiredAndNonNullable": "https://docs.karmanivero.us/entity-tools/types/entity_tools.WithRequiredAndNonNullable.html"
     },
+    "@smithy/types": {
+      "WaiterConfiguration": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-smithy-types/Interface/WaiterConfiguration/",
+      "WaiterResult": "https://github.com/smithy-lang/smithy-typescript/blob/main/packages/util-waiter/src/waiter.ts#L36-L43"
+    },
     "smithy": {
-      "waiter": "https://github.com/smithy-lang/smithy-typescript/blob/main/packages/types/src/waiter.ts",
       "WaiterResult": "https://github.com/smithy-lang/smithy-typescript/blob/main/packages/util-waiter/src/waiter.ts#L36-L43"
     }
   },
