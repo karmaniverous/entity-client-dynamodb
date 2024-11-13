@@ -7,7 +7,7 @@
     "@aws-sdk/client-dynamodb": "^3.687.0",
     "@aws-sdk/lib-dynamodb": "^3.689.0",
     "@karmaniverous/batch-process": "^0.1.0",
-    "@karmaniverous/entity-manager": "^6.13.0",
+    "@karmaniverous/entity-manager": "^6.13.1",
     "@karmaniverous/entity-tools": "^0.6.5",
     "aws-xray-sdk": "^3.10.2",
     "nanoid": "^5.0.8",
