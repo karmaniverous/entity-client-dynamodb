@@ -2,7 +2,7 @@ import type { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 import type { BaseConfigMap, PageKey } from '@karmaniverous/entity-manager';
 import { shake, sift } from 'radash';
 
-import type { IndexParams } from './IndexParams';
+import type { IndexParams } from '../QueryBuilder';
 
 export interface GetDocumentQueryArgsParams<C extends BaseConfigMap> {
   indexParamsMap: Record<string, IndexParams>;

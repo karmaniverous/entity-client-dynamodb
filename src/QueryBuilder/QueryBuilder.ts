@@ -8,13 +8,13 @@ import {
   type ShardQueryMap, // imported to support API docs
 } from '@karmaniverous/entity-manager';
 
+import { EntityClient } from '../EntityClient';
+import { getDocumentQueryArgs } from '../EntityClient/getDocumentQueryArgs';
 import { addFilterCondition, type FilterCondition } from './addFilterCondition';
 import {
   addRangeKeyCondition,
   type RangeKeyCondition,
 } from './addRangeKeyCondition';
-import { EntityClient } from './EntityClient';
-import { getDocumentQueryArgs } from './getDocumentQueryArgs';
 import type { IndexParams } from './IndexParams';
 
 /**

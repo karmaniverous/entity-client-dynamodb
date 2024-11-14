@@ -9,11 +9,11 @@ import { expect } from 'chai';
 import { nanoid } from 'nanoid';
 import { pick, range } from 'radash';
 
-import { entityManager, type MyConfigMap } from '../test/entityManager';
+import { entityManager, type MyConfigMap } from '../../test/entityManager';
+import { env } from '../env';
+import { generateTableDefinition } from '../Tables';
 import { EntityClient } from './EntityClient';
 import type { EntityClientOptions } from './EntityClientOptions';
-import { env } from './env';
-import { generateTableDefinition } from './generateTableDefinition';
 
 const entityClientOptions: Omit<
   EntityClientOptions<MyConfigMap>,

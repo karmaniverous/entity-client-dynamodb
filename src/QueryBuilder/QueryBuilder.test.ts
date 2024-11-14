@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 
-import { entityManager } from '../test/entityManager';
-import { EntityClient } from './EntityClient';
-import { QueryBuilder } from './QueryBuilder';
+import { entityManager } from '../../test/entityManager';
+import { EntityClient } from '../EntityClient';
+import { QueryBuilder } from '../QueryBuilder';
 
 const entityClient = new EntityClient({
   entityManager,

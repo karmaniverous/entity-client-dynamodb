@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import type { MyConfigMap } from '../test/entityManager';
+import type { MyConfigMap } from '../../test/entityManager';
 import {
   getDocumentQueryArgs,
   type GetDocumentQueryArgsParams,
