@@ -83,6 +83,7 @@
     "tsx",
     "typescript"
   ],
+  "hostedBaseUrl": "https://docs.karmanivero.us/entity-client-dynamodb",
   "navigation": {
     "includeCategories": true
   },
