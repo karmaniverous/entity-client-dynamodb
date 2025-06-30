@@ -40,19 +40,19 @@
       "BatchProcessOptions": "https://docs.karmanivero.us/batch-process/interfaces/batch_process.BatchProcessOptions.html"
     },
     "@karmaniverous/entity-manager": {
-      "BaseConfigMap": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.BaseConfigMap.html",
-      "BaseEntityClient": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.BaseEntityClient.html",
-      "BaseEntityClientOptions": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.BaseEntityClientOptions.html",
-      "BaseQueryBuilder": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.BaseQueryBuilder.html",
+      "BaseConfigMap": "https://docs.karmanivero.us/entity-manager/interfaces/index.BaseConfigMap.html",
+      "BaseEntityClient": "https://docs.karmanivero.us/entity-manager/classes/index.BaseEntityClient.html",
+      "BaseEntityClientOptions": "https://docs.karmanivero.us/entity-manager/interfaces/index.BaseEntityClientOptions.html",
+      "BaseQueryBuilder": "https://docs.karmanivero.us/entity-manager/classes/index.BaseQueryBuilder.html",
       "BaseQueryBuilderOptions": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.BaseQueryBuilderOptions.html",
-      "EntityKey": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityKey.html",
-      "EntityManager": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityManager.html",
-      "EntityRecord": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityRecord.html",
-      "EntityToken": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.EntityToken.html",
-      "QueryBuilderQueryOptions": "https://docs.karmanivero.us/entity-manager/types/entity_manager.QueryBuilderQueryOptions.html",
-      "QueryResult": "https://docs.karmanivero.us/entity-manager/types/entity_manager.QueryResult.html",
-      "ShardQueryFunction": "https://docs.karmanivero.us/entity-manager/types/entity_manager.ShardQueryFunction.html",
-      "ShardQueryMap": "https://docs.karmanivero.us/entity-manager/types/entity_manager.ShardQueryMap.html"
+      "EntityKey": "https://docs.karmanivero.us/entity-manager/types/index.EntityKey.html",
+      "EntityManager": "https://docs.karmanivero.us/entity-manager/classes/index.EntityManager.html",
+      "EntityRecord": "https://docs.karmanivero.us/entity-manager/types/index.EntityRecord.html",
+      "EntityToken": "https://docs.karmanivero.us/entity-manager/types/index.EntityToken.html",
+      "QueryBuilderQueryOptions": "https://docs.karmanivero.us/entity-manager/types/index.QueryBuilderQueryOptions.html",
+      "QueryResult": "https://docs.karmanivero.us/entity-manager/interfaces/index.QueryResult.html",
+      "ShardQueryFunction": "https://docs.karmanivero.us/entity-manager/types/index.ShardQueryFunction.html",
+      "ShardQueryMap": "https://docs.karmanivero.us/entity-manager/types/index.ShardQueryMap.html"
     },
     "@karmaniverous/entity-tools": {
       "Exactify": "https://docs.karmanivero.us/entity-tools/types/entity_tools.Exactify.html",
