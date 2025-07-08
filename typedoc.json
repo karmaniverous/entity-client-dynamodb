@@ -44,7 +44,7 @@
       "BaseEntityClient": "https://docs.karmanivero.us/entity-manager/classes/index.BaseEntityClient.html",
       "BaseEntityClientOptions": "https://docs.karmanivero.us/entity-manager/interfaces/index.BaseEntityClientOptions.html",
       "BaseQueryBuilder": "https://docs.karmanivero.us/entity-manager/classes/index.BaseQueryBuilder.html",
-      "BaseQueryBuilderOptions": "https://docs.karmanivero.us/entity-manager/classes/entity_manager.BaseQueryBuilderOptions.html",
+      "BaseQueryBuilderOptions": "https://docs.karmanivero.us/entity-manager/interfaces/index.BaseQueryBuilderOptions.html",
       "EntityKey": "https://docs.karmanivero.us/entity-manager/types/index.EntityKey.html",
       "EntityManager": "https://docs.karmanivero.us/entity-manager/classes/index.EntityManager.html",
       "EntityRecord": "https://docs.karmanivero.us/entity-manager/types/index.EntityRecord.html",
