@@ -15,8 +15,7 @@
     "tsBuildInfoFile": "./.tsbuildinfo",
     "types": [
       "node",
-      "vitest/globals",
-      "eslint__js"
+      "vitest/globals"
     ]
   },
   "exclude": [

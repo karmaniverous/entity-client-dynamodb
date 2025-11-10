@@ -1,13 +1,14 @@
-import type { BaseConfigMap } from '@karmaniverous/entity-manager';
-import type { DefaultTranscodeMap } from '@karmaniverous/entity-tools';
-import { expectAssignable, expectType } from 'tsd';
-
 import {
   defaultTranscodeAttributeTypeMap,
-  EntityClient,
   type EntityClientOptions,
   type TranscodeAttributeTypeMap,
-} from '..';
+} from '@karmaniverous/entity-client-dynamodb';
+import type {
+  BaseConfigMap,
+  EntityManager,
+} from '@karmaniverous/entity-manager';
+import type { DefaultTranscodeMap } from '@karmaniverous/entity-tools';
+import { expectAssignable, expectType } from 'tsd';
 
 // defaultTranscodeAttributeTypeMap matches its declared type
 expectType<TranscodeAttributeTypeMap<DefaultTranscodeMap>>(
@@ -25,10 +26,11 @@ interface Cfg extends BaseConfigMap {
 }
 
 // EntityClient constructor options assignability smoke test
+const fakeEm = null as unknown as EntityManager<Cfg>;
 const opts: EntityClientOptions<Cfg> = {
-  entityManager: {} as any, // not executed in type tests
+  entityManager: fakeEm,
   region: 'local',
   tableName: 't',
 };
 
-expectAssignable<EntityClient<Cfg>>(new EntityClient<Cfg>(opts as any));
+expectAssignable<EntityClientOptions<Cfg>>(opts);

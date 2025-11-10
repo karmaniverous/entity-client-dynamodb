@@ -1,16 +1,12 @@
 {
   "entry": ["src/**/index.ts"],
-  "ignoreDependencies": [
-    "@types/mocha",
-    "auto-changelog",
-    "jsdom-global",
-    "mocha",
-    "source-map-support",
-    "ts-node"
+  "ignore": [
+    "test/types/**",
+    ".stan/imports/**"
   ],
-  "mocha": {
-    "entry": ["*/**/*.test.!(*.*)"]
-  },
+  "ignoreDependencies": [
+    "auto-changelog"
+  ],
   "project": ["*/**", "!docs/**"],
   "rules": {
     "exports": "off",

@@ -1,4 +1,3 @@
-import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
 import type { BaseConfigMap } from '@karmaniverous/entity-manager';
 
 import { addQueryConditionBeginsWith } from './addQueryConditionBeginsWith';
@@ -48,7 +47,7 @@ export type FilterCondition<C extends BaseConfigMap> =
   | QueryConditionBeginsWith
   | QueryConditionBetween<ActuallyScalarAttributeValue>
   | QueryConditionComparison<ActuallyScalarAttributeValue>
-  | QueryConditionContains<NativeScalarAttributeValue>
+  | QueryConditionContains<ActuallyScalarAttributeValue>
   | QueryConditionExists
   | QueryConditionIn<ActuallyScalarAttributeValue>
   | QueryConditionGroup<FilterCondition<C>>

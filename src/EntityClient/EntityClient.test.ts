@@ -8,9 +8,9 @@ import type { EntityRecord } from '@karmaniverous/entity-manager';
 import { nanoid } from 'nanoid';
 import { pick, range } from 'radash';
 import {
-  after,
+  afterAll,
   afterEach,
-  before,
+  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -44,7 +44,7 @@ const tableOptions: Omit<CreateTableCommandInput, 'TableName'> = {
 let entityClient: EntityClient<MyConfigMap>;
 
 describe('EntityClient', function () {
-  before(async function () {
+  beforeAll(async function () {
     entityClient = new EntityClient<MyConfigMap>({
       tableName: 'EntityClientTest',
       ...entityClientOptions,
@@ -99,7 +99,7 @@ describe('EntityClient', function () {
         await entityClient.createTable({ ...tableOptions });
       });
 
-      after(async function () {
+      afterAll(async function () {
         // Delete table.
         await entityClient.deleteTable();
       });
@@ -297,7 +297,7 @@ describe('EntityClient', function () {
     });
   });
 
-  after(async function () {
+  afterAll(async function () {
     await teardownDynamoDbLocal();
   });
 });
