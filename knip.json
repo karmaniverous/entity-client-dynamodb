@@ -1,12 +1,11 @@
 {
   "entry": ["src/**/index.ts"],
-  "ignore": [
-    "test/types/**",
-    ".stan/imports/**"
-  ],
+  "ignore": ["test/types/**", ".stan/imports/**"],
+  "ignoreDependencies": ["cross-env"],
   "project": ["*/**", "!docs/**"],
   "rules": {
     "exports": "off",
     "types": "off"
   }
 }
+
