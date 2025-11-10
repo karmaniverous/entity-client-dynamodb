@@ -19,16 +19,20 @@ import {
   it,
 } from 'vitest';
 
-// Detect Docker availability; skip suite if not reachable (e.g., CI or local without Docker running).
-const dockerAvailable = (() => {
-  try {
-    execSync('docker info', { stdio: 'ignore' });
-    return true;
-  } catch {
-    return false;
+// Wait for Docker engine to come up (cold start tolerant).
+const waitForDocker = async (timeoutMs = 90000, intervalMs = 1000) => {
+  const start = Date.now();
+  for (;;) {
+    try {
+      execSync('docker info', { stdio: 'ignore' });
+      return;
+    } catch {
+      if (Date.now() - start >= timeoutMs)
+        throw new Error('Docker engine not available');
+      await new Promise((r) => setTimeout(r, intervalMs));
+    }
   }
-})();
-const d = dockerAvailable ? describe : describe.skip;
+};
 import { entityManager, type MyConfigMap } from '../../test/entityManager';
 import { env } from '../env';
 import { generateTableDefinition } from '../Tables';
@@ -55,8 +59,9 @@ const tableOptions: Omit<CreateTableCommandInput, 'TableName'> = {
 
 let entityClient: EntityClient<MyConfigMap>;
 
-d('EntityClient', function () {
+describe('EntityClient', function () {
   beforeAll(async function () {
+    await waitForDocker();
     entityClient = new EntityClient<MyConfigMap>({
       tableName: 'EntityClientTest',
       ...entityClientOptions,
@@ -64,7 +69,7 @@ d('EntityClient', function () {
 
     await setupDynamoDbLocal(env.dynamoDbLocalPort);
     await dynamoDbLocalReady(entityClient.client);
-  });
+  }, 120000);
 
   describe('constructor', function () {
     it('should create a EntityClient instance', function () {
@@ -109,7 +114,7 @@ d('EntityClient', function () {
 
         // Create table.
         await entityClient.createTable({ ...tableOptions });
-      });
+      }, 120000);
 
       afterAll(async function () {
         // Delete table.

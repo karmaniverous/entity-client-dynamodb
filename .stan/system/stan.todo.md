@@ -19,3 +19,7 @@
   Docker while preserving test logic.
 - Removed unused @types/eslint__js devDependency and cleaned knip config
   (dropped obsolete ignoreDependencies). Knip runs clean.
+- Integration test cold-start: removed skip gating and added a Docker preflight
+  wait with retries in EntityClient tests; increased Vitest hook timeouts to
+  tolerate cold Docker Desktop startup. Tests no longer skip on the first run
+  and remain green on subsequent runs.
