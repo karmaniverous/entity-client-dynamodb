@@ -24,6 +24,7 @@ export default defineConfig([
       'docs/**/*',
       '.rollup.cache/**/*',
       '**/*.js',
+      'test/types/**/*',
     ],
   },
   // Base + strict type-checked rules
