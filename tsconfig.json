@@ -22,7 +22,8 @@
     "coverage/",
     "dist/",
     "docs/",
-    "tests/**"
+    "tests/**",
+    "test/types/**"
   ],
   "include": [
     "src/**/*.ts",

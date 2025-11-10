@@ -1,3 +1,5 @@
+import { execSync } from 'node:child_process';
+
 import { type CreateTableCommandInput } from '@aws-sdk/client-dynamodb';
 import {
   dynamoDbLocalReady,
@@ -17,6 +19,16 @@ import {
   it,
 } from 'vitest';
 
+// Detect Docker availability; skip suite if not reachable (e.g., CI or local without Docker running).
+const dockerAvailable = (() => {
+  try {
+    execSync('docker info', { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+})();
+const d = dockerAvailable ? describe : describe.skip;
 import { entityManager, type MyConfigMap } from '../../test/entityManager';
 import { env } from '../env';
 import { generateTableDefinition } from '../Tables';
@@ -43,7 +55,7 @@ const tableOptions: Omit<CreateTableCommandInput, 'TableName'> = {
 
 let entityClient: EntityClient<MyConfigMap>;
 
-describe('EntityClient', function () {
+d('EntityClient', function () {
   beforeAll(async function () {
     entityClient = new EntityClient<MyConfigMap>({
       tableName: 'EntityClientTest',
