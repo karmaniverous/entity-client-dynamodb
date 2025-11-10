@@ -660,7 +660,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
       ...options,
     } as ReplaceKey<GetCommandInput, 'Key', EntityKey<C>>;
 
-    const attributeExpressions = attributes?.map((a) => `#${a.toString()}`);
+    const attributeExpressions = attributes?.map((a) => `#${a}`);
 
     const input: ReplaceKey<GetCommandInput, 'Key', EntityKey<C>> = {
       ...(attributes && attributeExpressions

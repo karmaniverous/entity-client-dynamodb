@@ -1,16 +1,23 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { readFileSync } from 'node:fs';
+
 import aliasPlugin, { Alias } from '@rollup/plugin-alias';
 import commonjsPlugin from '@rollup/plugin-commonjs';
 import jsonPlugin from '@rollup/plugin-json';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
+import stripPlugin from '@rollup/plugin-strip';
 import typescriptPlugin from '@rollup/plugin-typescript';
 import type { InputOptions, RollupOptions } from 'rollup';
 import dtsPlugin from 'rollup-plugin-dts';
 
-import pkg from './package.json' assert { type: 'json' };
+const pkg = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
+);
 
 const outputPath = `dist`;
 
 const commonPlugins = [
+  stripPlugin({ include: ['**/*.ts'] }),
   commonjsPlugin(),
   jsonPlugin(),
   nodeResolve(),
@@ -22,13 +29,13 @@ const commonAliases: Alias[] = [];
 type Package = Record<string, Record<string, string> | undefined>;
 
 const commonInputOptions: InputOptions = {
-  input: 'src/index.ts',
   external: [
     ...Object.keys((pkg as unknown as Package).dependencies ?? {}),
     ...Object.keys((pkg as unknown as Package).peerDependencies ?? {}),
     'tslib',
   ],
-  plugins: [aliasPlugin({ entries: commonAliases }), commonPlugins],
+  input: 'src/index.ts',
+  plugins: [aliasPlugin({ entries: commonAliases }), ...commonPlugins],
 };
 
 const config: RollupOptions[] = [
@@ -61,7 +68,13 @@ const config: RollupOptions[] = [
   // Type definitions output.
   {
     ...commonInputOptions,
-    plugins: [commonInputOptions.plugins, dtsPlugin()],
+    // Rebuild plugin list locally to avoid spreading a possibly non-iterable
+    // InputPluginOption union (fixes TS2488 in typed builds).
+    plugins: [
+      aliasPlugin({ entries: commonAliases }),
+      ...commonPlugins,
+      dtsPlugin(),
+    ],
     output: [
       {
         extend: true,

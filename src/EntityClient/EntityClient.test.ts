@@ -5,9 +5,17 @@ import {
   teardownDynamoDbLocal,
 } from '@karmaniverous/dynamodb-local';
 import type { EntityRecord } from '@karmaniverous/entity-manager';
-import { expect } from 'chai';
 import { nanoid } from 'nanoid';
 import { pick, range } from 'radash';
+import {
+  after,
+  afterEach,
+  before,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from 'vitest';
 
 import { entityManager, type MyConfigMap } from '../../test/entityManager';
 import { env } from '../env';

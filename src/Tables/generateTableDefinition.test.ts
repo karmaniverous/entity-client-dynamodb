@@ -8,8 +8,8 @@ import {
   type Entity,
   type EntityMap,
 } from '@karmaniverous/entity-tools';
-import { expect } from 'chai';
 import { inspect } from 'util';
+import { describe, expect, it } from 'vitest';
 
 import { generateTableDefinition } from './generateTableDefinition';
 

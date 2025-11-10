@@ -1,0 +1,39 @@
+stan-core:
+  stanPath: .stan
+  excludes:
+    - CHANGELOG.md
+    - docs
+    - package-lock.json
+  imports:
+    entity-manager:
+      - ../entity-manager/.stan/system/stan.requirements.md
+      - ../entity-manager/.stan/system/stan.todo.md
+      - ../entity-manager/dist/index.d.ts
+      - ../entity-manager/.stan/interop/entity-client-dynamodb/**
+    entity-tools:
+      - ../entity-tools/.stan/system/stan.requirements.md
+      - ../entity-tools/.stan/system/stan.todo.md
+      - ../entity-tools/dist/index.d.ts
+      - ../entity-tools/.stan/interop/entity-client-dynamodb/**
+    karmanivero.us:
+      - ../karmanivero.us/collections/_entity-manager/00-intro.md
+      - ../karmanivero.us/collections/_entity-manager/01-sql-vs-nosql.md
+      - ../karmanivero.us/collections/_entity-manager/02-evolving-a-nosql-db-schema.md
+      - ../karmanivero.us/collections/_entity-manager/03-demo.md
+      - ../karmanivero.us/collections/_entity-manager/04-configuration.md
+stan-cli:
+  cliDefaults:
+    run:
+      facets: false
+      plan: false
+      sequential: true
+  patchOpenCommand: code -g {file}
+  scripts:
+    typecheck: npm run typecheck
+    lint: npm run lint:fix
+    test: npm run test -- --no-color
+    build: cross-env NO_COLOR=1 npm run build
+    docs:
+      script: npm run docs -- --emit none
+      warnPattern: \\[warning\\]
+    knip: npm run knip

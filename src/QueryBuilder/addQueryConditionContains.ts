@@ -7,7 +7,7 @@ import type { QueryConditionContains } from './QueryCondition';
 
 export const addQueryConditionContains = <
   C extends BaseConfigMap,
-  V extends NativeScalarAttributeValue,
+  V extends Exclude<NativeScalarAttributeValue, object>,
 >(
   builder: QueryBuilder<C>,
   indexToken: string,

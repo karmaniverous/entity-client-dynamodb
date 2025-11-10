@@ -71,8 +71,9 @@ export interface QueryConditionComparison<
  * @category QueryBuilder
  * @protected
  */
-export interface QueryConditionContains<V extends NativeScalarAttributeValue>
-  extends QueryCondition {
+export interface QueryConditionContains<
+  V extends Exclude<NativeScalarAttributeValue, object>,
+> extends QueryCondition {
   property: string;
   operator: 'contains';
   value?: V;
