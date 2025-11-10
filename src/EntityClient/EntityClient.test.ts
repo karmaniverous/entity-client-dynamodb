@@ -87,7 +87,7 @@ describe('EntityClient', function () {
     describe('create ... delete', function () {
       let tableName: string;
 
-      before(async function () {
+      beforeAll(async function () {
         tableName = nanoid();
 
         entityClient = new EntityClient<MyConfigMap>({
