@@ -39,3 +39,7 @@
 - Removed unused `@types/eslint__js` devDependency and cleaned knip config
   (dropped obsolete ignoreDependencies). Knip runs clean.
 
+- Decompose EntityClient monolith
+  - Split src/EntityClient/EntityClient.ts into small method modules under
+    src/EntityClient/methods/\*. Class now delegates to helpers; public API
+    unchanged and each file is well under the 300 LOC threshold.
