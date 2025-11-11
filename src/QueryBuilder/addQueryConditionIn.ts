@@ -18,16 +18,19 @@ export const addQueryConditionIn = <
   builder.indexParamsMap[indexToken].expressionAttributeNames[`#${property}`] =
     property;
 
-  const aliases = [...value].map((v) => {
-    if (v === undefined) return;
+  const values = Array.isArray(value) ? value : Array.from(value);
 
-    const alias = attributeValueAlias();
+  const aliases = values
+    .filter((v): v is Exclude<V, undefined> => v !== undefined)
+    .map((v) => {
+      const alias = attributeValueAlias();
 
-    builder.indexParamsMap[indexToken].expressionAttributeValues[alias] =
-      v?.toString() ?? 'null';
+      builder.indexParamsMap[indexToken].expressionAttributeValues[alias] = v;
 
-    return alias;
-  });
+      return alias;
+    });
+
+  if (!aliases.length) return;
 
   return `#${property} ${operator.toUpperCase()} (${aliases.join(', ')})`;
 };

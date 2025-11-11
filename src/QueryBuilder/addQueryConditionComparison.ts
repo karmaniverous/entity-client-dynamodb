@@ -21,8 +21,7 @@ export const addQueryConditionComparison = <
 
   const alias = attributeValueAlias();
 
-  builder.indexParamsMap[indexToken].expressionAttributeValues[alias] =
-    value.toString();
+  builder.indexParamsMap[indexToken].expressionAttributeValues[alias] = value;
 
   return `#${property} ${operator} ${alias}`;
 };

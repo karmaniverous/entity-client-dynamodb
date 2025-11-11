@@ -28,11 +28,11 @@ export const addQueryConditionBetween = <
 
   if (!isNil(valueFrom))
     builder.indexParamsMap[indexToken].expressionAttributeValues[aliasFrom] =
-      valueFrom.toString();
+      valueFrom;
 
   if (!isNil(valueTo))
     builder.indexParamsMap[indexToken].expressionAttributeValues[aliasTo] =
-      valueTo.toString();
+      valueTo;
 
   return !isNil(valueFrom) && !isNil(valueTo)
     ? `#${property} ${operator.toUpperCase()} ${aliasFrom} AND ${aliasTo}`

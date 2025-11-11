@@ -20,8 +20,7 @@ export const addQueryConditionContains = <
 
   const alias = attributeValueAlias();
 
-  builder.indexParamsMap[indexToken].expressionAttributeValues[alias] =
-    value?.toString();
+  builder.indexParamsMap[indexToken].expressionAttributeValues[alias] = value;
 
   return `${operator}(#${property}, ${alias})`;
 };

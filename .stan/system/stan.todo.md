@@ -6,11 +6,14 @@
   integration tests (shared test util).
 - Expand tsd coverage for exported types (TranscodeAttributeTypeMap usage and
   QueryBuilder public types).
-- Fix QueryBuilder to preserve native numeric types in ExpressionAttributeValues
-  (no .toString on numbers/booleans). New integration test for created BETWEEN
-  demonstrates the current failure.
+- Add batch write unprocessed requeue tests; fix extractor to return original
+  items/keys (not WriteRequest objects). (Planned)
 
 ## Completed (recent)
+
+- QueryBuilder: preserve native scalar types in ExpressionAttributeValues for
+  comparison/between/contains/in (no .toString()), and filter undefined values
+  in "in" conditions. This fixes numeric BETWEEN on created in integration test.
 
 - Single tsconfig: keep all TS (src, tests, configs) type-checked by tsc; let tsd
   own test/types/**. Fixed tsconfig exclude to "test/types/**" so rollup/tsc do
