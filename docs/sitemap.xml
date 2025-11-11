@@ -1,139 +1,139 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 	<url>
-		<loc>https://docs.karmanivero.us/entity-client-dynamodb/modules.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<loc>https://docs.karmanivero.us/entity-client-dynamodb/index.html</loc>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/entity-client-dynamodb/index.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<loc>https://docs.karmanivero.us/entity-client-dynamodb/modules.html</loc>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/hierarchy.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/documents/CHANGELOG.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/modules/index.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/classes/index.EntityClient.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/classes/index.QueryBuilder.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/interfaces/index.BatchGetOptions.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/interfaces/index.BatchWriteOptions.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/interfaces/index.EntityClientOptions.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/interfaces/index.GetDocumentQueryArgsParams.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/interfaces/index.IndexParams.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/interfaces/index.QueryBuilderOptions.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/interfaces/index.QueryCondition.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/interfaces/index.QueryConditionBeginsWith.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/interfaces/index.QueryConditionBetween.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/interfaces/index.QueryConditionComparison.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/interfaces/index.QueryConditionContains.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/interfaces/index.QueryConditionExists.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/interfaces/index.QueryConditionGroup.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/interfaces/index.QueryConditionIn.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/interfaces/index.QueryConditionNot.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/types/index.ActuallyScalarAttributeValue.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/types/index.ComposeCondition.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/types/index.FilterCondition.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/types/index.RangeKeyCondition.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/types/index.TranscodeAttributeTypeMap.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/types/index.WaiterConfig.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/variables/index.defaultTranscodeAttributeTypeMap.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/functions/index.addFilterCondition.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/functions/index.addRangeKeyCondition.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/functions/index.attributeValueAlias.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/functions/index.generateTableDefinition.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/entity-client-dynamodb/functions/index.getDocumentQueryArgs.html</loc>
-		<lastmod>2025-07-08T09:30:36.345Z</lastmod>
+		<lastmod>2025-11-11T10:01:40.642Z</lastmod>
 	</url>
 </urlset>
