@@ -19,6 +19,7 @@ import {
   it,
 } from 'vitest';
 
+import { QueryBuilder } from '../QueryBuilder';
 // Wait for Docker engine to come up (cold start tolerant).
 const waitForDocker = async (timeoutMs = 90000, intervalMs = 1000) => {
   const start = Date.now();
@@ -310,6 +311,55 @@ describe('EntityClient', function () {
             });
           });
         });
+      });
+
+      describe('query by created via QueryBuilder (numeric)', function () {
+        it('should return items in the numeric created range', async function () {
+          // Insert items with numeric created values under the same table.
+          const baseId = nanoid();
+          const createdValues = [1000, 2000, 3000];
+
+          // Build entity records with generated keys via EntityManager.
+          const records = createdValues.map((created, i) =>
+            entityManager.addKeys('user', {
+              // minimal item that supports generated keys
+              userId: `${baseId}-${String(i)}`,
+              created,
+              updated: created,
+            }),
+          );
+
+          // Put items to the table.
+          for (const rec of records) await entityClient.putItem(rec);
+
+          // Build a QueryBuilder on the "created" index with a numeric range key condition.
+          const builder = new QueryBuilder({
+            entityClient,
+            entityToken: 'user',
+            hashKeyToken: 'hashKey2',
+          });
+
+          builder.addRangeKeyCondition('created', {
+            property: 'created',
+            operator: 'between',
+            value: { from: 1500, to: 3000 },
+          });
+
+          const shardQueryMap = builder.build();
+
+          const { items } = await entityManager.query({
+            entityToken: 'user',
+            // No special properties required here; the index uses the global hash key.
+            item: {},
+            shardQueryMap,
+            pageSize: 25,
+          });
+
+          const returnedCreated = (items as { created: number }[])
+            .map((i) => i.created)
+            .sort((a, b) => a - b);
+          expect(returnedCreated).to.deep.equal([2000, 3000]);
+        }, 120000);
       });
     });
   });

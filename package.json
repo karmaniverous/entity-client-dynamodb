@@ -4,8 +4,8 @@
     "url": "https://github.com/karmaniverous/entity-client-dynamodb/issues"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.927.0",
-    "@aws-sdk/lib-dynamodb": "^3.927.0",
+    "@aws-sdk/client-dynamodb": "^3.928.0",
+    "@aws-sdk/lib-dynamodb": "^3.928.0",
     "@karmaniverous/batch-process": "^0.1.0",
     "@karmaniverous/entity-manager": "^6.14.1",
     "@karmaniverous/entity-tools": "^0.6.9",
@@ -24,7 +24,7 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-strip": "^3.0.4",
     "@rollup/plugin-typescript": "^12.3.0",
-    "@smithy/types": "^4.8.1",
+    "@smithy/types": "^4.9.0",
     "@types/node": "^24.10.0",
     "@vitest/coverage-v8": "^4.0.8",
     "@vitest/eslint-plugin": "^1.4.2",
@@ -34,7 +34,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-simple-import-sort": "^12.1.1",
-    "eslint-plugin-tsdoc": "^0.4.0",
+    "eslint-plugin-tsdoc": "^0.5.0",
     "knip": "^5.68.0",
     "lefthook": "^2.0.3",
     "prettier": "^3.6.2",
@@ -48,7 +48,7 @@
     "typedoc-plugin-mdn-links": "^5.0.10",
     "typedoc-plugin-replace-text": "^4.2.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.46.3",
+    "typescript-eslint": "^8.46.4",
     "vitest": "^4.0.8"
   },
   "exports": {

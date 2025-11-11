@@ -6,6 +6,9 @@
   integration tests (shared test util).
 - Expand tsd coverage for exported types (TranscodeAttributeTypeMap usage and
   QueryBuilder public types).
+- Fix QueryBuilder to preserve native numeric types in ExpressionAttributeValues
+  (no .toString on numbers/booleans). New integration test for created BETWEEN
+  demonstrates the current failure.
 
 ## Completed (recent)
 
