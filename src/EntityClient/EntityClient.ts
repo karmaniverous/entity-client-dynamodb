@@ -377,8 +377,17 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
           ...input,
         });
 
-      const unprocessedItemExtractor = (output: BatchWriteCommandOutput) =>
-        output.UnprocessedItems?.[tableName] as EntityRecord<C>[];
+      const unprocessedItemExtractor = (output: BatchWriteCommandOutput) => {
+        const unprocessed = output.UnprocessedItems?.[tableName] ?? [];
+        return unprocessed.flatMap((wr) => {
+          // DocumentClient returns WriteRequest[] with PutRequest/DeleteRequest.
+          // Re-queue original items only.
+          const asAny = wr as unknown as {
+            PutRequest?: { Item?: EntityRecord<C> };
+          };
+          return asAny.PutRequest?.Item ? [asAny.PutRequest.Item] : [];
+        });
+      };
 
       const outputs = await batchProcess(items, {
         batchHandler,
@@ -437,8 +446,15 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
           ...batchWritecommandInput,
         });
 
-      const unprocessedItemExtractor = (output: BatchWriteCommandOutput) =>
-        output.UnprocessedItems?.[tableName] as EntityKey<C>[];
+      const unprocessedItemExtractor = (output: BatchWriteCommandOutput) => {
+        const unprocessed = output.UnprocessedItems?.[tableName] ?? [];
+        return unprocessed.flatMap((wr) => {
+          const asAny = wr as unknown as {
+            DeleteRequest?: { Key?: EntityKey<C> };
+          };
+          return asAny.DeleteRequest?.Key ? [asAny.DeleteRequest.Key] : [];
+        });
+      };
 
       const outputs = await batchProcess(keys, {
         batchHandler,
@@ -480,16 +496,18 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
       };
 
       let purged = 0;
-      let items: Record<string, unknown>[] = [];
       let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
       const { hashKey, rangeKey } = this.entityManager.config;
 
       do {
-        ({ Items: items = [], LastEvaluatedKey: lastEvaluatedKey } =
-          await this.doc.scan({
-            TableName: tableName,
-            ExclusiveStartKey: lastEvaluatedKey,
-          }));
+        const scanOut = await this.doc.scan({
+          TableName: tableName,
+          ExclusiveStartKey: lastEvaluatedKey,
+        });
+        const items = (scanOut.Items ?? []) as Record<string, unknown>[];
+        lastEvaluatedKey = scanOut.LastEvaluatedKey as
+          | Record<string, unknown>
+          | undefined;
 
         if (items.length) {
           const itemKeys = items.map((item) =>
@@ -503,7 +521,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
 
           purged += items.length;
         }
-      } while (items.length);
+      } while (lastEvaluatedKey);
 
       this.logger.debug('purged items from table', {
         options,

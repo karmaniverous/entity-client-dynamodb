@@ -70,7 +70,7 @@ describe('EntityClient', function () {
 
     await setupDynamoDbLocal(env.dynamoDbLocalPort);
     await dynamoDbLocalReady(entityClient.client);
-  }, 120000);
+  });
 
   describe('constructor', function () {
     it('should create a EntityClient instance', function () {
@@ -115,7 +115,7 @@ describe('EntityClient', function () {
 
         // Create table.
         await entityClient.createTable({ ...tableOptions });
-      }, 120000);
+      });
 
       afterAll(async function () {
         // Delete table.
@@ -359,7 +359,7 @@ describe('EntityClient', function () {
             .map((i) => i.created)
             .sort((a, b) => a - b);
           expect(returnedCreated).to.deep.equal([2000, 3000]);
-        }, 120000);
+        });
       });
     });
   });
