@@ -11,7 +11,7 @@ import type { EntityClient } from '../EntityClient';
  * Helper implementation for EntityClient.putItem.
  */
 export async function putItem<C extends BaseConfigMap>(
-  this: EntityClient<C>,
+  client: EntityClient<C>,
   itemOrOptions:
     | EntityRecord<C>
     | MakeOptional<
@@ -21,10 +21,10 @@ export async function putItem<C extends BaseConfigMap>(
   options: MakeOptional<Omit<PutCommandInput, 'Item'>, 'TableName'> = {},
 ): Promise<PutCommandOutput> {
   // Resolve options.
-  const { hashKey, rangeKey } = this.entityManager.config;
+  const { hashKey, rangeKey } = client.entityManager.config;
 
   const resolvedOptions = {
-    TableName: this.tableName,
+    TableName: client.tableName,
     ...(hashKey in itemOrOptions && rangeKey in itemOrOptions
       ? {
           Item: itemOrOptions as EntityRecord<C>,
@@ -35,11 +35,11 @@ export async function putItem<C extends BaseConfigMap>(
 
   try {
     // Send command.
-    const response = await this.doc.put(resolvedOptions);
+    const response = await client.doc.put(resolvedOptions);
 
     // Evaluate response.
     if (response.$metadata.httpStatusCode === 200)
-      this.logger.debug('put item to table', {
+      client.logger.debug('put item to table', {
         itemOrOptions,
         options,
         resolvedOptions,
@@ -47,14 +47,14 @@ export async function putItem<C extends BaseConfigMap>(
       });
     else {
       const msg = 'failed to put item to table';
-      this.logger.error(msg, response);
+      client.logger.error(msg, response);
       throw new Error(msg);
     }
 
     return response;
   } catch (error) {
     if (error instanceof Error)
-      this.logger.error(error.message, { itemOrOptions, options });
+      client.logger.error(error.message, { itemOrOptions, options });
 
     throw error;
   }

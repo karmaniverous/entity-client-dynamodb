@@ -9,7 +9,7 @@ import type { EntityClient } from '../EntityClient';
  * Helper implementation for EntityClient.deleteItems.
  */
 export async function deleteItems<C extends BaseConfigMap>(
-  this: EntityClient<C>,
+  client: EntityClient<C>,
   keys: EntityKey<C>[],
   options: BatchWriteOptions = {},
 ): Promise<BatchWriteCommandOutput[]> {
@@ -19,13 +19,13 @@ export async function deleteItems<C extends BaseConfigMap>(
     batchProcessOptions,
     ...batchWritecommandInput
   }: BatchWriteOptions = {
-    tableName: this.tableName,
+    tableName: client.tableName,
     ...options,
   };
 
   try {
     const batchHandler = async (batch: EntityKey<C>[]) =>
-      await this.doc.batchWrite({
+      await client.doc.batchWrite({
         RequestItems: {
           [tableName]: batch.map((key) => ({
             DeleteRequest: { Key: key },
@@ -47,10 +47,10 @@ export async function deleteItems<C extends BaseConfigMap>(
     const outputs = await batchProcess(keys, {
       batchHandler,
       unprocessedItemExtractor,
-      ...Object.assign({}, this.batchProcessOptions, batchProcessOptions),
+      ...Object.assign({}, client.batchProcessOptions, batchProcessOptions),
     });
 
-    this.logger.debug('deleted keys from table', {
+    client.logger.debug('deleted keys from table', {
       keys,
       options,
       tableName,
@@ -62,7 +62,7 @@ export async function deleteItems<C extends BaseConfigMap>(
     return outputs;
   } catch (error) {
     if (error instanceof Error)
-      this.logger.error(error.message, { keys, options });
+      client.logger.error(error.message, { keys, options });
 
     throw error;
   }

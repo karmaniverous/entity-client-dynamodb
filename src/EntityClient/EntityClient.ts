@@ -1,4 +1,8 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import {
+  type CreateTableCommandInput,
+  type DeleteTableCommandInput,
+  DynamoDBClient,
+} from '@aws-sdk/client-dynamodb';
 import {
   type BatchGetCommandOutput,
   type BatchWriteCommandOutput,
@@ -35,6 +39,7 @@ import { putItem as putItemFn } from './methods/putItem';
 import { putItems as putItemsFn } from './methods/putItems';
 import { transactDeleteItems as transactDeleteItemsFn } from './methods/transactDeleteItems';
 import { transactPutItems as transactPutItemsFn } from './methods/transactPutItems';
+import type { WaiterConfig } from './WaiterConfig';
 
 /**
  * Convenience wrapper around the AWS DynamoDB SDK in addition to
@@ -95,10 +100,10 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
    * @param waiterConfig - Waiter configuration (default maxWaitTime 60s).
    */
   async createTable(
-    options: Parameters<typeof createTableFn<C>>[1],
-    waiterConfig?: Parameters<typeof createTableFn<C>>[2],
+    options: MakeOptional<CreateTableCommandInput, 'TableName'>,
+    waiterConfig: WaiterConfig = { maxWaitTime: 60 },
   ) {
-    return createTableFn.call(this, options, waiterConfig);
+    return createTableFn(this, options, waiterConfig);
   }
 
   /**
@@ -108,10 +113,10 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
    * @param waiterConfig - Waiter configuration (default maxWaitTime 60s).
    */
   async deleteTable(
-    options?: Parameters<typeof deleteTableFn<C>>[1],
-    waiterConfig?: Parameters<typeof deleteTableFn<C>>[2],
+    options: MakeOptional<DeleteTableCommandInput, 'TableName'> = {},
+    waiterConfig: WaiterConfig = { maxWaitTime: 60 },
   ) {
-    return deleteTableFn.call(this, options, waiterConfig);
+    return deleteTableFn(this, options, waiterConfig);
   }
 
   /**
@@ -148,7 +153,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
         >,
     options?: MakeOptional<Omit<PutCommandInput, 'Item'>, 'TableName'>,
   ): Promise<PutCommandOutput> {
-    return putItemFn.call(this, itemOrOptions as never, options as never);
+    return putItemFn(this, itemOrOptions as never, options as never);
   }
 
   /**
@@ -185,7 +190,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
         >,
     options?: MakeOptional<Omit<DeleteCommandInput, 'Key'>, 'TableName'>,
   ): Promise<DeleteCommandOutput> {
-    return deleteItemFn.call(this, keyOrOptions as never, options as never);
+    return deleteItemFn(this, keyOrOptions as never, options as never);
   }
 
   /**
@@ -198,7 +203,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     items: EntityRecord<C>[],
     options?: BatchWriteOptions,
   ): Promise<BatchWriteCommandOutput[]> {
-    return putItemsFn.call(this, items, options ?? {});
+    return putItemsFn(this, items, options ?? {});
   }
 
   /**
@@ -211,7 +216,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     keys: EntityKey<C>[],
     options?: BatchWriteOptions,
   ): Promise<BatchWriteCommandOutput[]> {
-    return deleteItemsFn.call(this, keys, options ?? {});
+    return deleteItemsFn(this, keys, options ?? {});
   }
 
   /**
@@ -222,7 +227,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
    * @returns Number of items purged.
    */
   async purgeItems(options?: BatchWriteOptions): Promise<number> {
-    return purgeItemsFn.call(this, options ?? {});
+    return purgeItemsFn(this, options ?? {});
   }
 
   /**
@@ -233,7 +238,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
   async transactPutItems(
     items: EntityRecord<C>[],
   ): Promise<TransactWriteCommandOutput> {
-    return transactPutItemsFn.call(this, items);
+    return transactPutItemsFn(this, items);
   }
 
   /**
@@ -244,7 +249,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
   async transactDeleteItems(
     keys: EntityKey<C>[],
   ): Promise<TransactWriteCommandOutput> {
-    return transactDeleteItemsFn.call(this, keys);
+    return transactDeleteItemsFn(this, keys);
   }
 
   /**
@@ -310,7 +315,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
   ): Promise<
     ReplaceKey<GetCommandOutput, 'Item', EntityRecord<C> | undefined>
   > {
-    return getItemFn.call(
+    return getItemFn(
       this,
       keyOrOptions as never,
       attributesOrOptions as never,
@@ -328,6 +333,6 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     keys: EntityKey<C>[],
     options?: BatchGetOptions,
   ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }> {
-    return getItemsFn.call(this, keys, options ?? {});
+    return getItemsFn(this, keys, options ?? {});
   }
 }

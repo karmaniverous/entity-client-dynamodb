@@ -12,19 +12,19 @@ import type { EntityClient } from '../EntityClient';
  * Helper implementation for EntityClient.putItems.
  */
 export async function putItems<C extends BaseConfigMap>(
-  this: EntityClient<C>,
+  client: EntityClient<C>,
   items: EntityRecord<C>[],
   options: BatchWriteOptions = {},
 ): Promise<BatchWriteCommandOutput[]> {
   // Resolve options.
   const { tableName, batchProcessOptions, ...input }: BatchWriteOptions = {
-    tableName: this.tableName,
+    tableName: client.tableName,
     ...options,
   };
 
   try {
     const batchHandler = async (batch: EntityRecord<C>[]) =>
-      await this.doc.batchWrite({
+      await client.doc.batchWrite({
         RequestItems: {
           [tableName]: batch.map((item) => ({
             PutRequest: { Item: item },
@@ -48,10 +48,10 @@ export async function putItems<C extends BaseConfigMap>(
     const outputs = await batchProcess(items, {
       batchHandler,
       unprocessedItemExtractor,
-      ...Object.assign({}, this.batchProcessOptions, batchProcessOptions),
+      ...Object.assign({}, client.batchProcessOptions, batchProcessOptions),
     });
 
-    this.logger.debug('put items to table', {
+    client.logger.debug('put items to table', {
       items,
       options,
       tableName,
@@ -63,7 +63,7 @@ export async function putItems<C extends BaseConfigMap>(
     return outputs;
   } catch (error) {
     if (error instanceof Error)
-      this.logger.error(error.message, { items, options });
+      client.logger.error(error.message, { items, options });
 
     throw error;
   }

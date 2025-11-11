@@ -15,7 +15,7 @@ import type { EntityClient } from '../EntityClient';
  * Helper implementation for EntityClient.deleteItem.
  */
 export async function deleteItem<C extends BaseConfigMap>(
-  this: EntityClient<C>,
+  client: EntityClient<C>,
   keyOrOptions:
     | EntityKey<C>
     | MakeOptional<
@@ -25,10 +25,10 @@ export async function deleteItem<C extends BaseConfigMap>(
   options: MakeOptional<Omit<DeleteCommandInput, 'Key'>, 'TableName'> = {},
 ): Promise<DeleteCommandOutput> {
   // Resolve options.
-  const { hashKey, rangeKey } = this.entityManager.config;
+  const { hashKey, rangeKey } = client.entityManager.config;
 
   const resolvedOptions = {
-    TableName: this.tableName,
+    TableName: client.tableName,
     ...(hashKey in keyOrOptions && rangeKey in keyOrOptions
       ? {
           Key: keyOrOptions as EntityRecord<C>,
@@ -39,11 +39,11 @@ export async function deleteItem<C extends BaseConfigMap>(
 
   try {
     // Send command.
-    const response = await this.doc.delete(resolvedOptions);
+    const response = await client.doc.delete(resolvedOptions);
 
     // Evaluate response.
     if (response.$metadata.httpStatusCode === 200)
-      this.logger.debug('deleted item from table', {
+      client.logger.debug('deleted item from table', {
         keyOrOptions,
         options,
         resolvedOptions,
@@ -51,14 +51,14 @@ export async function deleteItem<C extends BaseConfigMap>(
       });
     else {
       const msg = 'failed to delete item from table';
-      this.logger.error(msg, response);
+      client.logger.error(msg, response);
       throw new Error(msg);
     }
 
     return response;
   } catch (error) {
     if (error instanceof Error)
-      this.logger.error(error.message, { keyOrOptions, options });
+      client.logger.error(error.message, { keyOrOptions, options });
 
     throw error;
   }

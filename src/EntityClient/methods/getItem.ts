@@ -13,7 +13,7 @@ import type { EntityClient } from '../EntityClient';
  * Helper implementation for EntityClient.getItem.
  */
 export async function getItem<C extends BaseConfigMap>(
-  this: EntityClient<C>,
+  client: EntityClient<C>,
   keyOrOptions: EntityKey<C> | MakeOptional<GetCommandInput, 'TableName'>,
   attributesOrOptions?:
     | string[]
@@ -30,10 +30,10 @@ export async function getItem<C extends BaseConfigMap>(
   >,
 ): Promise<ReplaceKey<GetCommandOutput, 'Item', EntityRecord<C> | undefined>> {
   // Resolve options.
-  const { hashKey, rangeKey } = this.entityManager.config;
+  const { hashKey, rangeKey } = client.entityManager.config;
 
   const { AttributesToGet: attributes, ...resolvedOptions } = {
-    TableName: this.tableName,
+    TableName: client.tableName,
     ...(hashKey in keyOrOptions && rangeKey in keyOrOptions
       ? { Key: keyOrOptions as EntityKey<C> }
       : keyOrOptions),
@@ -59,13 +59,13 @@ export async function getItem<C extends BaseConfigMap>(
   };
 
   try {
-    const output = (await this.doc.get(input)) as ReplaceKey<
+    const output = (await client.doc.get(input)) as ReplaceKey<
       GetCommandOutput,
       'Item',
       EntityRecord<C> | undefined
     >;
 
-    this.logger.debug('got item from table', {
+    client.logger.debug('got item from table', {
       keyOrOptions,
       attributesOrOptions,
       options,
@@ -79,7 +79,7 @@ export async function getItem<C extends BaseConfigMap>(
     return output;
   } catch (error) {
     if (error instanceof Error)
-      this.logger.error(error.message, {
+      client.logger.error(error.message, {
         keyOrOptions,
         attributesOrOptions,
         options,

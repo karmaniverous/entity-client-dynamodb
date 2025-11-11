@@ -8,22 +8,22 @@ import type { EntityClient } from '../EntityClient';
  * Helper implementation for EntityClient.purgeItems.
  */
 export async function purgeItems<C extends BaseConfigMap>(
-  this: EntityClient<C>,
+  client: EntityClient<C>,
   options: BatchWriteOptions = {},
 ): Promise<number> {
   try {
     // Resolve options.
     const { tableName, ...batchWriteOptions }: BatchWriteOptions = {
-      tableName: this.tableName,
+      tableName: client.tableName,
       ...options,
     };
 
     let purged = 0;
     let lastEvaluatedKey: Record<string, unknown> | undefined = undefined;
-    const { hashKey, rangeKey } = this.entityManager.config;
+    const { hashKey, rangeKey } = client.entityManager.config;
 
     do {
-      const scanOut = await this.doc.scan({
+      const scanOut = await client.doc.scan({
         TableName: tableName,
         ExclusiveStartKey: lastEvaluatedKey,
       });
@@ -37,7 +37,7 @@ export async function purgeItems<C extends BaseConfigMap>(
           pick(item, [hashKey, rangeKey]),
         ) as EntityKey<C>[];
 
-        await this.deleteItems(itemKeys, {
+        await client.deleteItems(itemKeys, {
           tableName,
           ...batchWriteOptions,
         });
@@ -46,7 +46,7 @@ export async function purgeItems<C extends BaseConfigMap>(
       }
     } while (lastEvaluatedKey);
 
-    this.logger.debug('purged items from table', {
+    client.logger.debug('purged items from table', {
       options,
       tableName,
       batchWriteOptions,
@@ -55,7 +55,7 @@ export async function purgeItems<C extends BaseConfigMap>(
 
     return purged;
   } catch (error) {
-    if (error instanceof Error) this.logger.error(error.message, { options });
+    if (error instanceof Error) client.logger.error(error.message, { options });
 
     throw error;
   }

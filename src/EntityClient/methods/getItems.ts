@@ -13,19 +13,19 @@ import type { EntityClient } from '../EntityClient';
  * Helper implementation for EntityClient.getItems.
  */
 export async function getItems<C extends BaseConfigMap>(
-  this: EntityClient<C>,
+  client: EntityClient<C>,
   keys: EntityKey<C>[],
   options: BatchGetOptions = {},
 ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }> {
   // Resolve options.
   const { tableName, batchProcessOptions, ...input }: BatchGetOptions = {
-    tableName: this.tableName,
+    tableName: client.tableName,
     ...options,
   };
 
   try {
     const batchHandler = async (batch: EntityKey<C>[]) =>
-      await this.doc.batchGet({
+      await client.doc.batchGet({
         RequestItems: {
           [tableName]: {
             Keys: batch,
@@ -40,10 +40,10 @@ export async function getItems<C extends BaseConfigMap>(
     const outputs = await batchProcess(keys, {
       batchHandler,
       unprocessedItemExtractor,
-      ...Object.assign({}, this.batchProcessOptions, batchProcessOptions),
+      ...Object.assign({}, client.batchProcessOptions, batchProcessOptions),
     });
 
-    this.logger.debug('got items from table', {
+    client.logger.debug('got items from table', {
       keys,
       options,
       tableName,
@@ -60,7 +60,7 @@ export async function getItems<C extends BaseConfigMap>(
     };
   } catch (error) {
     if (error instanceof Error)
-      this.logger.error(error.message, { keys, options });
+      client.logger.error(error.message, { keys, options });
     throw error;
   }
 }
