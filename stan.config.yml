@@ -35,5 +35,5 @@ stan-cli:
     build: cross-env NO_COLOR=1 npm run build
     docs:
       script: npm run docs -- --emit none
-      warnPattern: \\[warning\\]
+      warnPattern: ^(?!.*@smithy\\/types#ChecksumConstructor)(?!.*@smithy\\/smithy-client#DefaultsMode).*\\[warning\\]
     knip: npm run knip
