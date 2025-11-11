@@ -96,7 +96,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
    * @param options - {@link CreateTableCommandInput | `CreateTableCommandInput`} object. If `TableName` is provided it will override `this.tableName`.
    * @param waiterConfig - {@link WaiterConfig | `WaiterConfig`} with `maxWaitTime` defaulted to 60s.
    *
-   * @returns An object containing the resulting {@link CreateTableCommandOutput | `CreateTableCommandOutput`} and {@link smithy!WaiterResult | `WaiterResult`} objects.
+   * @returns An object containing the resulting {@link CreateTableCommandOutput | `CreateTableCommandOutput`} and {@link https://github.com/smithy-lang/smithy-typescript/blob/main/packages/util-waiter/src/waiter.ts#L36-L43 | `WaiterResult`} objects.
    */
   async createTable(
     options: MakeOptional<CreateTableCommandInput, 'TableName'>,
@@ -147,7 +147,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
    * @param options - {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-dynamodb/Interface/DeleteTableCommandInput | `DeleteTableCommandInput`} object. If `TableName` is provided it will override `this.tableName`.
    * @param waiterConfig - {@link WaiterConfig | `WaiterConfig`} with `maxWaitTime` defaulted to 60s.
    *
-   * @returns An object containing the resulting {@link DeleteTableCommandOutput | `DeleteTableCommandOutput`} and {@link smithy!WaiterResult | `WaiterResult`} objects.
+   * @returns An object containing the resulting {@link DeleteTableCommandOutput | `DeleteTableCommandOutput`} and {@link https://github.com/smithy-lang/smithy-typescript/blob/main/packages/util-waiter/src/waiter.ts#L36-L43 | `WaiterResult`} objects.
    */
   async deleteTable(
     options: MakeOptional<DeleteTableCommandInput, 'TableName'> = {},

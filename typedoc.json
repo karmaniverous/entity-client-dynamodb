@@ -63,11 +63,7 @@
       "WithRequiredAndNonNullable": "https://docs.karmanivero.us/entity-tools/types/entity_tools.WithRequiredAndNonNullable.html"
     },
     "@smithy/types": {
-      "WaiterConfiguration": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-smithy-types/Interface/WaiterConfiguration/",
-      "WaiterResult": "https://github.com/smithy-lang/smithy-typescript/blob/main/packages/util-waiter/src/waiter.ts#L36-L43"
-    },
-    "smithy": {
-      "WaiterResult": "https://github.com/smithy-lang/smithy-typescript/blob/main/packages/util-waiter/src/waiter.ts#L36-L43"
+      "WaiterConfiguration": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-smithy-types/Interface/WaiterConfiguration/"
     }
   },
   "highlightLanguages": [
