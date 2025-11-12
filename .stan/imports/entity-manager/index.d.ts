@@ -431,32 +431,18 @@ declare class EntityManager<C extends BaseConfigMap> {
      */
     addKeys(entityToken: EntityToken<C>, item: EntityItem<C>[], overwrite?: boolean): EntityRecord<C>[];
     /**
-     * Convert an {@link EntityItem | `EntityItem`} into an {@link EntityKey | `EntityKey`}.
+     * Convert one or more {@link EntityItem | `EntityItem`} objects into an array of {@link EntityKey | `EntityKey`} values.
      *
      * @param entityToken - {@link Config | `Config`} `entities` key.
-     * @param item - {@link EntityItem | `EntityItem`} object.
+     * @param item - {@link EntityItem | `EntityItem`} object, or array of them.
      * @param overwrite - Overwrite existing properties (default `false`).
      *
-     * @returns {@link EntityKey | `EntityKey`} extracted from shallow clone of `item` with updated properties.
+     * @returns An array of {@link EntityKey | `EntityKey`} values. For a single input item, returns 0..N keys (usually 1).
+     *          For an array input, returns a single flattened array of keys across all inputs.
      *
      * @throws `Error` if `entityToken` is invalid.
-     *
-     * @overload
      */
-    getPrimaryKey(entityToken: EntityToken<C>, item: EntityItem<C>, overwrite?: boolean): EntityKey<C>;
-    /**
-     * Convert an array of {@link EntityItem | `EntityItem`} objects into {@link EntityKey | `EntityKey`} objects.
-     *
-     * @param entityToken - {@link Config | `Config`} `entities` key.
-     * @param items - Array of {@link EntityItem | `EntityItem`} objects.
-     * @param overwrite - Overwrite existing properties (default `false`).
-     *
-     * @returns An array of {@link EntityKey | `EntityKey`} objects extracted from shallow clone of each `item` with updated properties.
-     *
-     * @throws `Error` if `entityToken` is invalid.
-     *
-     * @overload
-     */
+    getPrimaryKey(entityToken: EntityToken<C>, item: EntityItem<C>, overwrite?: boolean): EntityKey<C>[];
     getPrimaryKey(entityToken: EntityToken<C>, items: EntityItem<C>[], overwrite?: boolean): EntityKey<C>[];
     /**
      * Strips generated properties, hash key, and range key from an {@link EntityRecord | `EntityRecord`} object.

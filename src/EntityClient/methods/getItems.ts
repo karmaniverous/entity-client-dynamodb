@@ -5,6 +5,7 @@ import type {
   EntityKey,
   EntityRecord,
 } from '@karmaniverous/entity-manager';
+import { zipToObject } from 'radash';
 
 import type { BatchGetOptions } from '../BatchGetOptions';
 import type { EntityClient } from '../EntityClient';
@@ -15,13 +16,42 @@ import type { EntityClient } from '../EntityClient';
 export async function getItems<C extends BaseConfigMap>(
   client: EntityClient<C>,
   keys: EntityKey<C>[],
-  options: BatchGetOptions = {},
+  attributes: string[],
+  options?: BatchGetOptions,
+): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }>;
+export async function getItems<C extends BaseConfigMap>(
+  client: EntityClient<C>,
+  keys: EntityKey<C>[],
+  options?: BatchGetOptions,
+): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }>;
+export async function getItems<C extends BaseConfigMap>(
+  client: EntityClient<C>,
+  keys: EntityKey<C>[],
+  attributesOrOptions?: string[] | BatchGetOptions,
+  maybeOptions?: BatchGetOptions,
 ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }> {
+  const hasAttributes = Array.isArray(attributesOrOptions);
+  const attributes = hasAttributes ? attributesOrOptions : undefined;
+
   // Resolve options.
+  const resolvedOptions: BatchGetOptions = hasAttributes
+    ? (maybeOptions ?? {})
+    : (attributesOrOptions ?? {});
+
   const { tableName, batchProcessOptions, ...input }: BatchGetOptions = {
     tableName: client.tableName,
-    ...options,
+    ...resolvedOptions,
   };
+
+  // Prepare projection expression if attributes provided.
+  const attributeExpressions = attributes?.length
+    ? attributes.map((a) => `#${a}`)
+    : undefined;
+
+  const expressionAttributeNames =
+    attributes && attributeExpressions
+      ? zipToObject(attributeExpressions, attributes)
+      : undefined;
 
   try {
     const batchHandler = async (batch: EntityKey<C>[]) =>
@@ -29,6 +59,12 @@ export async function getItems<C extends BaseConfigMap>(
         RequestItems: {
           [tableName]: {
             Keys: batch,
+            ...(attributes && attributeExpressions
+              ? {
+                  ExpressionAttributeNames: expressionAttributeNames,
+                  ProjectionExpression: attributeExpressions.join(','),
+                }
+              : {}),
           },
         },
         ...input,
@@ -45,7 +81,10 @@ export async function getItems<C extends BaseConfigMap>(
 
     client.logger.debug('got items from table', {
       keys,
-      options,
+      options: resolvedOptions,
+      attributes,
+      expressionAttributeNames,
+      attributeExpressions,
       tableName,
       batchProcessOptions,
       input,
@@ -60,7 +99,11 @@ export async function getItems<C extends BaseConfigMap>(
     };
   } catch (error) {
     if (error instanceof Error)
-      client.logger.error(error.message, { keys, options });
+      client.logger.error(error.message, {
+        keys,
+        options: resolvedOptions,
+        attributes,
+      });
     throw error;
   }
 }

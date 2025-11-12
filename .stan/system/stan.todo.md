@@ -43,3 +43,8 @@
   - Split src/EntityClient/EntityClient.ts into small method modules under
     src/EntityClient/methods/\*. Class now delegates to helpers; public API
     unchanged and each file is well under the 300 LOC threshold.
+
+- getItems projection: add attributes[] overload
+  - Added getItems(keys, attributes, options?) overload and wired per-table
+    ProjectionExpression and ExpressionAttributeNames in BatchGet.
+  - Kept existing behavior and return types; no consolidation with getItem.

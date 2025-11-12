@@ -327,6 +327,18 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
    * Gets multiple items from a DynamoDB table in batches.
    *
    * @param keys - Array of EntityKey.
+   * @param attributes - Optional list of attributes to project.
+   * @param options - BatchGetOptions.
+   */
+  async getItems(
+    keys: EntityKey<C>[],
+    attributes: string[],
+    options?: BatchGetOptions,
+  ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }>;
+  /**
+   * Gets multiple items from a DynamoDB table in batches.
+   *
+   * @param keys - Array of EntityKey.
    * @param options - BatchGetOptions.
    */
   async getItems(
@@ -334,5 +346,14 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     options?: BatchGetOptions,
   ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }> {
     return getItemsFn(this, keys, options ?? {});
+  }
+  async getItems(
+    keys: EntityKey<C>[],
+    attributesOrOptions?: string[] | BatchGetOptions,
+    options?: BatchGetOptions,
+  ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }> {
+    return Array.isArray(attributesOrOptions)
+      ? getItemsFn(this, keys, attributesOrOptions, options ?? {})
+      : getItemsFn(this, keys, attributesOrOptions ?? {});
   }
 }
