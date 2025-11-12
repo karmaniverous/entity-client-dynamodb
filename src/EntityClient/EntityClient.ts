@@ -344,9 +344,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
   async getItems(
     keys: EntityKey<C>[],
     options?: BatchGetOptions,
-  ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }> {
-    return getItemsFn(this, keys, options ?? {});
-  }
+  ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }>;
   async getItems(
     keys: EntityKey<C>[],
     attributesOrOptions?: string[] | BatchGetOptions,
