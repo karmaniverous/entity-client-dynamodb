@@ -31,10 +31,10 @@ export class QueryBuilder<
   CF = unknown,
 > extends BaseQueryBuilder<C, EntityClient<C>, IndexParams, ET, ITS, CF> {
   getShardQueryFunction(indexToken: ITS): ShardQueryFunction<C, ET, ITS, CF> {
-    const fn: ShardQueryFunction<C, ET, ITS, CF> = async (
-      hashKey,
-      pageKey,
-      pageSize,
+    const fn = async (
+      hashKey: string,
+      pageKey?: PageKeyByIndex<C, ET, ITS, CF>,
+      pageSize?: number,
     ) => {
       const {
         Count: count = 0,
@@ -65,7 +65,7 @@ export class QueryBuilder<
       return result;
     };
 
-    return fn;
+    return fn as unknown as ShardQueryFunction<C, ET, ITS, CF>;
   }
 
   /**

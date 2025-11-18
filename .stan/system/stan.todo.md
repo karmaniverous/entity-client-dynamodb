@@ -65,4 +65,9 @@
 
 - QueryBuilder SQF assignability
   - Explicitly typed the returned async function as ShardQueryFunction<C, ET, ITS, CF>
-    to satisfy conditional typing and resolve TS2322 during build/docs/typecheck.
+    to satisfy conditional typing and resolve TS2322 during build/docs/typecheck.
+
+- QueryBuilder SQF conditional cast
+  - Due to conditional typing on ShardQueryFunction with CF/IT, returned async
+    function is cast via unknown as ShardQueryFunction<C, ET, ITS, CF> to avoid
+    TS2322 while preserving the correct public signature and runtime behavior.
