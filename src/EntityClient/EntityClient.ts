@@ -18,6 +18,7 @@ import {
 import {
   type BaseConfigMap,
   BaseEntityClient,
+  type EntityItemByToken,
   type EntityKey,
   type EntityRecord,
   type EntityRecordByToken,
@@ -504,6 +505,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
 
     const token =
       typeof args[0] === 'string' ? (args[0] as EntityToken<C>) : undefined;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (token && options?.removeKeys) {
       return {
         ...result,

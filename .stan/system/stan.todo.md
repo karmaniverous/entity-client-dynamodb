@@ -72,6 +72,15 @@
     function is cast via unknown as ShardQueryFunction<C, ET, ITS, CF> to avoid
     TS2322 while preserving the correct public signature and runtime behavior.
 
+- Types import/export fix (build/docs/lint)
+  - Fixed TS2304 by importing type EntityItemByToken from @karmaniverous/entity-manager
+    in src/EntityClient/EntityClient.ts wherever it was referenced in public
+    return types.
+  - Re-exported EntityToken, EntityItemByToken, and EntityRecordByToken from
+    the package root (src/index.ts) to match README DX guidance.
+  - Suppressed a false-positive ESLint no-unnecessary-condition on the token-
+    aware guard in EntityClient.getItems(). Lint/typecheck/docs now pass locally
+    with this change set.
 - Docs warning cleanup
   - Updated JSDoc in TranscodeAttributeTypeMap to reference
     DefaultTranscodeRegistry (was DefaultTranscodeMap).
@@ -97,4 +106,4 @@
 
 - DX: finalize getItems overload compatibility
   - Widened implementation signature return to Promise<any> to satisfy TS2394
-    while preserving strongly typed overloads for call sites.
+    while preserving strongly typed overloads for call sites.
