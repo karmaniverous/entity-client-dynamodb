@@ -2,12 +2,6 @@
 
 ## Next up
 
-- Hotfix: resolve TS2394 in QueryBuilder.addRangeKeyCondition
-  - Remove the CF-aware overload and keep a single implementation signature
-    (RangeKeyCondition) to restore typecheck/docs immediately.
-  - Record CF-aware property narrowing as design intent for a safe follow-up
-    that avoids overload vs implementation conflicts.
-
 - Design a safe CF-aware property narrowing path for range key property (no
   overload/impl mismatch)
   - Option A (preferred): introduce a typed helper (e.g., rangeKeyProp) that
@@ -24,7 +18,7 @@
     • combined cases (tuple + removeKeys literal).
   - QueryBuilder/EntityManager query typing:
     • createQueryBuilder({ cf }) → ITS derived from cf; PageKeyByIndex typed
-      by index; ShardQueryFunction pageKey param narrowing.
+    by index; ShardQueryFunction pageKey param narrowing.
     • Negative cases for invalid index keys and wrong page-key shapes.
 
 - Document adapter ProjectionExpression policy
@@ -169,3 +163,9 @@
 - Fix: QueryBuilder CF-aware overload fallback
   - Ensured CF-aware property type falls back to string when no literal can be
     resolved (avoids ‘never’ and keeps overload compatible with implementation).
+
+- Amendment: Retained CF-aware property narrowing without overloads
+  - Replaced the overloadimplementation pair with a single CF-aware method
+    signature for addRangeKeyCondition that narrows `condition.property` via
+    IndexRangeKeyOf<CF, ITS>. This resolves TS2394 while preserving CF-aware
+    DX. No runtime changes; Typedoc/rollup/tsc remain compatible.

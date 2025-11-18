@@ -238,3 +238,8 @@
   - This ensures const‑tuple K (e.g., ['userId','created'] as const) narrows to
     Pick<…, 'userId' | 'created'>[] in QueryResult<…, K>.items as intended.
   - No runtime changes; tsd projection-typing.test-d.ts now passes.
+
+- Amended: Projected<T, K> object guard (TS2344)
+  - Wrapped Exactify usage in `T extends object ? … : T` so the type parameter
+    no longer violates the `object` constraint in tooling (tsc/rollup/typedoc).
+  - No runtime changes; typecheck/build/docs should pass cleanly.

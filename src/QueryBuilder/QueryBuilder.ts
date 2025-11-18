@@ -70,33 +70,30 @@ export class QueryBuilder<
   }
 
   /**
-   * Adds a range key condition to a {@link ShardQueryMap | `ShardQueryMap`} index. See the {@link RangeKeyCondition | `RangeKeyCondition`} type for more info.
+   * Adds a range key condition to a {@link ShardQueryMap | `ShardQueryMap`} index.
+   * See the {@link RangeKeyCondition | `RangeKeyCondition`} type for more info.
    *
    * @param indexToken - The index token.
    * @param condition - The {@link RangeKeyCondition | `RangeKeyCondition`} object.
    *
    * @returns - The modified {@link ShardQueryMap | `ShardQueryMap`} instance.
    */
-  // Overload: CF-aware narrowing of the property (subset of implementation)
   addRangeKeyCondition(
     indexToken: ITS,
     condition: Omit<RangeKeyCondition, 'property'> & {
-      // If CF carries indexes and ITS is constrained to those keys,
-      // property narrows to the index rangeKey token union; otherwise fall back to string.
+      // CF-aware narrowing: when CF carries indexes and ITS is constrained to those keys,
+      // property narrows to that index's rangeKey token; otherwise fall back to string.
       property: IndexRangeKeyOf<CF, ITS> extends string
         ? IndexRangeKeyOf<CF, ITS>
         : string;
     },
-  ): this;
-  // General signature: preserves original type for implementation
-  addRangeKeyCondition(indexToken: ITS, condition: RangeKeyCondition): this;
-  addRangeKeyCondition(indexToken: ITS, condition: RangeKeyCondition): this {
+  ): this {
     addRangeKeyCondition(this, indexToken, condition);
     return this;
   }
 
   /**
-   * Adds a filter condition to a {@link ShardQueryMap | `ShardQueryMap`} index.  See the {@link FilterCondition | `FilterCondition`} type for more info.
+   * Adds a filter condition to a {@link ShardQueryMap | `ShardQueryMap`} index. See the {@link FilterCondition | `FilterCondition`} type for more info.
    *
    * @param indexToken - The index token.
    * @param condition - The {@link FilterCondition | `FilterCondition`} object.
