@@ -7,6 +7,7 @@ import {
   type ShardQueryFunction,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   type ShardQueryMap, // imported to support API docs
+  type ShardQueryResult,
 } from '@karmaniverous/entity-manager';
 
 import { EntityClient } from '../EntityClient';
@@ -51,17 +52,17 @@ export class QueryBuilder<
         }),
       );
 
-      const base = {
+      const result: ShardQueryResult<C, ET, ITS, CF> = {
         count,
         items: items as EntityItemByToken<C, ET>[],
       };
 
-      return newPageKey
-        ? {
-            ...base,
-            pageKey: newPageKey as PageKeyByIndex<C, ET, ITS, CF>,
-          }
-        : base;
+      if (newPageKey) {
+        (result as { pageKey?: PageKeyByIndex<C, ET, ITS, CF> }).pageKey =
+          newPageKey as PageKeyByIndex<C, ET, ITS, CF>;
+      }
+
+      return result;
     };
   }
 

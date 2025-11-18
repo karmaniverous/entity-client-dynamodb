@@ -58,3 +58,7 @@
   - Updated getShardQueryFunction to return items as EntityItemByToken<C, ET>[]
     and to include pageKey only when present (optional), matching
     ShardQueryFunction<C, ET, ITS, CF>.
+
+- QueryBuilder SQF return typing
+  - Eliminated inferred union by anchoring the return to ShardQueryResult and
+    setting pageKey conditionally on presence (optional property).
