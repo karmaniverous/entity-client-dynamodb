@@ -82,9 +82,10 @@ export class QueryBuilder<
     indexToken: ITS,
     condition: Omit<RangeKeyCondition, 'property'> & {
       // If CF carries indexes and ITS is constrained to those keys,
-      // property narrows to the index rangeKey token union; otherwise
-      // this resolves to never and the general overload applies.
-      property: IndexRangeKeyOf<CF, ITS>;
+      // property narrows to the index rangeKey token union; otherwise fall back to string.
+      property: IndexRangeKeyOf<CF, ITS> extends string
+        ? IndexRangeKeyOf<CF, ITS>
+        : string;
     },
   ): this;
   // General signature: preserves original type for implementation

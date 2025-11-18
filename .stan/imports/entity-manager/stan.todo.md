@@ -215,4 +215,15 @@
     • build(): ShardQueryMap<…, CF, K>
     • query(): forwards K to EntityManager.query<…, CF, K>
   - No runtime behavior changes; enables entity-client-dynamodb to plumb
-    const-tuple projection types end-to-end.
+    const-tuple projection types end-to-end.
+
+- Tests/docs/interop — projection K
+  - Added tsd test test-d/projection-typing.test-d.ts validating that const-tuple
+    projections (K) narrow result item shapes through ShardQueryFunction/Map,
+    QueryOptions, and QueryResult.
+  - Updated requirements (.stan/system/stan.requirements.md) to document K, sort
+    alignment to projected shape, and BaseQueryBuilder K threading.
+  - Added interop note at .stan/interop/entity-client-dynamodb/projection-k-integration.md
+    detailing how to adopt K, invariants (uniqueProperty/sort keys), recommended
+    adapter behaviors, and suggested tsd coverage.
+  - No runtime changes; typecheck/lint/tests/build/docs remain green.

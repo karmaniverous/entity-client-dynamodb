@@ -131,4 +131,8 @@
   - Added CF-aware overload while keeping implementation signature as RangeKeyCondition to satisfy TS union assignability and avoid TS2345 during build/docs.
 
 - Fix: QueryBuilder overload compatibility (TS2394)
-  - Removed extra generic from CF-aware overload and used IndexRangeKeyOf<CF, ITS> directly; dropped unused HasIndexFor import. Implementation remains (ITS, RangeKeyCondition). No runtime changes.
+  - Removed extra generic from CF-aware overload and used IndexRangeKeyOf<CF, ITS> directly; dropped unused HasIndexFor import. Implementation remains (ITS, RangeKeyCondition). No runtime changes.
+
+- Fix: QueryBuilder CF-aware overload fallback
+  - Ensured CF-aware property type falls back to string when no literal can be
+    resolved (avoids ‘never’ and keeps overload compatible with implementation).
