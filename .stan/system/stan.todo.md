@@ -81,6 +81,11 @@
   - Suppressed a false-positive ESLint no-unnecessary-condition on the token-
     aware guard in EntityClient.getItems(). Lint/typecheck/docs now pass locally
     with this change set.
+
+- Docs: external symbol mapping cleanup
+  - Added externalSymbolLinkMappings for entity-manager Config and ConfigMap,
+    and entity-tools EntityMap to silence remaining Typedoc warnings about
+    unresolved links in public comments.
 - Docs warning cleanup
   - Updated JSDoc in TranscodeAttributeTypeMap to reference
     DefaultTranscodeRegistry (was DefaultTranscodeMap).

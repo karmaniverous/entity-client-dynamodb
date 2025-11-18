@@ -52,7 +52,9 @@
       "QueryBuilderQueryOptions": "https://docs.karmanivero.us/entity-manager/types/index.QueryBuilderQueryOptions.html",
       "QueryResult": "https://docs.karmanivero.us/entity-manager/interfaces/index.QueryResult.html",
       "ShardQueryFunction": "https://docs.karmanivero.us/entity-manager/types/index.ShardQueryFunction.html",
-      "ShardQueryMap": "https://docs.karmanivero.us/entity-manager/types/index.ShardQueryMap.html"
+      "ShardQueryMap": "https://docs.karmanivero.us/entity-manager/types/index.ShardQueryMap.html",
+      "Config": "https://docs.karmanivero.us/entity-manager/types/index.Config.html",
+      "ConfigMap": "https://docs.karmanivero.us/entity-manager/types/index.ConfigMap.html"
     },
     "@karmaniverous/entity-tools": {
       "Exactify": "https://docs.karmanivero.us/entity-tools/types/entity_tools.Exactify.html",
@@ -60,6 +62,7 @@
       "MakeOptional": "https://docs.karmanivero.us/entity-tools/types/entity_tools.MakeOptional.html",
       "ReplaceKey": "https://docs.karmanivero.us/entity-tools/types/entity_tools.ReplaceKey.html",
       "TranscodeRegistry": "https://docs.karmanivero.us/entity-tools/types/entity_tools.TranscodeRegistry.html",
+      "EntityMap": "https://docs.karmanivero.us/entity-tools/types/entity_tools.EntityMap.html",
       "WithRequiredAndNonNullable": "https://docs.karmanivero.us/entity-tools/types/entity_tools.WithRequiredAndNonNullable.html"
     },
     "@smithy/types": {
