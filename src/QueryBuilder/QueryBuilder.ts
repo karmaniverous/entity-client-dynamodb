@@ -83,10 +83,11 @@ export class QueryBuilder<
     condition: RangeKeyCondition & {
       // CF-aware narrowing: when CF carries indexes and ITS is constrained to those keys,
       // property narrows to that index's rangeKey token; otherwise falls back to string.
-      // Use a non-distributive conditional so that `never` does not propagate.
-      property: [IndexRangeKeyOf<CF, ITS>] extends [string]
-        ? IndexRangeKeyOf<CF, ITS>
-        : string;
+      // Use an IfNever-style non-distributive conditional so that `never`
+      // falls back to `string` when CF is absent.
+      property: [IndexRangeKeyOf<CF, ITS>] extends [never]
+        ? string
+        : IndexRangeKeyOf<CF, ITS>;
     },
   ): this {
     addRangeKeyCondition(this, indexToken, condition);

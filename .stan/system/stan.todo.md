@@ -169,3 +169,9 @@
     signature for addRangeKeyCondition that narrows `condition.property` via
     IndexRangeKeyOf<CF, ITS>. This resolves TS2394 while preserving CF-aware
     DX. No runtime changes; Typedoc/rollup/tsc remain compatible.
+
+- Amendment: CF-aware property fallback guard (no runtime change)
+  - Updated addRangeKeyCondition signature to use an IfNever-style conditional
+    for `property`, so when CF is absent the type falls back to `string`.
+  - Preserves CF-aware narrowing when CF is provided; restores typecheck/build/
+    docs by avoiding `never` at call sites.
