@@ -125,4 +125,7 @@
 - QueryBuilder typing (CF-aware, optional)
   - Tightened addRangeKeyCondition param types: indexToken accepts ITS, and
     when a config literal (CF) is supplied, the condition.property narrows to
-    the index’s rangeKey; otherwise remains string. No runtime changes.
+    the index’s rangeKey; otherwise remains string. No runtime changes.
+
+- Fix: QueryBuilder addRangeKeyCondition overloads
+  - Added CF-aware overload while keeping implementation signature as RangeKeyCondition to satisfy TS union assignability and avoid TS2345 during build/docs.

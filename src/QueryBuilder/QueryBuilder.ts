@@ -78,15 +78,18 @@ export class QueryBuilder<
    *
    * @returns - The modified {@link ShardQueryMap | `ShardQueryMap`} instance.
    */
+  // Overload: CF-aware narrowing of the property when CF carries indexes
   addRangeKeyCondition<IT extends ITS>(
     indexToken: IT,
     condition: Omit<RangeKeyCondition, 'property'> & {
-      // If CF carries indexes and IT is one, restrict property to its rangeKey; else string
       property: HasIndexFor<CF, IT> extends true
         ? IndexRangeKeyOf<CF, IT>
         : string;
     },
-  ): this {
+  ): this;
+  // General signature: preserves original type for implementation
+  addRangeKeyCondition(indexToken: ITS, condition: RangeKeyCondition): this;
+  addRangeKeyCondition(indexToken: ITS, condition: RangeKeyCondition): this {
     addRangeKeyCondition(this, indexToken, condition);
     return this;
   }

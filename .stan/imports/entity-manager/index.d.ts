@@ -253,9 +253,9 @@ type EntityOfToken<CC extends BaseConfigMap, ET extends EntityToken<CC>> = Exact
  * Note: If using createEntityManager with entitiesSchema, the schema must declare
  * only base (non-generated) properties. Generated keys/tokens are layered by EntityManager.
  */
-type EntityItemByToken$1<CC extends BaseConfigMap, ET extends EntityToken<CC>> = Partial<EntityOfToken<CC, ET> & Record<CC['HashKey'] | CC['RangeKey'] | CC['ShardedKeys'] | CC['UnshardedKeys'], string>> & Record<string, unknown>;
+type EntityItemByToken<CC extends BaseConfigMap, ET extends EntityToken<CC>> = Partial<EntityOfToken<CC, ET> & Record<CC['HashKey'] | CC['RangeKey'] | CC['ShardedKeys'] | CC['UnshardedKeys'], string>> & Record<string, unknown>;
 /** EntityRecordByToken — database-facing record (keys required) narrowed to a specific entity token. */
-type EntityRecordByToken<CC extends BaseConfigMap, ET extends EntityToken<CC>> = EntityItemByToken$1<CC, ET> & EntityKey<CC>;
+type EntityRecordByToken<CC extends BaseConfigMap, ET extends EntityToken<CC>> = EntityItemByToken<CC, ET> & EntityKey<CC>;
 /**
  * Normalize literals: string | readonly string[] -\> union of strings.
  */
@@ -267,7 +267,7 @@ type Projected<T, K> = [KeysFrom<K>] extends [never] ? T : Pick<T, Extract<keyof
 /**
  * Projected item by token — narrows EntityItemByToken by K when provided.
  */
-type ProjectedItemByToken<CC extends BaseConfigMap, ET extends EntityToken<CC>, K = unknown> = Projected<EntityItemByToken$1<CC, ET>, K>;
+type ProjectedItemByToken<CC extends BaseConfigMap, ET extends EntityToken<CC>, K = unknown> = Projected<EntityItemByToken<CC, ET>, K>;
 
 /**
  * A result returned by a {@link ShardQueryFunction | `ShardQueryFunction`} querying an individual shard.
@@ -542,11 +542,11 @@ declare class EntityManager<CC extends BaseConfigMap> {
      *
      * @overload
      */
-    addKeys<ET extends EntityToken<CC>>(entityToken: ET, item: EntityItemByToken$1<CC, ET>, overwrite?: boolean): EntityRecordByToken<CC, ET>;
+    addKeys<ET extends EntityToken<CC>>(entityToken: ET, item: EntityItemByToken<CC, ET>, overwrite?: boolean): EntityRecordByToken<CC, ET>;
     /**
      * @overload
      */
-    addKeys<ET extends EntityToken<CC>>(entityToken: ET, item: EntityItemByToken$1<CC, ET>[], overwrite?: boolean): EntityRecordByToken<CC, ET>[];
+    addKeys<ET extends EntityToken<CC>>(entityToken: ET, item: EntityItemByToken<CC, ET>[], overwrite?: boolean): EntityRecordByToken<CC, ET>[];
     /**
      * Convert one or more {@link EntityItem | `EntityItem`} objects into an array of {@link EntityKey | `EntityKey`} values.
      *
@@ -559,11 +559,11 @@ declare class EntityManager<CC extends BaseConfigMap> {
      *
      * @throws `Error` if `entityToken` is invalid.
      */
-    getPrimaryKey<ET extends EntityToken<CC>>(entityToken: ET, item: EntityItemByToken$1<CC, ET>, overwrite?: boolean): EntityKey<CC>[];
+    getPrimaryKey<ET extends EntityToken<CC>>(entityToken: ET, item: EntityItemByToken<CC, ET>, overwrite?: boolean): EntityKey<CC>[];
     /**
      * @overload
      */
-    getPrimaryKey<ET extends EntityToken<CC>>(entityToken: ET, items: EntityItemByToken$1<CC, ET>[], overwrite?: boolean): EntityKey<CC>[];
+    getPrimaryKey<ET extends EntityToken<CC>>(entityToken: ET, items: EntityItemByToken<CC, ET>[], overwrite?: boolean): EntityKey<CC>[];
     /**
      * Strips generated properties, hash key, and range key from an {@link EntityRecord | `EntityRecord`} object.
      *
@@ -576,11 +576,11 @@ declare class EntityManager<CC extends BaseConfigMap> {
      *
      * @overload
      */
-    removeKeys<ET extends EntityToken<CC>>(entityToken: ET, item: EntityRecordByToken<CC, ET>): EntityItemByToken$1<CC, ET>;
+    removeKeys<ET extends EntityToken<CC>>(entityToken: ET, item: EntityRecordByToken<CC, ET>): EntityItemByToken<CC, ET>;
     /**
      * @overload
      */
-    removeKeys<ET extends EntityToken<CC>>(entityToken: ET, items: EntityRecordByToken<CC, ET>[]): EntityItemByToken$1<CC, ET>[];
+    removeKeys<ET extends EntityToken<CC>>(entityToken: ET, items: EntityRecordByToken<CC, ET>[]): EntityItemByToken<CC, ET>[];
     /**
      * Find an index token in a {@link Config | `Config`} object based on the index `hashKey` and `rangeKey`.
      *
@@ -831,4 +831,4 @@ declare abstract class BaseQueryBuilder<CC extends BaseConfigMap, EntityClient e
 }
 
 export { BaseEntityClient, BaseQueryBuilder, EntityManager, configSchema, createEntityManager };
-export type { BaseConfigMap, BaseEntityClientOptions, BaseQueryBuilderOptions, CapturedConfigMapFrom, Config, ConfigInput, ConfigMap, EntitiesFromSchema, EntityItem, EntityItemByToken$1 as EntityItemByToken, EntityKey, EntityOfToken, EntityRecord, EntityRecordByToken, EntityToken, HasIndexFor, HashKeyFrom, IndexComponentTokens, IndexHashKeyOf, IndexRangeKeyOf, IndexTokensFrom, IndexTokensOf, KeysFrom, PageKey, PageKeyByIndex, ParsedConfig, Projected, ProjectedItemByToken, QueryBuilderQueryOptions, QueryOptions, QueryOptionsByCC, QueryOptionsByCF, QueryResult, RangeKeyFrom, ShardBump, ShardQueryFunction, ShardQueryMap, ShardQueryMapByCC, ShardQueryMapByCF, ShardQueryResult, ShardedKeysFrom, TranscodedPropertiesFrom, UnshardedKeysFrom, ValidateConfigMap };
+export type { BaseConfigMap, BaseEntityClientOptions, BaseQueryBuilderOptions, CapturedConfigMapFrom, Config, ConfigInput, ConfigMap, EntitiesFromSchema, EntityItem, EntityItemByToken, EntityKey, EntityOfToken, EntityRecord, EntityRecordByToken, EntityToken, HasIndexFor, HashKeyFrom, IndexComponentTokens, IndexHashKeyOf, IndexRangeKeyOf, IndexTokensFrom, IndexTokensOf, KeysFrom, PageKey, PageKeyByIndex, ParsedConfig, Projected, ProjectedItemByToken, QueryBuilderQueryOptions, QueryOptions, QueryOptionsByCC, QueryOptionsByCF, QueryResult, RangeKeyFrom, ShardBump, ShardQueryFunction, ShardQueryMap, ShardQueryMapByCC, ShardQueryMapByCF, ShardQueryResult, ShardedKeysFrom, TranscodedPropertiesFrom, UnshardedKeysFrom, ValidateConfigMap };
