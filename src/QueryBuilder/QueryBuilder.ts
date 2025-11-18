@@ -2,7 +2,8 @@ import {
   type BaseConfigMap,
   BaseQueryBuilder,
   type EntityItem,
-  type PageKey,
+  type EntityToken,
+  type PageKeyByIndex,
   type ShardQueryFunction,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   type ShardQueryMap, // imported to support API docs
@@ -22,19 +23,24 @@ import type { IndexParams } from './IndexParams';
  *
  * @category QueryBuilder
  */
-export class QueryBuilder<C extends BaseConfigMap> extends BaseQueryBuilder<
-  C,
-  EntityClient<C>,
-  IndexParams
-> {
-  getShardQueryFunction(indexToken: string): ShardQueryFunction<C> {
-    return async (hashKey: string, pageKey?: PageKey<C>, pageSize?: number) => {
+export class QueryBuilder<
+  C extends BaseConfigMap,
+  ET extends EntityToken<C> = EntityToken<C>,
+  ITS extends string = string,
+  CF = unknown,
+> extends BaseQueryBuilder<C, EntityClient<C>, IndexParams, ET, ITS, CF> {
+  getShardQueryFunction(indexToken: ITS): ShardQueryFunction<C, ET, ITS, CF> {
+    return async (
+      hashKey: string,
+      pageKey?: PageKeyByIndex<C, ET, ITS, CF>,
+      pageSize?: number,
+    ) => {
       const {
         Count: count = 0,
         Items: items = [],
         LastEvaluatedKey: newPageKey,
       } = await this.entityClient.doc.query(
-        getDocumentQueryArgs<C>({
+        getDocumentQueryArgs<C, ET, ITS, CF>({
           hashKey,
           hashKeyToken: this.hashKeyToken,
           indexParamsMap: this.indexParamsMap,
@@ -48,7 +54,7 @@ export class QueryBuilder<C extends BaseConfigMap> extends BaseQueryBuilder<
       return {
         count,
         items: items as EntityItem<C>[],
-        pageKey: newPageKey as PageKey<C>,
+        pageKey: newPageKey as PageKeyByIndex<C, ET, ITS, CF>,
       };
     };
   }

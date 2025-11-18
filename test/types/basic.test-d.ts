@@ -7,11 +7,11 @@ import type {
   BaseConfigMap,
   EntityManager,
 } from '@karmaniverous/entity-manager';
-import type { DefaultTranscodeMap } from '@karmaniverous/entity-tools';
+import type { DefaultTranscodeRegistry } from '@karmaniverous/entity-tools';
 import { expectAssignable, expectType } from 'tsd';
 
 // defaultTranscodeAttributeTypeMap matches its declared type
-expectType<TranscodeAttributeTypeMap<DefaultTranscodeMap>>(
+expectType<TranscodeAttributeTypeMap<DefaultTranscodeRegistry>>(
   defaultTranscodeAttributeTypeMap,
 );
 

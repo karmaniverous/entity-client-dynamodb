@@ -33,7 +33,7 @@ import {
 export const generateTableDefinition = <C extends BaseConfigMap>(
   entityManager: EntityManager<C>,
   transcodeAtttributeTypeMap: TranscodeAttributeTypeMap<
-    C['TranscodeMap']
+    C['TranscodeRegistry']
   > = defaultTranscodeAttributeTypeMap,
 ): Pick<
   CreateTableCommandInput,
@@ -77,7 +77,7 @@ export const generateTableDefinition = <C extends BaseConfigMap>(
                 : (transcodeAtttributeTypeMap[
                     propertyTranscodes[
                       component
-                    ] as keyof TranscodeAttributeTypeMap<C['TranscodeMap']>
+                    ] as keyof TranscodeAttributeTypeMap<C['TranscodeRegistry']>
                   ] ?? 'S'),
           });
         }

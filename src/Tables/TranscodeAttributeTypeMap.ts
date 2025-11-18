@@ -1,8 +1,8 @@
 import type { ScalarAttributeType } from '@aws-sdk/client-dynamodb';
 import type {
-  DefaultTranscodeMap,
+  DefaultTranscodeRegistry,
   Exactify,
-  TranscodeMap,
+  TranscodeRegistry,
 } from '@karmaniverous/entity-tools';
 
 /**
@@ -10,7 +10,7 @@ import type {
  *
  * @category Tables
  */
-export type TranscodeAttributeTypeMap<T extends TranscodeMap> = {
+export type TranscodeAttributeTypeMap<T extends TranscodeRegistry> = {
   [P in keyof Exactify<T> as T[P] extends string
     ? never
     : P]?: ScalarAttributeType;
@@ -21,5 +21,5 @@ export type TranscodeAttributeTypeMap<T extends TranscodeMap> = {
  *
  * @category Tables
  */
-export const defaultTranscodeAttributeTypeMap: TranscodeAttributeTypeMap<DefaultTranscodeMap> =
+export const defaultTranscodeAttributeTypeMap: TranscodeAttributeTypeMap<DefaultTranscodeRegistry> =
   { bigint: 'N', fix6: 'N', int: 'N', number: 'N', timestamp: 'N' };

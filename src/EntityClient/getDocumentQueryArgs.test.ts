@@ -6,7 +6,7 @@ import {
   type GetDocumentQueryArgsParams,
 } from './getDocumentQueryArgs';
 
-let defaultArgs: GetDocumentQueryArgsParams<MyConfigMap>;
+let defaultArgs: GetDocumentQueryArgsParams<MyConfigMap, 'user', 'index1'>;
 
 describe('getDocumentQueryArgs', function () {
   beforeEach(function () {

@@ -1,20 +1,34 @@
 import type { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
-import type { BaseConfigMap, PageKey } from '@karmaniverous/entity-manager';
+import type {
+  BaseConfigMap,
+  EntityToken,
+  PageKeyByIndex,
+} from '@karmaniverous/entity-manager';
 import { shake, sift } from 'radash';
 
 import type { IndexParams } from '../QueryBuilder';
 
-export interface GetDocumentQueryArgsParams<C extends BaseConfigMap> {
-  indexParamsMap: Record<string, IndexParams>;
-  indexToken: string;
+export interface GetDocumentQueryArgsParams<
+  C extends BaseConfigMap,
+  ET extends EntityToken<C>,
+  IT extends string,
+  CF = unknown,
+> {
+  indexParamsMap: Record<IT, IndexParams>;
+  indexToken: IT;
   hashKeyToken: C['HashKey'] | C['ShardedKeys'];
   hashKey: string;
-  pageKey?: PageKey<C>;
+  pageKey?: PageKeyByIndex<C, ET, IT, CF>;
   pageSize?: number;
   tableName: string;
 }
 
-export const getDocumentQueryArgs = <C extends BaseConfigMap>({
+export const getDocumentQueryArgs = <
+  C extends BaseConfigMap,
+  ET extends EntityToken<C>,
+  IT extends string,
+  CF = unknown,
+>({
   indexParamsMap,
   indexToken,
   hashKeyToken,
@@ -22,7 +36,7 @@ export const getDocumentQueryArgs = <C extends BaseConfigMap>({
   pageKey,
   pageSize,
   tableName,
-}: GetDocumentQueryArgsParams<C>): QueryCommandInput => {
+}: GetDocumentQueryArgsParams<C, ET, IT, CF>): QueryCommandInput => {
   const {
     expressionAttributeNames,
     expressionAttributeValues,
