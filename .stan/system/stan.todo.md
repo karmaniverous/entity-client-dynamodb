@@ -70,4 +70,8 @@
 - QueryBuilder SQF conditional cast
   - Due to conditional typing on ShardQueryFunction with CF/IT, returned async
     function is cast via unknown as ShardQueryFunction<C, ET, ITS, CF> to avoid
-    TS2322 while preserving the correct public signature and runtime behavior.
+    TS2322 while preserving the correct public signature and runtime behavior.
+
+- Docs warning cleanup
+  - Updated JSDoc in TranscodeAttributeTypeMap to reference
+    DefaultTranscodeRegistry (was DefaultTranscodeMap).

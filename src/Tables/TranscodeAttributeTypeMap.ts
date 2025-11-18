@@ -17,7 +17,7 @@ export type TranscodeAttributeTypeMap<T extends TranscodeRegistry> = {
 };
 
 /**
- * {@link TranscodeAttributeTypeMap | `TranscodeAttributeTypeMap`} object supporting default transcodes defined in {@link DefaultTranscodeMap | `DefaultTranscodeMap`}.
+ * {@link TranscodeAttributeTypeMap | `TranscodeAttributeTypeMap`} object supporting default transcodes defined in {@link DefaultTranscodeRegistry | `DefaultTranscodeRegistry`}.
  *
  * @category Tables
  */
