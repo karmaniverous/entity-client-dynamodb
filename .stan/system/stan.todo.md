@@ -61,4 +61,8 @@
 
 - QueryBuilder SQF return typing
   - Eliminated inferred union by anchoring the return to ShardQueryResult and
-    setting pageKey conditionally on presence (optional property).
+    setting pageKey conditionally on presence (optional property).
+
+- QueryBuilder SQF assignability
+  - Explicitly typed the returned async function as ShardQueryFunction<C, ET, ITS, CF>
+    to satisfy conditional typing and resolve TS2322 during build/docs/typecheck.
