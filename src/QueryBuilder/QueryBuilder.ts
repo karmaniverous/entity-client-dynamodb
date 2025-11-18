@@ -3,7 +3,6 @@ import {
   BaseQueryBuilder,
   type EntityItemByToken,
   type EntityToken,
-  type HasIndexFor,
   type IndexRangeKeyOf,
   type PageKeyByIndex,
   type ShardQueryFunction,
@@ -78,13 +77,14 @@ export class QueryBuilder<
    *
    * @returns - The modified {@link ShardQueryMap | `ShardQueryMap`} instance.
    */
-  // Overload: CF-aware narrowing of the property when CF carries indexes
-  addRangeKeyCondition<IT extends ITS>(
-    indexToken: IT,
+  // Overload: CF-aware narrowing of the property (subset of implementation)
+  addRangeKeyCondition(
+    indexToken: ITS,
     condition: Omit<RangeKeyCondition, 'property'> & {
-      property: HasIndexFor<CF, IT> extends true
-        ? IndexRangeKeyOf<CF, IT>
-        : string;
+      // If CF carries indexes and ITS is constrained to those keys,
+      // property narrows to the index rangeKey token union; otherwise
+      // this resolves to never and the general overload applies.
+      property: IndexRangeKeyOf<CF, ITS>;
     },
   ): this;
   // General signature: preserves original type for implementation

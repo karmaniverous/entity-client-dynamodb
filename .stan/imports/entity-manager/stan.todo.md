@@ -205,4 +205,14 @@
   - Aligned QueryOptions.sortOrder with projected item shape.
   - Kept runtime behavior unchanged; added localized casts in query.ts to
     preserve dedupe/sort when callers project attributes.
-  - Backwards compatible via default generics (K=unknown); adapters may opt in.
+  - Backwards compatible via default generics (K=unknown); adapters may opt in.
+
+- BaseQueryBuilder — projection K threading (type-only)
+  - Threaded an optional generic K through BaseQueryBuilder so downstream
+    adapters can build ShardQueryMap/ShardQueryFunction with projected item
+    typing:
+    • getShardQueryFunction(...): ShardQueryFunction<…, CF, K>
+    • build(): ShardQueryMap<…, CF, K>
+    • query(): forwards K to EntityManager.query<…, CF, K>
+  - No runtime behavior changes; enables entity-client-dynamodb to plumb
+    const-tuple projection types end-to-end.
