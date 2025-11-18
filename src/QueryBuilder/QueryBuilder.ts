@@ -1,7 +1,7 @@
 import {
   type BaseConfigMap,
   BaseQueryBuilder,
-  type EntityItem,
+  type EntityItemByToken,
   type EntityToken,
   type PageKeyByIndex,
   type ShardQueryFunction,
@@ -51,11 +51,17 @@ export class QueryBuilder<
         }),
       );
 
-      return {
+      const base = {
         count,
-        items: items as EntityItem<C>[],
-        pageKey: newPageKey as PageKeyByIndex<C, ET, ITS, CF>,
+        items: items as EntityItemByToken<C, ET>[],
       };
+
+      return newPageKey
+        ? {
+            ...base,
+            pageKey: newPageKey as PageKeyByIndex<C, ET, ITS, CF>,
+          }
+        : base;
     };
   }
 

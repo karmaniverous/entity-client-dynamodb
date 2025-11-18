@@ -53,3 +53,8 @@
   .stan/interop/entity-manager/z-infer-dts-bug.md. Proposed upstream fix:
   remove the named zod “infer” import and use z.infer<...> at type sites,
   republish a patch so tsc/typedoc/build pass downstream.
+
+- QueryBuilder SQF return shape
+  - Updated getShardQueryFunction to return items as EntityItemByToken<C, ET>[]
+    and to include pageKey only when present (optional), matching
+    ShardQueryFunction<C, ET, ITS, CF>.
