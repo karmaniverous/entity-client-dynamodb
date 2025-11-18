@@ -1,8 +1,8 @@
 import eslint from '@eslint/js';
 import vitest from '@vitest/eslint-plugin';
 import { defineConfig } from 'eslint/config';
-import prettierPlugin from 'eslint-config-prettier';
-import prettierEslintPlugin from 'eslint-plugin-prettier';
+import prettierConfig from 'eslint-config-prettier';
+import prettierPlugin from 'eslint-plugin-prettier';
 import simpleImportSortPlugin from 'eslint-plugin-simple-import-sort';
 import tsDocPlugin from 'eslint-plugin-tsdoc';
 import tseslint from 'typescript-eslint';
@@ -39,7 +39,7 @@ export default defineConfig([
       eslint.configs.recommended,
       ...tseslint.configs.strictTypeChecked,
       ...tseslint.configs.stylisticTypeChecked,
-      prettierPlugin,
+      prettierConfig,
     ],
     languageOptions: {
       parserOptions: {
@@ -50,7 +50,7 @@ export default defineConfig([
     plugins: {
       'simple-import-sort': simpleImportSortPlugin,
       tsdoc: tsDocPlugin,
-      prettier: prettierEslintPlugin,
+      prettier: prettierPlugin,
     },
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
@@ -67,7 +67,7 @@ export default defineConfig([
   // Lint the config itself without type-aware rules to avoid upstream rule crash
   {
     files: ['eslint.config.ts'],
-    extends: [eslint.configs.recommended, prettierPlugin],
+    extends: [eslint.configs.recommended, prettierConfig],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
@@ -77,7 +77,7 @@ export default defineConfig([
     plugins: {
       'simple-import-sort': simpleImportSortPlugin,
       tsdoc: tsDocPlugin,
-      prettier: prettierEslintPlugin,
+      prettier: prettierPlugin,
     },
     rules: {
       'prettier/prettier': 'error',
