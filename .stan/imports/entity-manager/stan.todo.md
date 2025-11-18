@@ -1,9 +1,6 @@
 # Development Plan
 
 ## Next up (in priority order)
-
-- Typecheck red → projection K: fix tsd failure (test-d/projection-typing.test-d.ts) by ensuring Projected<T, K> ignores index-signature keys. Update TokenAware.Projected to select from keyof Exactify<T> so const‑tuple K (e.g., ['userId','created'] as const) narrows correctly. No runtime changes. Add/adjust tsd to assert QueryResult<…, K>.items narrows to Pick<…, 'userId' | 'created'>[].
-
 - Docs (DX) — projection K + builder threading:
   - README/API: add a focused section showing:
     - How to use projection K with const tuples (end‑to‑end narrowing in ShardQueryFunction/Map, QueryOptions/Result).

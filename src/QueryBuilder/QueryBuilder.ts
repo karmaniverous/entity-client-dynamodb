@@ -80,10 +80,11 @@ export class QueryBuilder<
    */
   addRangeKeyCondition(
     indexToken: ITS,
-    condition: Omit<RangeKeyCondition, 'property'> & {
+    condition: RangeKeyCondition & {
       // CF-aware narrowing: when CF carries indexes and ITS is constrained to those keys,
-      // property narrows to that index's rangeKey token; otherwise fall back to string.
-      property: IndexRangeKeyOf<CF, ITS> extends string
+      // property narrows to that index's rangeKey token; otherwise falls back to string.
+      // Use a non-distributive conditional so that `never` does not propagate.
+      property: [IndexRangeKeyOf<CF, ITS>] extends [string]
         ? IndexRangeKeyOf<CF, ITS>
         : string;
     },

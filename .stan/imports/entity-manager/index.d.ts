@@ -263,7 +263,7 @@ type KeysFrom<K> = K extends readonly (infer E)[] ? Extract<E, string> : K exten
 /**
  * Project item shape by keys; if K is never/unknown, fall back to T.
  */
-type Projected<T, K> = [KeysFrom<K>] extends [never] ? T : Pick<T, Extract<KeysFrom<K>, keyof Exactify<T>>>;
+type Projected<T, K> = [KeysFrom<K>] extends [never] ? T : T extends object ? Pick<T, Extract<KeysFrom<K>, keyof Exactify<T>>> : T;
 /**
  * Projected item by token — narrows EntityItemByToken by K when provided.
  */
