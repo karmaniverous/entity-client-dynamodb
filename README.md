@@ -7,9 +7,23 @@ EntityClient for AWS DynamoDB (SDK v3) with:
 - Thin, typed wrapper over DynamoDBClient and DynamoDBDocument
 - Enhanced batch processing (retries for unprocessed items)
 - Seamless integration with [EntityManager](https://github.com/karmaniverous/entity-manager) for cross-shard, multi-index querying
-- First-class TypeScript types and docs
+- First-class TypeScript types and DX-focused factories/overloads
 
-If you are using the EntityManager ecosystem for single-table DynamoDB design, this package provides a practical, ergonomic client layer you can use directly in services, tests, and scripts.
+If you use the EntityManager ecosystem for single-table DynamoDB design, this package gives you a practical, ergonomic client with strong inference and minimal boilerplate.
+
+---
+
+## Mental model (DX first)
+
+- EntityManager defines your schema, generated properties, and query strategy.
+- EntityClient is a DynamoDB adapter:
+  - CRUD and batch ops with strong typing
+  - Optional page-key decoding and key stripping when you want domain objects
+- QueryBuilder composes cross-shard index queries:
+  - Token-aware and index-aware types
+  - Zero generics at call sites via a factory
+
+You should not need to write type parameters (<...>) at call sites. Pass values (entityToken, config literals), and types flow.
 
 ---
 
@@ -18,32 +32,23 @@ If you are using the EntityManager ecosystem for single-table DynamoDB design, t
 - Node 18+ recommended
 - TypeScript 5+ recommended
 
-Install from npm:
-
 ```bash
 npm i @karmaniverous/entity-client-dynamodb
 ```
-
-This package bundles AWS SDK v3 client dependencies; you do not need to install them separately.
 
 ---
 
 ## Quick start
 
-Below is a minimal, end-to-end example using an existing EntityManager configuration. See the EntityManager docs for how to build `entityManager`.
+Assume you already have a typed EntityManager configured.
 
 ```ts
-import {
-  EntityClient,
-  QueryBuilder,
-  generateTableDefinition,
-} from '@karmaniverous/entity-client-dynamodb';
+import { EntityClient } from '@karmaniverous/entity-client-dynamodb';
 import { EntityManager } from '@karmaniverous/entity-manager';
 
-// Assume you already have a typed, validated EntityManager instance.
+// Assume a typed EntityManager instance exists.
 declare const entityManager: EntityManager<any>;
 
-// Create the client.
 const entityClient = new EntityClient({
   entityManager,
   tableName: 'UserTable',
@@ -51,156 +56,148 @@ const entityClient = new EntityClient({
   endpoint: 'http://localhost:8000',
   credentials: { accessKeyId: 'fake', secretAccessKey: 'fake' },
 });
+```
 
-// Optionally create a table from your EntityManager config.
+### Create a table from your EntityManager config
+
+```ts
+import { generateTableDefinition } from '@karmaniverous/entity-client-dynamodb';
+
 await entityClient.createTable({
   BillingMode: 'PAY_PER_REQUEST',
   ...generateTableDefinition(entityManager),
 });
+```
 
-// Put & get a record (assumes your config hashKey/rangeKey are set).
-await entityClient.putItem({ hashKey2: 'u1', rangeKey: 'rk1', first: 'Ada' });
-const { Item } = await entityClient.getItem({
-  hashKey2: 'u1',
-  rangeKey: 'rk1',
+### Basic CRUD
+
+```ts
+// Put
+await entityClient.putItem({ hashKey2: 'h1', rangeKey: 'r1', a: 1 });
+
+// Get (full item)
+const full = await entityClient.getItem({ hashKey2: 'h1', rangeKey: 'r1' });
+
+// Get (projection)
+const projected = await entityClient.getItem(
+  { hashKey2: 'h1', rangeKey: 'r1' },
+  ['a'],
+);
+```
+
+### Token-aware typed reads (no generics; optional key stripping)
+
+Strong inference without casts — pass a literal entity token. You can also request key stripping (removeKeys) to return domain objects.
+
+```ts
+// Token-aware single get (record)
+const rec = await entityClient.getItem('user', {
+  hashKey2: 'h1',
+  rangeKey: 'r1',
 });
-console.log(Item); // { hashKey2: 'u1', rangeKey: 'rk1', first: 'Ada' }
 
-// Query across shards using QueryBuilder + EntityManager.
-const builder = new QueryBuilder({
+// Token-aware single get (record, projection)
+const recProj = await entityClient.getItem(
+  'user',
+  { hashKey2: 'h1', rangeKey: 'r1' },
+  ['a'],
+);
+
+// Token-aware single get (domain object: remove generated/global keys)
+const it = await entityClient.getItem(
+  'user',
+  { hashKey2: 'h1', rangeKey: 'r1' },
+  { removeKeys: true },
+);
+
+// Token-aware batch get (records)
+const many = await entityClient.getItems('user', [
+  { hashKey2: 'h1', rangeKey: 'r1' },
+  { hashKey2: 'h1', rangeKey: 'r2' },
+]);
+
+// Token-aware batch get (domain objects)
+const manyDomain = await entityClient.getItems(
+  'user',
+  [
+    { hashKey2: 'h1', rangeKey: 'r1' },
+    { hashKey2: 'h1', rangeKey: 'r2' },
+  ],
+  { removeKeys: true },
+);
+```
+
+Note:
+
+- Without a token, removeKeys is ignored (we do not guess the entity).
+- With a token and removeKeys: true, items are stripped to your domain shape.
+
+---
+
+## Querying (cross-shard, multi-index) with QueryBuilder
+
+Use the factory to infer ET automatically. Optionally pass your config literal (cf) to derive index tokens (ITS) and per-index page-key typing.
+
+```ts
+import { createQueryBuilder } from '@karmaniverous/entity-client-dynamodb';
+
+// Minimal: infer ET from entityToken; ITS defaults to string
+const qb = createQueryBuilder({
   entityClient,
   entityToken: 'user',
   hashKeyToken: 'hashKey2',
 });
 
-// Example range condition (see QueryBuilder section for more)
-builder.addRangeKeyCondition('created', {
+// Optional CF: derive ITS from cf.indexes and narrow page keys by index
+const qb2 = createQueryBuilder({
+  entityClient,
+  entityToken: 'user',
+  hashKeyToken: 'hashKey2',
+  cf: myConfigLiteral, // preserves keys with `as const`
+});
+
+// Add conditions
+qb.addRangeKeyCondition('created', {
   property: 'created',
   operator: 'between',
   value: { from: 1700000000000, to: 1900000000000 },
 });
 
-const shardQueryMap = builder.build();
+// Build the shard query map & execute via EntityManager.query
+const shardQueryMap = qb.build();
+
 const { items, pageKeyMap } = await entityManager.query({
   entityToken: 'user',
-  item: {}, // only required fields to derive alternate hash keys
+  item: {}, // minimal fields to derive alternate keys when needed
   shardQueryMap,
   pageSize: 25,
 });
-console.log(items.length, pageKeyMap);
 ```
 
----
-
-## Creating & deleting tables
-
-Use your EntityManager configuration to generate a DynamoDB table definition, then create/delete it with convenient waiters:
-
-```ts
-import { generateTableDefinition } from '@karmaniverous/entity-client-dynamodb';
-
-// Create
-const { waiterResult: createWaiter } = await entityClient.createTable({
-  BillingMode: 'PAY_PER_REQUEST',
-  ...generateTableDefinition(entityManager),
-});
-console.log(createWaiter.state); // 'SUCCESS'
-
-// Delete
-const { waiterResult: deleteWaiter } = await entityClient.deleteTable();
-console.log(deleteWaiter.state); // 'SUCCESS'
-```
-
-The waiter timeout is configurable:
-
-```ts
-await entityClient.createTable(
-  {
-    /* ... */
-  },
-  { maxWaitTime: 120 },
-);
-```
-
----
-
-## Basic CRUD
-
-### putItem
-
-```ts
-// Overload 1: provide the Item directly
-await entityClient.putItem({ hashKey2: 'h1', rangeKey: 'r1', a: 1 });
-
-// Overload 2: pass a full PutCommandInput (Item must match your record type)
-await entityClient.putItem({
-  Item: { hashKey2: 'h2', rangeKey: 'r2', a: 2 },
-  ConditionExpression: 'attribute_not_exists(#rk)',
-  ExpressionAttributeNames: { '#rk': 'rangeKey' },
-});
-```
-
-### getItem
-
-```ts
-// Full item
-const full = await entityClient.getItem({ hashKey2: 'h1', rangeKey: 'r1' });
-console.log(full.Item);
-
-// Projection with attribute list
-const projected = await entityClient.getItem(
-  { hashKey2: 'h1', rangeKey: 'r1' },
-  ['a'],
-);
-console.log(projected.Item); // { a: 1 }
-```
-
-### deleteItem
-
-```ts
-await entityClient.deleteItem({ hashKey2: 'h1', rangeKey: 'r1' });
-```
+To fetch the next page, pass the returned `pageKeyMap` back into `EntityManager.query`.
 
 ---
 
 ## Batch operations
 
-### putItems
-
 ```ts
+// putItems
 await entityClient.putItems([
   { hashKey2: 'h', rangeKey: '1' },
   { hashKey2: 'h', rangeKey: '2' },
-  { hashKey2: 'h', rangeKey: '3' },
 ]);
-```
 
-The client will retry unprocessed items until exhausted (configurable via `batchProcessOptions` on the EntityClient constructor and per-call overrides).
-
-### deleteItems
-
-```ts
+// deleteItems
 await entityClient.deleteItems([
   { hashKey2: 'h', rangeKey: '1' },
   { hashKey2: 'h', rangeKey: '2' },
-  { hashKey2: 'h', rangeKey: '3' },
 ]);
-```
 
-### purgeItems
-
-Delete every item from the table (scans, then batched deletes). Returns number of items purged:
-
-```ts
+// purge (scan + batched deletes). Returns number purged.
 const count = await entityClient.purgeItems();
-console.log(`Purged ${count} items`);
 ```
 
----
-
-## Transactions
-
-Use DynamoDB transactional writes for atomic multi-item updates:
+Transactions:
 
 ```ts
 await entityClient.transactPutItems([
@@ -216,57 +213,15 @@ await entityClient.transactDeleteItems([
 
 ---
 
-## Querying with QueryBuilder + EntityManager
-
-The QueryBuilder composes shard-friendly, index-specific query functions. Use it with `EntityManager.query` to run cross-shard, multi-index queries with typed page-key hydration.
-
-```ts
-import { QueryBuilder } from '@karmaniverous/entity-client-dynamodb';
-
-const builder = new QueryBuilder({
-  entityClient,
-  entityToken: 'user',
-  hashKeyToken: 'hashKey2', // your config HashKey token
-});
-
-// Add a range key condition (see QueryBuilder API for all operators)
-builder.addRangeKeyCondition('created', {
-  property: 'created',
-  operator: 'between',
-  value: { from: 1700000000000, to: 1900000000000 },
-});
-
-// Add filter conditions (optional)
-builder.addFilterCondition('updated', {
-  property: 'updated',
-  operator: '>=',
-  value: 1700000000000,
-});
-
-const shardQueryMap = builder.build();
-
-const { items, pageKeyMap } = await entityManager.query({
-  entityToken: 'user',
-  item: {}, // minimal fields to derive alternate hash keys when needed
-  shardQueryMap,
-  pageSize: 25, // per-shard page size
-  // limit: 100, // optional cross-shard max
-});
-```
-
-To fetch the next page, pass the returned `pageKeyMap` back into `EntityManager.query`.
-
----
-
 ## Table definition generation
 
 `generateTableDefinition(entityManager)` builds a partial `CreateTableCommandInput` based on your EntityManager config:
 
-- AttributeDefinitions (including global keys plus all index components)
+- AttributeDefinitions (global & index tokens)
 - GlobalSecondaryIndexes (with projections resolved)
-- KeySchema (global hash/range keys)
+- KeySchema
 
-Use it together with your desired throughput/billing options:
+Use it with your billing/throughput options:
 
 ```ts
 const definition = generateTableDefinition(entityManager);
@@ -280,7 +235,7 @@ await entityClient.createTable({
 
 ## AWS X-Ray
 
-If you run in an environment with a running X-Ray daemon (`AWS_XRAY_DAEMON_ADDRESS`), you can enable X-Ray capture for the underlying DynamoDB client:
+Enable X-Ray capture for the internal DynamoDB client when an X-Ray daemon is present.
 
 ```ts
 const entityClient = new EntityClient({
@@ -293,34 +248,46 @@ const entityClient = new EntityClient({
 
 ---
 
-## DynamoDB Local (for testing)
+## Types you’ll use most (re-exported here)
 
-This repo’s tests run against [DynamoDB Local](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html) inside Docker. See the test suite for a reference setup.
-
-For your own projects, point EntityClient at the emulator:
+Types are re-exported for convenience:
 
 ```ts
-const entityClient = new EntityClient({
-  entityManager,
-  tableName: 'DevTable',
-  region: 'local',
-  endpoint: 'http://localhost:8000',
-  credentials: { accessKeyId: 'fake', secretAccessKey: 'fake' },
-});
+import type {
+  EntityToken,
+  EntityItemByToken,
+  EntityRecordByToken,
+} from '@karmaniverous/entity-client-dynamodb';
 ```
+
+Note: Runtime re-exports (e.g., EntityManager) are intentionally not provided — import them from their source packages to keep module graphs clear.
 
 ---
 
-## Exported surface (high level)
+## API surface (high level)
 
-- EntityClient class (and related option types)
+- EntityClient class (and options)
+  - Token-aware getItem/getItems overloads
+  - Optional key stripping with GetItemOptions / GetItemsOptions
 - QueryBuilder and helpers for conditions and index parameters
+  - Factory: createQueryBuilder (cf optional)
 - Tables utilities:
   - generateTableDefinition
   - TranscodeAttributeTypeMap and defaultTranscodeAttributeTypeMap
-- Low-level helper: getDocumentQueryArgs (used internally by QueryBuilder)
+- Low-level helper: getDocumentQueryArgs
 
 See [API Docs](https://docs.karmanivero.us/entity-client-dynamodb) for details.
+
+---
+
+## Notes on inference and mental model
+
+- “Token in → Narrowed type out”
+  - Pass a literal entity token to get token-narrowed records.
+- “RemoveKeys when you want domain objects”
+  - In token-aware reads, set `removeKeys: true` to strip generated/global keys.
+- “Config literal (cf) narrows page keys by index”
+  - Pass your config literal to createQueryBuilder for index/page-key correctness.
 
 ---
 

@@ -63,7 +63,11 @@
       "WithRequiredAndNonNullable": "https://docs.karmanivero.us/entity-tools/types/entity_tools.WithRequiredAndNonNullable.html"
     },
     "@smithy/types": {
-      "WaiterConfiguration": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-smithy-types/Interface/WaiterConfiguration/"
+      "WaiterConfiguration": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-smithy-types/Interface/WaiterConfiguration/",
+      "ChecksumConstructor": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-smithy-types/TypeAlias/ChecksumConstructor/"
+    },
+    "@smithy/smithy-client": {
+      "DefaultsMode": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-smithy-smithy-client/TypeAlias/DefaultsMode/"
     }
   },
   "highlightLanguages": [

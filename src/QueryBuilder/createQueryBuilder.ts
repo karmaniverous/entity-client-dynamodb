@@ -8,13 +8,24 @@ import { EntityClient } from '../EntityClient';
 import { QueryBuilder } from './QueryBuilder';
 
 /**
- * Factory that produces a token-/config-aware QueryBuilder with fully inferred generics:
- * - ET inferred from options.entityToken
- * - CF inferred from options.cf
- * - ITS derived as IndexTokensOf<CF> (when CF carries indexes with literal keys)
+ * Factory that produces a token-/config-aware QueryBuilder with fully inferred generics.
+ *
+ * Overloads:
+ * - Without `cf`: ET is inferred; ITS defaults to `string`; CF defaults to `unknown`.
+ * - With `cf`: ET is inferred; ITS derives as IndexTokensOf<CF>; CF is threaded for page-key narrowing.
  *
  * No generics are required at the call site.
  */
+export function createQueryBuilder<
+  C extends BaseConfigMap,
+  ET extends EntityToken<C>,
+>(options: {
+  entityClient: EntityClient<C>;
+  entityToken: ET;
+  hashKeyToken: C['HashKey'] | C['ShardedKeys'];
+  pageKeyMap?: string;
+}): QueryBuilder<C, ET>;
+
 export function createQueryBuilder<
   C extends BaseConfigMap,
   ET extends EntityToken<C>,
@@ -25,12 +36,32 @@ export function createQueryBuilder<
   hashKeyToken: C['HashKey'] | C['ShardedKeys'];
   cf: CF;
   pageKeyMap?: string;
-}) {
-  const { cf, ...rest } = options;
-  void cf; // ensure CF is referenced for lint/usage; CF flows into typing only
+}): QueryBuilder<C, ET, IndexTokensOf<CF>, CF>;
 
-  // CF/ITS flow into the typed instance; CF is not needed at runtime.
-  return new QueryBuilder<C, ET, IndexTokensOf<CF>, CF>({
-    ...rest,
-  });
+export function createQueryBuilder<
+  C extends BaseConfigMap,
+  ET extends EntityToken<C>,
+  CF,
+>(
+  options:
+    | {
+        entityClient: EntityClient<C>;
+        entityToken: ET;
+        hashKeyToken: C['HashKey'] | C['ShardedKeys'];
+        pageKeyMap?: string;
+      }
+    | {
+        entityClient: EntityClient<C>;
+        entityToken: ET;
+        hashKeyToken: C['HashKey'] | C['ShardedKeys'];
+        cf: CF;
+        pageKeyMap?: string;
+      },
+) {
+  if ('cf' in options) {
+    const { cf, ...rest } = options;
+    void cf;
+    return new QueryBuilder<C, ET, IndexTokensOf<CF>, CF>({ ...rest });
+  }
+  return new QueryBuilder<C, ET, string, unknown>(options);
 }

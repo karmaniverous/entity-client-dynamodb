@@ -29,6 +29,8 @@ import AWSXray from 'aws-xray-sdk';
 import type { BatchGetOptions } from './BatchGetOptions';
 import type { BatchWriteOptions } from './BatchWriteOptions';
 import type { EntityClientOptions } from './EntityClientOptions';
+import type { GetItemOptions } from './GetItemOptions';
+import type { GetItemsOptions } from './GetItemsOptions';
 // Delegated method helpers.
 import { createTable as createTableFn } from './methods/createTable';
 import { deleteItem as deleteItemFn } from './methods/deleteItem';
@@ -255,6 +257,45 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
   }
 
   /**
+   * Token-aware getItem overloads, with optional key stripping (removeKeys) in options.
+   */
+  async getItem<ET extends EntityToken<C>>(
+    entityToken: ET,
+    key: EntityKey<C>,
+    attributes: string[],
+    options?: GetItemOptions,
+  ): Promise<
+    ReplaceKey<
+      GetCommandOutput,
+      'Item',
+      EntityRecordByToken<C, ET> | EntityItemByToken<C, ET> | undefined
+    >
+  >;
+
+  async getItem<ET extends EntityToken<C>>(
+    entityToken: ET,
+    key: EntityKey<C>,
+    options?: GetItemOptions,
+  ): Promise<
+    ReplaceKey<
+      GetCommandOutput,
+      'Item',
+      EntityRecordByToken<C, ET> | EntityItemByToken<C, ET> | undefined
+    >
+  >;
+
+  async getItem<ET extends EntityToken<C>>(
+    entityToken: ET,
+    options: MakeOptional<GetCommandInput, 'TableName'>,
+  ): Promise<
+    ReplaceKey<
+      GetCommandOutput,
+      'Item',
+      EntityRecordByToken<C, ET> | EntityItemByToken<C, ET> | undefined
+    >
+  >;
+
+  /**
    * Get item from a DynamoDB table.
    *
    * @param key - EntityKey object.
@@ -299,30 +340,81 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
   async getItem(
     options: MakeOptional<GetCommandInput, 'TableName'>,
   ): Promise<ReplaceKey<GetCommandOutput, 'Item', EntityRecord<C> | undefined>>;
-  async getItem(
-    keyOrOptions: EntityKey<C> | MakeOptional<GetCommandInput, 'TableName'>,
-    attributesOrOptions?:
+  async getItem(...args: unknown[]): Promise<unknown> {
+    // Normalize to: (token?), keyOrOptions, attributesOrOptions, options
+    let entityToken: EntityToken<C> | undefined;
+    let keyOrOptions: EntityKey<C> | MakeOptional<GetCommandInput, 'TableName'>;
+    let attributesOrOptions:
       | string[]
-      | MakeOptional<Omit<GetCommandInput, 'Key'>, 'TableName'>,
-    options?: MakeOptional<
-      Omit<
-        GetCommandInput,
-        | 'AttributesToGet'
-        | 'ExpressionAttributeNames'
-        | 'Key'
-        | 'ProjectionExpression'
-      >,
-      'TableName'
-    >,
-  ): Promise<
-    ReplaceKey<GetCommandOutput, 'Item', EntityRecord<C> | undefined>
-  > {
-    return getItemFn(
+      | MakeOptional<Omit<GetCommandInput, 'Key'>, 'TableName'>
+      | undefined;
+    let options:
+      | MakeOptional<
+          Omit<
+            GetCommandInput,
+            | 'AttributesToGet'
+            | 'ExpressionAttributeNames'
+            | 'Key'
+            | 'ProjectionExpression'
+          >,
+          'TableName'
+        >
+      | GetItemOptions
+      | undefined;
+
+    if (typeof args[0] === 'string') {
+      // getItem(entityToken, key, attributes?, options?) OR getItem(entityToken, options)
+      entityToken = args[0] as EntityToken<C>;
+      if (Array.isArray(args[2])) {
+        keyOrOptions = args[1] as EntityKey<C>;
+        attributesOrOptions = args[2] as string[];
+        options = args[3] as GetItemOptions | undefined;
+      } else {
+        // key + options OR options only
+        if (args[1] && typeof args[1] === 'object' && 'TableName' in args[1]) {
+          keyOrOptions = args[1] as MakeOptional<GetCommandInput, 'TableName'>;
+          attributesOrOptions = undefined;
+          options = undefined;
+        } else {
+          keyOrOptions = args[1] as EntityKey<C>;
+          attributesOrOptions = undefined;
+          options = args[2] as GetItemOptions | undefined;
+        }
+      }
+    } else {
+      // legacy: getItem(key, attributes?, options?) OR getItem(options)
+      keyOrOptions = args[0] as
+        | EntityKey<C>
+        | MakeOptional<GetCommandInput, 'TableName'>;
+      attributesOrOptions = Array.isArray(args[1])
+        ? (args[1] as string[])
+        : (args[1] as never);
+      options = (Array.isArray(args[1]) ? args[2] : args[1]) as never;
+    }
+
+    const output = (await getItemFn(
       this,
       keyOrOptions as never,
       attributesOrOptions as never,
       options as never,
-    );
+    )) as ReplaceKey<
+      GetCommandOutput,
+      'Item',
+      Record<string, unknown> | undefined
+    >;
+
+    if (
+      entityToken &&
+      (options as GetItemOptions | undefined)?.removeKeys &&
+      output.Item
+    ) {
+      return {
+        ...output,
+        Item: this.entityManager.removeKeys(entityToken, output.Item as never),
+      } as unknown;
+    }
+
+    return output;
   }
 
   /**
@@ -336,9 +428,9 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     entityToken: ET,
     keys: EntityKey<C>[],
     attributes: string[],
-    options?: BatchGetOptions,
+    options?: GetItemsOptions,
   ): Promise<{
-    items: EntityRecordByToken<C, ET>[];
+    items: EntityRecordByToken<C, ET>[] | EntityItemByToken<C, ET>[];
     outputs: BatchGetCommandOutput[];
   }>;
   /**
@@ -351,9 +443,9 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
   async getItems<ET extends EntityToken<C>>(
     entityToken: ET,
     keys: EntityKey<C>[],
-    options?: BatchGetOptions,
+    options?: GetItemsOptions,
   ): Promise<{
-    items: EntityRecordByToken<C, ET>[];
+    items: EntityRecordByToken<C, ET>[] | EntityItemByToken<C, ET>[];
     outputs: BatchGetCommandOutput[];
   }>;
   /**
@@ -376,38 +468,48 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
    */
   async getItems(
     keys: EntityKey<C>[],
-    options?: BatchGetOptions,
+    options?: GetItemsOptions,
   ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }>;
   async getItems(...args: unknown[]): Promise<unknown> {
     // Normalize to: keys, attributesOrOptions, options
     let keys: EntityKey<C>[];
     let attributesOrOptions: string[] | BatchGetOptions | undefined;
-    let options: BatchGetOptions | undefined;
+    let options: GetItemsOptions | undefined;
 
     if (Array.isArray(args[0])) {
       // getItems(keys, attributes?, options?)
       keys = args[0] as EntityKey<C>[];
       if (Array.isArray(args[1])) {
         attributesOrOptions = args[1] as string[];
-        options = args[2] as BatchGetOptions | undefined;
+        options = args[2] as GetItemsOptions | undefined;
       } else {
-        attributesOrOptions = args[1] as BatchGetOptions | undefined;
-        options = args[2] as BatchGetOptions | undefined;
+        attributesOrOptions = args[1] as GetItemsOptions | undefined;
+        options = args[2] as GetItemsOptions | undefined;
       }
     } else {
       // getItems(entityToken, keys, attributes?, options?)
       keys = args[1] as EntityKey<C>[];
       if (Array.isArray(args[2])) {
         attributesOrOptions = args[2] as string[];
-        options = args[3] as BatchGetOptions | undefined;
+        options = args[3] as GetItemsOptions | undefined;
       } else {
-        attributesOrOptions = args[2] as BatchGetOptions | undefined;
-        options = args[3] as BatchGetOptions | undefined;
+        attributesOrOptions = args[2] as GetItemsOptions | undefined;
+        options = args[3] as GetItemsOptions | undefined;
       }
     }
 
-    return Array.isArray(attributesOrOptions)
-      ? getItemsFn(this, keys, attributesOrOptions, options ?? {})
-      : getItemsFn(this, keys, attributesOrOptions ?? {});
+    const result = Array.isArray(attributesOrOptions)
+      ? await getItemsFn(this, keys, attributesOrOptions, options ?? {})
+      : await getItemsFn(this, keys, attributesOrOptions ?? {});
+
+    const token =
+      typeof args[0] === 'string' ? (args[0] as EntityToken<C>) : undefined;
+    if (token && options?.removeKeys) {
+      return {
+        ...result,
+        items: this.entityManager.removeKeys(token, result.items as never),
+      } as unknown;
+    }
+    return result;
   }
 }
