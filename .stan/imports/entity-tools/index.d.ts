@@ -30,27 +30,23 @@ type ConditionalProperty<K extends PropertyKey, C, O extends object> = [
  *
  * @example
  * ```
- * interface DefaultTranscodeMap extends TranscodeMap {
- *   bigint20: bigint;
- *   boolean: boolean;
+ * interface MyTranscodeRegistry extends TranscodeRegistry {
  *   fix6: number;
- *   int: number;
- *   string: string;
+ *   boolean: boolean;
  * }
  * ```
- *
  * @category Transcoding
  */
-type TranscodeMap = object;
+type TranscodeRegistry = object;
 
 /**
- * Default {@link TranscodeMap | `TranscodeMap`} supporting {@link defaultTranscodes | `defaultTranscodes`}.
+ * Default {@link TranscodeRegistry | `TranscodeRegistry`} supporting {@link defaultTranscodes | `defaultTranscodes`}.
  *
  * @see {@link Transcodes | `Transcodes`}
  *
  * @category Transcoding
  */
-interface DefaultTranscodeMap extends TranscodeMap {
+interface DefaultTranscodeRegistry extends TranscodeRegistry {
     /**
      * Supports variable-width transcoding of `BigInt` values. See {@link defaultTranscodes | `defaultTranscodes`} for implementation details.
      */
@@ -101,10 +97,10 @@ type Exactify<O extends object> = {
 /**
  * Maps transcode keys to their respective encoding and decoding functions.
  *
- * @typeParam T - The {@link TranscodeMap | `TranscodeMap`} type.
+ * @typeParam TR - The {@link TranscodeRegistry | `TranscodeRegistry`} type.
  *
  * @remarks
- * The keys of this object must exactly match the keys of the {@link TranscodeMap | `TranscodeMap`}.
+ * The keys of this object must exactly match the keys of the {@link TranscodeRegistry | `TranscodeRegistry`}.
  *
  * Each `encode` function must take the mapped type as an argument and return a `string`. Invalid values should throw an error.
  *
@@ -114,11 +110,11 @@ type Exactify<O extends object> = {
  *
  * @example
  * ```
- * interface MyTranscodeMap extends TranscodeMap {
+ * interface MyTranscodeRegistry extends TranscodeRegistry {
  *   fix6: number;
  * }
  *
- * const myTranscodes extends Transcodes<MyTranscodeMap> = {
+ * const myTranscodes: Transcodes<MyTranscodeRegistry> = {
  *   fix6: {
  *     encode: (value) => {
  *       if (
@@ -154,21 +150,21 @@ type Exactify<O extends object> = {
  *
  * @category Transcoding
  */
-type Transcodes<T extends TranscodeMap> = {
-    [P in keyof Exactify<T>]: {
-        encode: (value: T[P]) => string;
-        decode: (value: string) => T[P];
+type Transcodes<TR extends TranscodeRegistry> = {
+    [P in keyof Exactify<TR>]: {
+        encode: (value: TR[P]) => string;
+        decode: (value: string) => TR[P];
     };
 };
 
 /**
- * A default set of {@link Transcodes | `Transcodes`} supporting {@link DefaultTranscodeMap | `DefaultTranscodeMap`}. These can be extended as needed by consuming applications.
+ * A default set of {@link Transcodes | `Transcodes`} supporting {@link DefaultTranscodeRegistry | `DefaultTranscodeRegistry`}. These can be extended as needed by consuming applications.
  *
  * See {@link https://github.com/karmaniverous/entity-tools/blob/main/src/defaultTranscodes.ts | implementation details}.
  *
  * @category Transcoding
  */
-declare const defaultTranscodes: Transcodes<DefaultTranscodeMap>;
+declare const defaultTranscodes: Transcodes<DefaultTranscodeRegistry>;
 
 /**
  * The base Entity type. Supports string keys with any value. Derived types will accept unspecified string keys. All Entities should extend this type.
@@ -178,6 +174,24 @@ declare const defaultTranscodes: Transcodes<DefaultTranscodeMap>;
  * @category Entities
  */
 type Entity = Record<string, unknown>;
+
+/**
+ * Specifies progressive sorting on properties of an {@link Entity | `Entity`} type.
+ *
+ * @typeParam E - {@link Entity | `Entity`} type.
+ *
+ * @category Sort
+ */
+type SortOrder<E extends Entity> = {
+    property: keyof Exactify<E>;
+    desc?: boolean;
+}[];
+
+/**
+ + Identity helper that enforces SortOrder<E> at the call site while preserving
+ + property literal unions for better inference and DX.
+ */
+declare function defineSortOrder<E extends Entity>(so: SortOrder<E>): SortOrder<E>;
 
 /**
  * The base EntityMap type. All EntityMaps should extend this type.
@@ -204,27 +218,27 @@ type EntityKeys<E extends Entity> = E extends E ? keyof E : never;
  * @category Entities
  * @protected
  */
-type EntityValue<E extends Entity, P extends PropertyKey> = E extends Record<P, infer V> | Partial<Record<P, infer V>> ? V : never;
+type EntityValue<E extends Entity, PK extends PropertyKey> = E extends Record<PK, infer V> | Partial<Record<PK, infer V>> ? V : never;
 /**
  * Returns a union of exactified entity types in an {@link EntityMap | `EntityMap`}.
  *
- * @typeParam M - The {@link EntityMap | `EntityMap`} type.
+ * @typeParam EM - The {@link EntityMap | `EntityMap`} type.
  *
  * @category Entities
  * @protected
  */
-type EntityMapValues<M extends EntityMap> = {
-    [P in keyof M]: Exactify<M[P]>;
-}[keyof Exactify<M>];
+type EntityMapValues<EM extends EntityMap> = {
+    [P in keyof EM]: Exactify<EM[P]>;
+}[keyof Exactify<EM>];
 /**
  * Flattens an {@link EntityMap | `EntityMap`} into a single object with matching key types unionized.
  *
- * @typeParam M - The {@link EntityMap | `EntityMap`} to flatten.
+ * @typeParam EM - The {@link EntityMap | `EntityMap`} to flatten.
  *
  * @category Entities
  */
-type FlattenEntityMap<M extends EntityMap> = {
-    [K in EntityKeys<EntityMapValues<M>>]: EntityValue<EntityMapValues<M>, K>;
+type FlattenEntityMap<EM extends EntityMap> = {
+    [K in EntityKeys<EntityMapValues<EM>>]: EntityValue<EntityMapValues<EM>, K>;
 };
 
 /**
@@ -350,27 +364,27 @@ type NotNever<T extends object, N extends (string & keyof T)[]> = N extends [inf
 } : Tail extends string[] ? NotNever<T, Tail extends (string & keyof T)[] ? Tail : []> : true : true : true;
 
 /**
- * Returns the properties of `object` `O` with types that do not extend type `T`. Ignores `undefined` types.
+ * Returns the properties of `object` `O` with types that do not extend type `V`. Ignores `undefined` types.
  *
  * @typeParam O - The 'object' type.
- * @typeParam T - The type to filter by.
+ * @typeParam V - The type to filter by.
  *
  * @category Utilities
  */
-type PropertiesNotOfType<O extends object, T> = keyof {
-    [Property in keyof O as [T] extends [never] ? [NonNullable<O[Property]>] extends [never] ? never : Property : [NonNullable<O[Property]>] extends [never] ? NonNullable<O[Property]> extends T ? Property : never : never]: never;
+type PropertiesNotOfType<O extends object, V> = keyof {
+    [Property in keyof Exactify<O> as [V] extends [never] ? [NonNullable<Exactify<O>[Property]>] extends [never] ? never : Property : [NonNullable<Exactify<O>[Property]>] extends [never] ? never : NonNullable<Exactify<O>[Property]> extends V ? never : Property]: never;
 } & string;
 
 /**
- * Returns the properties of `object` `O` with types that extend type `T`. Ignores `undefined` types.
+ * Returns the properties of `object` `O` with types that extend type `V`. Ignores `undefined` types.
  *
  * @typeParam O - The `object` type.
- * @typeParam T - The type to filter by.
+ * @typeParam V - The type to filter by.
  *
  * @category Utilities
  */
-type PropertiesOfType<O extends object, T> = keyof {
-    [Property in keyof O as [T] extends [never] ? [NonNullable<O[Property]>] extends [never] ? Property : never : [NonNullable<O[Property]>] extends [never] ? never : NonNullable<O[Property]> extends T ? Property : never]: never;
+type PropertiesOfType<O extends object, V> = keyof {
+    [Property in keyof O as [V] extends [never] ? [NonNullable<O[Property]>] extends [never] ? Property : never : [NonNullable<O[Property]>] extends [never] ? never : NonNullable<O[Property]> extends V ? Property : never]: never;
 };
 
 /**
@@ -393,18 +407,6 @@ type ReplaceKey<T extends object, K extends keyof T, R> = Omit<T, K> & Record<K,
  * @category Utilities
  */
 type ReplaceKeys<T extends object, R extends object> = Omit<T, keyof T & keyof R> & Pick<R, keyof T & keyof R>;
-
-/**
- * Specifies progressive sorting on properties of an {@link Entity | `Entity`} type.
- *
- * @typeParam E - {@link Entity | `Entity`} type.
- *
- * @category Sort
- */
-type SortOrder<E extends Entity> = {
-    property: keyof Exactify<E>;
-    desc?: boolean;
-}[];
 
 /**
  * Sort an array of `Item` progressively by `sort`.
@@ -430,26 +432,26 @@ type SortOrder<E extends Entity> = {
 declare const sort: <Item extends Entity>(items?: Item[], sortOrder?: SortOrder<Item>) => Item[];
 
 /**
- * Returns the properties of an {@link Entity | `Entity`} or {@link EntityMap | `EntityMap`} whose types are covered by {@link TranscodeMap | `TranscodeMap`} `T`.
+ * Returns the properties of an {@link Entity | `Entity`} or {@link EntityMap | `EntityMap`} whose types are covered by {@link TranscodeRegistry | `TranscodeRegistry`} `TR`.
  *
  * @typeParam O - The {@link Entity | `Entity`} or {@link EntityMap | `EntityMap`} type.
- * @typeParam T - The {@link TranscodeMap | `TranscodeMap`}.
+ * @typeParam TR - The {@link TranscodeRegistry | `TranscodeRegistry`}.
  *
  * @category Transcoding
  * @category Entities
  */
-type TranscodableProperties<O extends EntityMap | Entity, T extends TranscodeMap> = PropertiesOfType<O extends EntityMap ? FlattenEntityMap<O> : O, T[keyof Exactify<T>]> & string;
+type TranscodableProperties<O extends EntityMap | Entity, TR extends TranscodeRegistry> = PropertiesOfType<O extends EntityMap ? FlattenEntityMap<O> : O, TR[keyof Exactify<TR>]> & string;
 
 /**
- * Returns the properties of an {@link Entity | `Entity`} or {@link EntityMap | `EntityMap`} whose types are not covered by {@link TranscodeMap | `TranscodeMap`} `T`.
+ * Returns the properties of an {@link Entity | `Entity`} or {@link EntityMap | `EntityMap`} whose types are not covered by {@link TranscodeRegistry | `TranscodeRegistry`} `TR`.
  *
  * @typeParam O - The {@link Entity | `Entity`} or {@link EntityMap | `EntityMap`} type.
- * @typeParam T - The {@link TranscodeMap | `TranscodeMap`}.
+ * @typeParam TR - The {@link TranscodeRegistry | `TranscodeRegistry`}.
  *
  * @category Transcoding
  * @category Entities
  */
-type UntranscodableProperties<O extends EntityMap | Entity, T extends TranscodeMap> = PropertiesNotOfType<O extends EntityMap ? FlattenEntityMap<O> : O, T[keyof Exactify<T>]>;
+type UntranscodableProperties<O extends EntityMap | Entity, TR extends TranscodeRegistry> = PropertiesNotOfType<O extends EntityMap ? FlattenEntityMap<O> : O, TR[keyof Exactify<TR>]>;
 
 /**
  * Creates a shallow update of `record` with the properties of `update` according to the following conventions:
@@ -482,5 +484,119 @@ type WithRequiredAndNonNullable<T, K extends keyof T> = T & {
     [P in K]-?: NonNullable<T[P]>;
 };
 
-export { conditionalize, defaultTranscodes, isNil, sort, updateRecord };
-export type { AllDisjoint, ConditionalProperty, DefaultTranscodeMap, Entity, EntityKeys, EntityMap, EntityMapValues, EntityValue, Exactify, FlattenEntityMap, MakeOptional, MakeRequired, MakeUpdatable, MutuallyExclusive, Nil, NotNever, PropertiesNotOfType, PropertiesOfType, ReplaceKey, ReplaceKeys, SortOrder, TranscodableProperties, TranscodeMap, Transcodes, UntranscodableProperties, WithRequiredAndNonNullable };
+/**
+ + Maps a record of transcoders to a TranscodeRegistry type by extracting each
+ + entry's decode return type.
+ +
+ + @example
+ + type R = TranscodeRegistryFrom\<\{ int: Transcoder<number> \}\>;
+ + // \{ int: number \}
+ */
+type TranscodeRegistryFrom<T extends Record<string, {
+    decode: (value: string) => unknown;
+}>> = {
+    [K in keyof T]: T[K] extends {
+        decode: (value: string) => infer V;
+    } ? V : never;
+};
+
+type EncodeParam<F> = F extends {
+    encode: (value: infer V) => string;
+} ? V : never;
+type DecodeReturn<F> = F extends {
+    decode: (value: string) => infer V;
+} ? V : never;
+/**
+ * Branded error shapes to improve DX when encode/decode agreement fails.
+ */
+type MissingEncodeError<K extends string> = {
+    __error__: 'MissingEncode';
+    key: K;
+};
+type MissingDecodeError<K extends string> = {
+    __error__: 'MissingDecode';
+    key: K;
+};
+type EncodeDecodeMismatchError<K extends string, E, D> = {
+    __error__: 'EncodeDecodeMismatch';
+    key: K;
+    encodeParam: E;
+    decodeReturn: D;
+};
+/**
+ * Ensures that for each entry K:
+ *  - encode: (value: VK) =\> string
+ *  - decode: (value: string) =\> VK
+ * and VK matches in both positions (bi-directionally).
+ */
+type EncodeDecodeAgreement<T extends Record<string, {
+    decode: (value: string) => unknown;
+}>> = {
+    [K in keyof T]-?: K extends string ? [EncodeParam<T[K]>] extends [never] ? MissingEncodeError<K> : [DecodeReturn<T[K]>] extends [never] ? MissingDecodeError<K> : [EncodeParam<T[K]>] extends [DecodeReturn<T[K]>] ? [DecodeReturn<T[K]>] extends [EncodeParam<T[K]>] ? T[K] : EncodeDecodeMismatchError<K, EncodeParam<T[K]>, DecodeReturn<T[K]>> : EncodeDecodeMismatchError<K, EncodeParam<T[K]>, DecodeReturn<T[K]>> : T[K];
+};
+/**
+ * Inference-first builder — derive the registry shape from decode() return types.
+ * Enforces encode/decode agreement per key.
+ */
+declare function defineTranscodes<const T extends Record<string, {
+    decode: (value: string) => unknown;
+}>>(spec: T & EncodeDecodeAgreement<T>): Transcodes<TranscodeRegistryFrom<T>>;
+
+/**
+ * Transcode name literal union for a registry.
+ */
+type TranscodeName<TR extends TranscodeRegistry> = keyof Exactify<TR> & string;
+
+/**
+ + Extracts the value type for a specific transcode name.
+ */
+type TranscodedType<TR extends TranscodeRegistry, TN extends TranscodeName<TR>> = TR[TN];
+
+/**
+ * A pair of encode/decode functions for a specific value type V.
+ *
+ * @category Transcoding
+ */
+type Transcoder<V> = {
+    encode: (value: V) => string;
+    decode: (value: string) => V;
+};
+
+/**
+ + Decodes a serialized key/value string using configurable delimiters.
+ + Requires exactly one kv delimiter per pair; throws on malformed pairs.
+ + Defaults: pair="|", kv="#".
+ */
+declare function decodePairs(serialized: string, options?: {
+    pair?: string;
+    kv?: string;
+}): Array<[string, string]>;
+
+/**
+ + Encodes key/value pairs into a single string using configurable delimiters.
+ + Defaults: pair="|", kv="#".
+ */
+declare function encodePairs(pairs: Array<[string, string]>, options?: {
+    pair?: string;
+    kv?: string;
+}): string;
+
+/**
+ + Enumerates all shard suffixes for a radix/width combination.
+ + For chars === 0, returns [""].
+ */
+declare function enumerateShardSuffixes(radix: number, chars: number): string[];
+
+/**
+ + Computes a stable 32-bit unsigned FNV-1a hash for a string.
+ */
+declare function hashString(value: string): number;
+
+/**
+ + Computes a shard suffix from a 32-bit hash modulo the shard space.
+ + For chars === 0, returns "".
+ */
+declare function shardSuffixFromHash(hash: number, radix: number, chars: number): string;
+
+export { conditionalize, decodePairs, defaultTranscodes, defineSortOrder, defineTranscodes, encodePairs, enumerateShardSuffixes, hashString, isNil, shardSuffixFromHash, sort, updateRecord };
+export type { AllDisjoint, ConditionalProperty, DecodeReturn, DefaultTranscodeRegistry, EncodeDecodeAgreement, EncodeDecodeMismatchError, EncodeParam, Entity, EntityKeys, EntityMap, EntityMapValues, EntityValue, Exactify, FlattenEntityMap, MakeOptional, MakeRequired, MakeUpdatable, MissingDecodeError, MissingEncodeError, MutuallyExclusive, Nil, NotNever, PropertiesNotOfType, PropertiesOfType, ReplaceKey, ReplaceKeys, SortOrder, TranscodableProperties, TranscodeName, TranscodeRegistry, TranscodeRegistryFrom, TranscodedType, Transcoder, Transcodes, UntranscodableProperties, WithRequiredAndNonNullable };

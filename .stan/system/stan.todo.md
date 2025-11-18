@@ -47,4 +47,9 @@
 - getItems projection: add attributes[] overload
   - Added getItems(keys, attributes, options?) overload and wired per-table
     ProjectionExpression and ExpressionAttributeNames in BatchGet.
-  - Kept existing behavior and return types; no consolidation with getItem.
+  - Kept existing behavior and return types; no consolidation with getItem.
+
+- Interop: drafted z.infer d.ts bug report to entity-manager and saved at
+  .stan/interop/entity-manager/z-infer-dts-bug.md. Proposed upstream fix:
+  remove the named zod “infer” import and use z.infer<...> at type sites,
+  republish a patch so tsc/typedoc/build pass downstream.

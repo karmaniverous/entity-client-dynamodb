@@ -1,81 +1,212 @@
 # Entity Manager — Requirements (authoritative)
 
 Scope
-- This document is extracted from the current implementation (v6.14.0) and is the source of truth for behavior and configuration.
-- Imported narrative documentation informs intent (single-table pattern, provider-agnostic design, shard/query behavior), but when conflicts arise, this specification prevails.
+
+- This document specifies the desired end state for entity-manager (vNext). It supersedes prior guidance where conflicts arise and reflects a coordinated, inference-first typing strategy across the “entity-\*” stack.
+- It remains provider-agnostic (DynamoDB is a common target) and retains current runtime semantics unless explicitly changed.
 
 Overview
-- Entity Manager provides a provider-agnostic, highly opinionated approach to single-table NoSQL data modeling, sharding, and cross-shard, multi-index querying.
+
+- Entity Manager implements rational indexing and cross-shard querying at scale in your NoSQL database so you can focus on application logic.
 - Core responsibilities:
   - Generate and maintain database-facing keys (global hashKey and rangeKey) and other generated properties used by indexes.
   - Encode/decode generated property elements via transcodes.
   - Dehydrate/rehydrate page keys for multi-index, cross-shard paging.
-  - Execute provider-agnostic, parallel shard queries through injected shard query functions, combining, deduping, and sorting results.
+  - Execute provider-agnostic, parallel shard queries through injected shard query functions, combining, de-duplicating, and sorting results.
 
 Key concepts and terminology
+
 - Entity: application data type; accepts unknown keys (record-like).
 - Generated properties:
   - Sharded: include the hashKey value and one or more property=value elements; require all elements to be present (atomic), otherwise undefined.
   - Unsharded: one or more property=value elements; missing element values are encoded as empty strings.
 - Keys:
   - Global hashKey (shared name across entities) with shard suffix.
-  - Global rangeKey (shared name across entities) in the form "uniqueProperty#value".
+  - Global rangeKey (shared name across entities) in the form “uniqueProperty#value”.
 - Shard bump: a time-windowed rule (timestamp, charBits, chars) defining shard key width and radix for records created within/after that timestamp.
 - Index components: tokens defining index hashKey and rangeKey. Tokens may be:
   - Global hashKey or rangeKey.
   - A sharded generated property (hashKey side only).
   - An unsharded generated property or a transcodable scalar property (rangeKey side).
 
-Configuration model (global-centric)
-- Configuration type: Config<C> where C is a ConfigMap describing:
-  - EntityMap: map of entities.
-  - HashKey/RangeKey: string tokens for global key property names (default 'hashKey' and 'rangeKey').
-  - ShardedKeys/UnshardedKeys: tokens for generated properties (optional sets).
-  - TranscodedProperties: tokens for properties subject to transcoding.
-  - TranscodeMap: mapping of transcode names to types (defaults to DefaultTranscodeMap).
-- ParsedConfig (runtime shape; validated with Zod v4):
-  - entities: Record<entityToken, {
-      timestampProperty: TranscodedProperties;
-      uniqueProperty: TranscodedProperties;
-      shardBumps?: ShardBump[];
-      defaultLimit?: number (default 10);
-      defaultPageSize?: number (default 10);
-    }>
-  - generatedProperties:
-    - sharded: Record<ShardedKey, TranscodedProperties[]>
-    - unsharded: Record<UnshardedKey, TranscodedProperties[]>
-  - indexes: Record<indexToken, {
-      hashKey: HashKey | ShardedKey;
-      rangeKey: RangeKey | UnshardedKey | TranscodedProperties;
-      projections?: string[]; // must be unique and must not include any keys
-    }>
-  - propertyTranscodes: Record<TranscodedProperties, keyof TranscodeMap>
-  - transcodes: Record<transcodeName, { encode: (unknown) => string; decode: (string) => unknown }>, defaults to defaultTranscodes
-  - hashKey: HashKey
-  - rangeKey: RangeKey
-  - generatedKeyDelimiter: string (default '|', must match /\W+/)
-  - generatedValueDelimiter: string (default '#', must match /\W+/)
-  - shardKeyDelimiter: string (default '!', must match /\W+/)
-  - throttle: number (default 10)
+Compatibility and assumptions
 
-Runtime config validation (excerpt of mandatory checks)
+- Provider-agnostic orchestration; intended to work over platforms like DynamoDB.
+- Canonicalization (e.g., name search fields) is an application concern; Entity Manager treats such strings as opaque values and provides transcodes for ordering/encoding.
+
+Non-requirements (current behavior)
+
+- No automatic fan-out reduction relative to remaining limit in the query loop.
+- No enforcement of globally unique (hashKey, rangeKey) pairs across separate index tokens.
+
+---
+
+## Inference-first typing (refactor) — strict acronyms and API requirements
+
+Goals
+
+- Inference-first configuration: callers pass a literal config value; Entity Manager captures tokens and index names directly from the value (no explicit generic parameters required in normal use).
+- Token-aware and index-aware typing end-to-end: entity token (ET) and index token (IT/ITS) narrow items, records, page keys, low-level helpers, shard query contracts, and query results without casts.
+- Value-first helpers and patterns ensure literal keys are preserved across module boundaries (use “as const” and “satisfies”).
+- Runtime behavior remains unchanged: Zod-based validation persists; we intersect parsed configuration with captured literal types at the type level.
+
+Zod-schema-first EM inference (no generics at call sites)
+
+- Factory supports optional entitiesSchema: Record<entityToken, Zod schema>.
+- When provided, EM is inferred as { [ET]: z.infer<typeof schema[ET]> } directly from values.
+- When omitted, EM falls back to a broad EntityMap (no breaking change).
+- Schemas define only non-generated properties (base/domain fields). Do not include:
+  - global keys (hashKey/rangeKey),
+  - generated property tokens (sharded/unsharded keys such as userPK, firstNameRK).
+- Item-facing types layer optional key/token strings and base properties over schemas where applicable.
+- Record-facing types layer required global keys (hashKey/rangeKey) over schemas for storage-facing shapes.
+- Runtime config parsing/validation remains unchanged; entitiesSchema is used for type capture only.
+
+Naming and acronym policy (hard rule)
+
+- Acronyms are reserved for type-parameter names only (e.g., CC, EM, ET, IT, ITS, EOT, EIBT, ERBT as template parameter identifiers).
+- Never export abbreviated type aliases. All exported types must be fully named (e.g., EntityOfToken, EntityItemByToken, EntityRecordByToken).
+
+Strict capitalized type-parameter dictionary (type parameters only; no alias exports)
+
+- EM — EntityMap
+- E — Entity (single entity shape)
+- ET — EntityToken (keys of EM)
+- EOT — EntityOfToken (Exactify<EM[ET]>)
+- TR — TranscodeRegistry (name → value type)
+- TN — TranscodeName (keys of TR)
+- CC — CapturedConfig (inference-first config type captured from the literal value)
+- HKT — HashKeyToken
+- RKT — RangeKeyToken
+- SGKT — ShardedGeneratedKeyToken
+- UGKT — UnshardedGeneratedKeyToken
+- PT — PropertyToken (transcodable scalar property token)
+- IT — IndexToken (keys of config.indexes)
+- ITS — IndexTokenSubset (subset of IT valid for ET in context)
+- EIBT — EntityItemByToken (partial EOT + key/generated tokens as strings)
+- ERBT — EntityRecordByToken (EIBT + required HKT/RKT)
+- PKBI — PageKeyByIndex
+- PKMBIS — PageKeyMapByIndexSet
+- SQFBI — ShardQueryFunctionByIndex
+- QO — QueryOptions
+- QR — QueryResult
+- PK — PropertyKey (utility)
+- V — Value (utility)
+
+Type-parameter ordering (public APIs)
+
+1. CC (when config-derived tokens are needed)
+2. EM
+3. TR (and TN only if necessary)
+4. ET (and EOT only if necessary)
+5. IT / ITS
+6. PK / V (utility generics last)
+
+Inference-first API and typing (entity-manager)
+
+- Factory (values-first)
+  - createEntityManager<const CC extends ConfigInput, EM extends EntityMap = EntitiesFromSchema<CC>>(config: CC, logger?): EntityManager<CC, EM>
+  - Behavior:
+    - CC is captured from the literal value; callers should prefer “satisfies” for structure checks and “as const” for nested records (indexes, generatedProperties) to preserve literal keys.
+    - EM is optional; if entitiesSchema is provided, EM is inferred from the Zod schemas. Otherwise, EM falls back to a broad EntityMap.
+    - Zod still validates at runtime; the parsed result is intersected with the captured literal types at the type level (no runtime change).
+- Items/records (entity-token aware)
+  - EIBT<CC, EM, ET extends keyof EM> — partial EOT with key/generated tokens string-typed.
+  - ERBT<CC, EM, ET> — EIBT plus required keys HKT|RKT present as strings.
+- Core methods (no explicit generics at call sites; inferred from parameters)
+  - addKeys<CC, EM, ET>(entityToken: ET, item: EIBT<CC, EM, ET>, overwrite?): ERBT<CC, EM, ET>
+  - removeKeys<CC, EM, ET>(entityToken: ET, item: ERBT<CC, EM, ET>): EIBT<CC, EM, ET>
+  - getPrimaryKey<CC, EM, ET>(entityToken: ET, item: EIBT<CC, EM, ET>, overwrite?): Array<Record<HKT<CC> | RKT<CC>, string>>
+- Query (entity + index aware; values-first)
+  - Page keys:
+    - PKBI<CC, EM, ET, IT> — index-specific page-key object type
+    - PKMBIS<CC, EM, ET, ITS> — per-index map of per-hashKey page keys
+  - Shard query:
+    - SQFBI<CC, EM, ET, IT> = (hashKey: string, pageKey?: PKBI<CC, EM, ET, IT>, pageSize?: number)
+      => Promise<{ count: number; items: EIBT<CC, EM, ET>[]; pageKey?: PKBI<CC, EM, ET, IT> }>
+  - Options/results:
+    - QO<CC, EM, ET extends keyof EM, ITS extends ITSubsetForEntity<CC, EM, ET>>
+    - QR<CC, EM, ET, ITS>
+  - query<CC, EM, ET extends keyof EM, ITS extends ITSubsetForEntity<CC, EM, ET>>(
+    em: EntityManager<CC, EM>,
+    options: QO<CC, EM, ET, ITS>
+    ): Promise<QR<CC, EM, ET, ITS>>
+  - Inference:
+    - ET inferred from options.entityToken.
+    - ITS inferred from the literal keys of options.shardQueryMap (subset of IT).
+- Low-level helpers (thread ET/IT; inference-first)
+  - getIndexComponents<CC, EM, ET, IT>(…): Array<HKT<CC> | RKT<CC> | SGKT<CC> | UGKT<CC> | PT>
+  - unwrapIndex<CC, EM, ET, IT>(…): Array<PT>
+  - encodeElement<CC, EM, ET>(…): string | undefined
+  - decodeElement<CC, EM, ET>(…): EIBT<CC, EM, ET>[PK]
+  - dehydrateIndexItem<CC, EM, ET, IT>(…): string
+  - rehydrateIndexItem<CC, EM, ET, IT>(…): EIBT<CC, EM, ET>
+  - dehydratePageKeyMap<CC, EM, ET, ITS>(…): string[]
+  - rehydratePageKeyMap<CC, EM, ET, ITS>(…): [HKT<CC>, PKMBIS<CC, EM, ET, ITS>]
+  - decodeGeneratedProperty<CC, EM, ET>(entityManager, entityToken: ET, encoded: string): EntityItemByToken<CC, EM, ET>
+    - Note: entityToken is required (no backward-compat constraint).
+- IndexTokenByEntity
+  - Computed from CC (and optionally EM) using config semantics:
+    - Hash side: global HKT → all entities; sharded generated hashKey → E must contain all elements of the sharded generated property.
+    - Range side:
+      - RKT → E must have uniqueProperty.
+      - Unsharded generated range → E must contain its elements.
+      - Scalar PT → E must have that property and it must be mapped in propertyTranscodes.
+
+DX guidance (values-first patterns)
+
+- Prefer “as const” and “satisfies” for config structures (especially indexes, generatedProperties).
+- Avoid early broad annotation of the whole config object; pass the literal to createEntityManager so CC is captured from values.
+- Degrade gracefully: if keys widen due to dynamic spreads, types still work; users can opt back into full inference by applying the patterns above.
+
+---
+
+## Configuration model (runtime shape; validated with Zod)
+
+ParsedConfig (authoritative runtime object)
+
+- entities: Record<entityToken, {
+  timestampProperty: TranscodedProperties;
+  uniqueProperty: TranscodedProperties;
+  shardBumps?: ShardBump[];
+  defaultLimit?: number (default 10);
+  defaultPageSize?: number (default 10);
+  }>
+- generatedProperties:
+  - sharded: Record<ShardedKey, TranscodedProperties[]>
+  - unsharded: Record<UnshardedKey, TranscodedProperties[]>
+- indexes: Record<indexToken, {
+  hashKey: HashKey | ShardedKey;
+  rangeKey: RangeKey | UnshardedKey | TranscodedProperties;
+  projections?: string[]; // unique; must not include keys
+  }>
+- propertyTranscodes: Record<TranscodedProperties, keyof TranscodeRegistry>
+- transcodes: Transcodes<TranscodeRegistry> (defaults to defaultTranscodes)
+- hashKey: HashKey
+- rangeKey: RangeKey
+- generatedKeyDelimiter: string (default '|', must match /\W+/)
+- generatedValueDelimiter: string (default '#', must match /\W+/)
+- shardKeyDelimiter: string (default '!', must match /\W+/)
+- throttle: number (default 10)
+
+Runtime config validation (selected checks)
+
 - Delimiters:
   - Each delimiter must match /\W+/.
-  - No delimiter may contain another (check both directions for: generatedKeyDelimiter, generatedValueDelimiter, shardKeyDelimiter).
+  - No delimiter may contain another (check both directions for generatedKeyDelimiter, generatedValueDelimiter, shardKeyDelimiter).
 - Key exclusivity:
   - hashKey must not collide with rangeKey, sharded/unsharded generated keys, or transcoded properties.
   - rangeKey must not collide with sharded/unsharded generated keys or transcoded properties.
   - sharded and unsharded generated keys must be mutually exclusive; neither may collide with transcoded properties.
 - propertyTranscodes:
-  - Values must be valid transcode keys present in transcodes.
+  - Values must be valid transcode names present in transcodes.
 - Generated property elements:
   - All elements listed under sharded/unsharded must be covered by propertyTranscodes (i.e., are transcodable properties).
   - Arrays must be non-empty and must not contain duplicates.
 - Indexes:
   - hashKey must be either the global hashKey or a sharded generated property.
   - rangeKey must be one of: global rangeKey, an unsharded generated property, or a transcodable scalar property.
-  - projections (if present) must be unique; must not include any key (global hash/range, index hash/range, sharded/unsharded keys).
-  - (Note) No duplicate (hashKey, rangeKey) pairs are currently enforced, but may be validated in future.
+  - projections (if present) must be unique; must not include any key (global hash/range, index hash/range, sharded/unsharded).
 - Entities:
   - timestampProperty and uniqueProperty must be TranscodedProperties.
   - shardBumps:
@@ -83,161 +214,156 @@ Runtime config validation (excerpt of mandatory checks)
     - Bumps are sorted by timestamp ascending; a zero-timestamp bump { charBits: 1, chars: 0 } is ensured (prepended if missing).
     - chars must increase monotonically with timestamp (strictly).
 
-Transcodes and property transcoding
-- defaultTranscodes: provided by @karmaniverous/entity-tools (e.g., bigint, bigint20, boolean, fix6, int, number, string, timestamp).
-- Each property listed in propertyTranscodes is encoded/decoded using transcodes[propertyTranscodes[property]].encode/decode.
-- encodeElement/decodeElement:
-  - For non-key elements: uses the property transcode functions.
-  - For global hashKey/rangeKey tokens: values are returned as-is (bypassing transcodes).
+---
 
-Generated property encoding
+## Generated property encoding
+
 - encodeGeneratedProperty(entityManager, propertyToken, item):
   - propertyToken must be defined under generatedProperties.sharded or .unsharded.
   - Sharded behavior (atomic):
     - If any element is null/undefined, result is undefined (atomicity).
-    - Output format: "<hashKey>|k#v|k#v..." where <hashKey> is the item's current global hashKey value.
+    - Output format: “<hashKey>|k#v|k#v...” where <hashKey> is the item’s current global hashKey value.
   - Unsharded behavior (not atomic):
     - Missing element values are rendered as empty strings.
-    - Output format: "k#v|k#v..."
+    - Output format: “k#v|k#v...”
   - Elements are encoded using generatedValueDelimiter ('#') and joined by generatedKeyDelimiter ('|').
-- decodeGeneratedProperty(entityManager, encoded):
-  - Parses sharded vs unsharded form; rebuilds an EntityItem patch:
+
+- decodeGeneratedProperty(entityManager, entityToken, encoded):
+  - Parses sharded vs unsharded form; rebuilds an EIBT patch:
     - If first segment contains shardKeyDelimiter, it is interpreted as the global hashKey.
-    - Each "k#v" pair is decoded back to the original property types via decodeElement.
+    - Each “k#v” pair is decoded back to the original property types via decodeElement.
   - Throws on malformed pairs (missing or repeated value delimiters).
 
-Global key updates
+---
+
+## Global key updates
+
 - updateItemHashKey(entityManager, entityToken, item, overwrite=false):
   - Computes hashKey suffix based on the shard bump applicable to the entity’s timestampProperty:
-    - Determine bump by timestamp; compute radix = 2**charBits.
-    - Compute space = radix ** chars (full shard space).
+    - Determine bump by timestamp; compute radix = 2\*\*charBits.
+    - Compute space = radix \*\* chars (full shard space).
     - Compute suffix = (stringHash(uniquePropertyValue) % space).toString(radix).padStart(chars, '0').
     - Prefix = entityToken + shardKeyDelimiter; final hashKey = prefix + suffix.
-    - If chars == 0, suffix is empty (unsharded: "<entity>!").
+    - If chars == 0, suffix is empty (unsharded: “<entity>!”).
   - If hashKey exists and overwrite=false, returns a shallow copy without changes.
   - Validates presence of timestampProperty and uniqueProperty.
+
 - updateItemRangeKey(entityManager, entityToken, item, overwrite=false):
-  - Sets the global rangeKey to "<uniqueProperty>#<value>" using generatedValueDelimiter.
+  - Sets the global rangeKey to “<uniqueProperty>#<value>” using generatedValueDelimiter.
   - If rangeKey exists and overwrite=false, returns a shallow copy without changes.
+
 - addKeys(entityManager, entityToken, item, overwrite=false):
   - Validates entityToken; updates hashKey, then rangeKey, then all generatedProperties (sharded and unsharded) based on overwrite rules.
   - Returns an EntityRecord (i.e., EntityItem with required hashKey and rangeKey present).
+
 - removeKeys(entityManager, entityToken, item):
   - Returns a shallow clone with global keys and generatedProperties removed (hashKey, rangeKey, and all generated property tokens).
+
 - getPrimaryKey(entityManager, entityToken, item, overwrite=false):
-  - Returns only the global hashKey and rangeKey from a shallow clone (using addKeys if needed).
+  - Returns an array of keys. If both keys are present and overwrite=false, returns exactly that pair.
+  - Otherwise:
+    - Computes the range key.
+    - If timestampProperty is present, computes exactly one hashKey and returns a single pair.
+    - If timestampProperty is missing but uniqueProperty is present, enumerates the hash-key space across all shard bumps and returns one key per applicable bump (deduped).
 
-Indexes and index helpers
-- Index definition is global:
-  - indexes[indexToken] = { hashKey: <HashKey|ShardedKey>, rangeKey: <RangeKey|UnshardedKey|TranscodedProp>, projections? }.
-- getIndexComponents(entityManager, indexToken):
-  - Returns a unique array of tokens including global hashKey and rangeKey plus the index’s own hashKey/rangeKey tokens, deduped.
-- unwrapIndex(entityManager, entityToken, indexToken, omit: string[] = []):
-  - Produces a sorted, deduped list of ungenerated component elements for the index:
-    - If component === global hashKey → timestampProperty is substituted (to support queries that need an ordering basis).
-    - If component === global rangeKey → uniqueProperty is substituted (to support rehydration and pagination).
-    - If component is a generated property → expands to its element list.
-    - If component is ungenerated and transcodable → included as-is.
-  - Omit list can exclude tokens/elements from the result (e.g., omit generated hashKey tokens in certain contexts).
-- dehydrateIndexItem(entityManager, entityToken, indexToken, item):
-  - Omits the index hashKey token, unwraps the index into elements, encodes each element from the provided item via encodeElement, and joins with generatedKeyDelimiter.
-  - Returns empty string if item is undefined.
-- rehydrateIndexItem(entityManager, entityToken, indexToken, dehydrated):
-  - Splits on generatedKeyDelimiter; validates value count equals expected elements.
-  - Decodes each string and reconstructs an EntityItem fragment (using decodeElement).
+---
 
-Page key map dehydration/rehydration
-- PageKeyMap<C>:
-  - A two-layer structure: { [indexToken]: { [hashKeyValue]: PageKey<C> | undefined } }.
-  - Inner PageKey<C> is a partial EntityItem restricted to tokens allowed in PageKey: global hashKey/rangeKey, sharded/unsharded keys, and TranscodedProperties.
+## Page key map dehydration/rehydration
+
+- PKMBIS<CC, EM, ET, ITS>:
+  - A two-layer map of page keys for a given entity token (ET) and index subset (ITS).
+  - The outer keys are index tokens (ITS).
+  - The inner keys are the shard-space hashKey values enumerated for the query window.
+  - The leaf values are PKBI<CC, EM, ET, IT> or undefined.
+
 - dehydratePageKeyMap(entityManager, entityToken, pageKeyMap):
   - Validates entityToken; if pageKeyMap is empty, returns [].
-  - Sorts indexTokens and enumerates hashKey values from the first index; for each index/hashKey pair:
+  - Sorts indexTokens and enumerates hashKey values from the first index; for each (index, hashKey):
     - If undefined → emits '' (empty string).
-    - Else → composes an EntityItem from the pageKey, decoding any encoded generated keys, refreshes rangeKey via updateItemRangeKey, and dehydrates the index fragment (dehydrateIndexItem).
-  - If all entries are '', returns [] (empty array).
-- rehydratePageKeyMap(entityManager, entityToken, indexTokens, item, dehydrated, timestampFrom=0, timestampTo=Date.now()):
-  - Validates entityToken and non-empty indexTokens; validates all indexTokens exist and share the same hashKey token; returns [hashKeyToken, PageKeyMap].
-  - Enumerates hash key space for [timestampFrom, timestampTo] using getHashKeySpace.
-  - If dehydrated is undefined → returns a PageKeyMap with all hashKeys mapped to undefined.
-  - Else → validates dehydrated length equals (indexTokens.length * hashKeySpace.length); clusters strings by index, aligns by hashKey; for non-empty entries, combines:
-    - Decoded hashKey (from segment if sharded) + rehydrateIndexItem(...).
-    - Sets rangeKey in the pageKey to "<uniqueProperty>#<value>" format.
-    - Encodes any generated properties in the pageKey to strings via encodeGeneratedProperty (for storage in the map).
-- de/serialization in queries:
-  - Query returns a compressed JSON string (lz-string’s compressToEncodedURIComponent) representing the dehydrated page key array.
-  - Query accepts a previous pageKeyMap string, which it decompresses and parses into a string[] for rehydration.
+    - Else → composes an item from the pageKey:
+      - Decodes any encoded generated keys into item fields.
+      - Refreshes rangeKey via updateItemRangeKey.
+      - Dehydrates the per-index fragment via dehydrateIndexItem (string).
+  - If all entries are '', returns [].
 
-Shard space enumeration
+- rehydratePageKeyMap(entityManager, entityToken, indexTokens, item, dehydrated, timestampFrom=0, timestampTo=Date.now()):
+  - Validates entityToken and non-empty indexTokens; validates all tokens exist and share the same hashKey token; returns [hashKeyToken, PKMBIS].
+  - Enumerates hash key space for [timestampFrom, timestampTo] via getHashKeySpace.
+  - If dehydrated is undefined → returns a PKMBIS with all hashKeys mapped to undefined for each index token.
+  - Else → validates dehydrated length equals (indexTokens.length \* hashKeySpace.length); clusters strings by index, aligns by hashKey; for non-empty entries:
+    - Decodes hashKey into item fields (if sharded).
+    - Rehydrates index fragment via rehydrateIndexItem.
+    - Sets rangeKey string to “<uniqueProperty>#<value>”.
+    - Encodes any generated properties used in page keys.
+
+---
+
+## Shard space enumeration
+
 - getHashKeySpace(entityManager, entityToken, hashKeyToken, item, timestampFrom=0, timestampTo=Date.now()):
   - hashKeyToken must be either the global hashKey or a sharded generated property.
-  - For each shard bump that overlaps the [timestampFrom, timestampTo] window:
-    - Compute radix = 2**charBits and all shard keys for chars ('' if chars=0 else 0..(radix**chars - 1), base=radix, padded to chars).
-    - For global hashKey: value = "<entityToken>!<shardSuffix>".
-    - For a sharded generated hashKey token: value = encodeGeneratedProperty(property, { ...item, [hashKey]: "<entityToken>!<shardSuffix>" }).
-  - Returns ordered list of hash key values across relevant bumps; throws if item lacks the elements needed to encode the alternate sharded hash key.
+  - For each shard bump that overlaps [timestampFrom, timestampTo]:
+    - Compute radix = 2**charBits and enumerate shard keys for chars ('' if chars=0 else 0..(radix**chars - 1), base=radix, padded to chars).
+  - Global hashKey variant → “<entityToken>!<suffix>”.
+  - Sharded generated hashKey variant → encodeGeneratedProperty(hashKeyToken, {…item, [hashKey]: “<entityToken>!<suffix>”}).
+  - Throws if item lacks elements required to encode a sharded alternate hash key.
 
-Query orchestration
-- QueryOptions<C>:
-  - entityToken: the entity to query.
-  - item: partial EntityItem sufficient to generate alternate hash keys as needed.
-  - shardQueryMap: Record<indexToken, ShardQueryFunction<C>>; each function queries a single shard/index page: (hashKey, pageKey?, pageSize?) => Promise<{ count, items, pageKey? }>
+---
+
+## Query orchestration
+
+- QO<CC, EM, ET, ITS>
+  - entityToken: ET
+  - item: EIBT<CC, EM, ET> (sufficient to generate alternate hash keys as needed).
+  - shardQueryMap: Partial<Record<ITS, SQFBI<CC, EM, ET, ITS>>>
   - pageKeyMap?: string — compressed dehydrated page key array from prior query iteration.
-  - limit?: number — target maximum total records across all shards; must be positive integer or Infinity; default = entity defaultLimit.
-  - pageSize?: number — max records per individual shard query; must be positive integer; default = entity defaultPageSize.
-  - sortOrder?: SortOrder<EntityItem<C>> — array of { property, desc? } for progressive sort; defaults to [].
+  - limit?: number — target maximum total records across all shards; positive integer or Infinity; default = entity defaultLimit.
+  - pageSize?: number — max records per individual shard query; positive integer; default = entity defaultPageSize.
+  - sortOrder?: SortOrder<EIBT<CC, EM, ET>> — progressive sort order; defaults to [].
   - timestampFrom?: number, timestampTo?: number — shard window; defaults 0..Date.now().
   - throttle?: number — max number of shard queries in parallel; default = config.throttle.
-- Query behavior:
-  - Rehydrate pageKeyMap (or initialize with undefined keys) over the index set provided by shardQueryMap and enumerated shard keys for [timestampFrom, timestampTo].
-  - If rehydration yields no shards/indexes (empty map), return { count: 0, items: [], pageKeyMap: compressed '[]' }.
+
+- QR<CC, EM, ET, ITS>
+  - count: number
+  - items: EIBT<CC, EM, ET>[]
+  - pageKeyMap: string
+
+- Behavior (unchanged semantics)
+  - Rehydrate pageKeyMap (or initialize with undefined) over the index set and enumerated shard keys for the window.
+  - If the map is empty, return { count: 0, items: [], pageKeyMap: compressed '[]' }.
   - Iterate:
     - Execute shardQueryFunction in parallel for every (indexToken, hashKey) with pageKey !== undefined, up to throttle concurrency.
-    - Update in-memory pageKeyMap with returned pageKey for each shard.
-    - Accumulate items; repeat while any pageKey remains defined AND item count < limit.
-  - Dedupe by entity uniqueProperty (stringified) and sort by sortOrder.
-  - Dehydrate the new pageKeyMap to a string[]; compress to pageKeyMap string; return { count, items, pageKeyMap }.
-  - Notes:
-    - No built-in fan-out throttling relative to remaining limit; callers should tune pageSize/throttle for scale.
-    - Only validates that rehydratePageKeyMap succeeds; shardQueryMap keys must correspond to valid index tokens.
+    - Update in-memory pageKeyMap with each returned pageKey.
+    - Accumulate items; repeat while any pageKey remains defined and item count < limit.
+  - De-duplicate by uniqueProperty and sort by sortOrder.
+  - Dehydrate, compress, and return.
 
-Logging and errors
-- The EntityManager accepts an injected logger implementing { debug, error } (console by default).
-- All helper functions attempt to log debug details on success and error details on failure; errors are rethrown.
+---
 
-Type surface (selected)
-- Exported from src/EntityManager/index.ts via src/index.ts:
-  - BaseConfigMap, Config, ConfigMap, ParsedConfig, ValidateConfigMap
-  - EntityItem, EntityRecord, EntityKey, EntityToken
-  - PageKey, PageKeyMap
-  - ShardBump, ShardQueryFunction, ShardQueryMap, ShardQueryResult
-  - QueryOptions, QueryResult
-  - EntityManager class with:
-    - encodeGeneratedProperty(property, item)
-    - addKeys(entityToken, item|items, overwrite?)
-    - getPrimaryKey(entityToken, item|items, overwrite?)
-    - removeKeys(entityToken, item|items)
-    - findIndexToken(hashKeyToken, rangeKeyToken, suppressError?)
-    - query(options)
+## Transcodes (entity-tools; canonical names)
 
-Delimiters (defaults and constraints)
-- generatedKeyDelimiter: '|' — separates generated property pairs (k#v|k#v).
-- generatedValueDelimiter: '#' — separates key and value inside a pair (k#v).
-- shardKeyDelimiter: '!' — separates entity token from shard suffix in global hashKey ("entity!xx").
-- Each delimiter must be a non-word string (/\W+/); no delimiter may contain another.
+- Registry naming
+  - TranscodeRegistry is canonical (replaces TranscodeMap).
+  - DefaultTranscodeRegistry is canonical (replaces DefaultTranscodeMap).
+  - defaultTranscodes: Transcodes<DefaultTranscodeRegistry>.
 
-Sharding requirements summary
-- Assignment (records):
-  - Within the applicable bump, all placeholders must be used; shard suffix space = radix ** chars; suffix is base-radix, padded to length chars.
-  - For chars == 0, hashKey is "entity!" (unsharded).
-- Query (enumeration):
-  - Hash key space must cover all shard bumps overlapping the requested time window.
-  - Alternate sharded hash keys (for sharded generated properties) must be encodable from provided item (or throw).
+- defineTranscodes (entity-tools)
+  - Value-first builder; infers registry from decode() return types; enforces encode/decode agreement at compile time.
 
-Compatibility and assumptions
-- Provider-agnostic orchestration; intended to work over platforms like DynamoDB (page keys will typically include both global hash and range keys).
-- Canonicalization (e.g., name search fields) is application responsibility; Entity Manager treats such strings as opaque values and provides transcodes for ordering/encoding.
+- Selection helpers (entity-tools)
+  - TranscodableProperties<O, TR>, UntranscodableProperties<O, TR> operate precisely on scalar properties whose types are covered by TR.
 
-Non-requirements (current behavior)
-- No automatic fan-out reduction relative to remaining limit in the query loop.
-- No enforcement of globally unique (hashKey, rangeKey) pairs across separate index tokens.
+---
+
+## Logging and errors
+
+- EntityManager accepts an injected logger implementing { debug, error } (console by default).
+- All helpers log debug context and error detail; errors are rethrown.
+
+---
+
+## Documentation guidance (DX)
+
+- Show “values-first” config patterns using satisfies and as const to preserve literal keys for indexes and generatedProperties.
+- Prefer examples that do not require explicit generic parameters at call sites; demonstrate narrowing via values (entityToken, index tokens).
+- Provide concise examples of PageKey typing by index, token-aware add/remove/keys, and value-first factory usage.
