@@ -1,5 +1,6 @@
 import { EntityMap, TranscodeRegistry, ConditionalProperty, Exactify, PropertiesOfType, TranscodableProperties, FlattenEntityMap, Transcodes, MutuallyExclusive, NotNever, DefaultTranscodeRegistry, SortOrder } from '@karmaniverous/entity-tools';
-import { z, ZodType, infer } from 'zod';
+import * as z from 'zod';
+import { z as z$1, ZodType } from 'zod';
 import { BatchProcessOptions } from '@karmaniverous/batch-process';
 
 /**
@@ -147,15 +148,15 @@ type EntityKey<CC extends BaseConfigMap> = Record<CC['HashKey'] | CC['RangeKey']
  */
 type EntityToken<CC extends BaseConfigMap> = keyof Exactify<CC['EntityMap']> & string;
 
-declare const configSchema: z.ZodObject<{
-    entities: z.ZodDefault<z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodObject<{
-        defaultLimit: z.ZodDefault<z.ZodOptional<z.ZodNumber>>;
-        defaultPageSize: z.ZodDefault<z.ZodOptional<z.ZodNumber>>;
-        shardBumps: z.ZodPipe<z.ZodDefault<z.ZodOptional<z.ZodArray<z.ZodObject<{
-            timestamp: z.ZodNumber;
-            charBits: z.ZodNumber;
-            chars: z.ZodNumber;
-        }, z.core.$strict>>>>, z.ZodTransform<{
+declare const configSchema: z$1.ZodObject<{
+    entities: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodObject<{
+        defaultLimit: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodNumber>>;
+        defaultPageSize: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodNumber>>;
+        shardBumps: z$1.ZodPipe<z$1.ZodDefault<z$1.ZodOptional<z$1.ZodArray<z$1.ZodObject<{
+            timestamp: z$1.ZodNumber;
+            charBits: z$1.ZodNumber;
+            chars: z$1.ZodNumber;
+        }, z$1.core.$strict>>>>, z$1.ZodTransform<{
             timestamp: number;
             charBits: number;
             chars: number;
@@ -164,36 +165,36 @@ declare const configSchema: z.ZodObject<{
             charBits: number;
             chars: number;
         }[]>>;
-        timestampProperty: z.ZodString;
-        uniqueProperty: z.ZodString;
-    }, z.core.$strict>>>>;
-    generatedProperties: z.ZodDefault<z.ZodOptional<z.ZodObject<{
-        sharded: z.ZodDefault<z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodArray<z.ZodString>>>>;
-        unsharded: z.ZodDefault<z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodArray<z.ZodString>>>>;
-    }, z.core.$strip>>>;
-    hashKey: z.ZodString;
-    indexes: z.ZodDefault<z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodObject<{
-        hashKey: z.ZodString;
-        rangeKey: z.ZodString;
-        projections: z.ZodOptional<z.ZodArray<z.ZodString>>;
-    }, z.core.$strip>>>>;
-    generatedKeyDelimiter: z.ZodDefault<z.ZodOptional<z.ZodString>>;
-    generatedValueDelimiter: z.ZodDefault<z.ZodOptional<z.ZodString>>;
-    propertyTranscodes: z.ZodDefault<z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>>;
-    rangeKey: z.ZodString;
-    shardKeyDelimiter: z.ZodDefault<z.ZodOptional<z.ZodString>>;
-    throttle: z.ZodDefault<z.ZodOptional<z.ZodNumber>>;
-    transcodes: z.ZodDefault<z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodObject<{
-        encode: z.ZodCustom<unknown, unknown>;
-        decode: z.ZodCustom<unknown, unknown>;
-    }, z.core.$strict>>>>;
-}, z.core.$strict>;
+        timestampProperty: z$1.ZodString;
+        uniqueProperty: z$1.ZodString;
+    }, z$1.core.$strict>>>>;
+    generatedProperties: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodObject<{
+        sharded: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodArray<z$1.ZodString>>>>;
+        unsharded: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodArray<z$1.ZodString>>>>;
+    }, z$1.core.$strip>>>;
+    hashKey: z$1.ZodString;
+    indexes: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodObject<{
+        hashKey: z$1.ZodString;
+        rangeKey: z$1.ZodString;
+        projections: z$1.ZodOptional<z$1.ZodArray<z$1.ZodString>>;
+    }, z$1.core.$strip>>>>;
+    generatedKeyDelimiter: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodString>>;
+    generatedValueDelimiter: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodString>>;
+    propertyTranscodes: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodString>>>;
+    rangeKey: z$1.ZodString;
+    shardKeyDelimiter: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodString>>;
+    throttle: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodNumber>>;
+    transcodes: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodObject<{
+        encode: z$1.ZodCustom<unknown, unknown>;
+        decode: z$1.ZodCustom<unknown, unknown>;
+    }, z$1.core.$strict>>>>;
+}, z$1.core.$strict>;
 /**
  * Simplified type taken on by a {@link Config | `Config`} object after parsing in the {@link EntityManager | `EntityManager`} constructor.
  *
  * @category EntityManager
  */
-type ParsedConfig = z.infer<typeof configSchema>;
+type ParsedConfig = z$1.infer<typeof configSchema>;
 
 /**
  * A partial {@link EntityItem | `EntityItem`} restricted to keys defined in `C`.
@@ -660,7 +661,7 @@ type TranscodedPropertiesFrom<CC> = CC extends {
 type EntitiesFromSchema<CC> = CC extends {
     entitiesSchema?: infer S;
 } ? S extends Record<string, ZodType> ? {
-    [K in keyof S & string]: infer<S[K]>;
+    [K in keyof S & string]: z.infer<S[K]>;
 } & EntityMap : EntityMap : EntityMap;
 /**
  * Derive the union of index token names from a values-first config input.

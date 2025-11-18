@@ -195,3 +195,6 @@
 
 - Interop — entity-client-dynamodb response
   - Added .stan/interop/entity-client-dynamodb/interop-response.md summarizing delivered features and DX enhancements beyond the original request.
+
+- Interop — zod infer in d.ts
+  - Replaced zod named/aliased infer import with a type-only namespace import and z.infer in EntitiesFromSchema to avoid d.ts parse errors downstream. No runtime import added; prepare patch release.
