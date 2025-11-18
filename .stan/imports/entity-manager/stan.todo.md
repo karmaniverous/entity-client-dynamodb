@@ -198,3 +198,11 @@
 
 - Interop — zod infer in d.ts
   - Replaced zod named/aliased infer import with a type-only namespace import and z.infer in EntitiesFromSchema to avoid d.ts parse errors downstream. No runtime import added; prepare patch release.
+- Projection-aware typed results (type-only K in entity-manager)
+  - Added helper types KeysFrom, Projected, ProjectedItemByToken to TokenAware.
+  - Threaded an optional generic K through ShardQueryFunction/Result/Map,
+    QueryOptions/Result, WorkingQueryResult, and EntityManager.query.
+  - Aligned QueryOptions.sortOrder with projected item shape.
+  - Kept runtime behavior unchanged; added localized casts in query.ts to
+    preserve dedupe/sort when callers project attributes.
+  - Backwards compatible via default generics (K=unknown); adapters may opt in.

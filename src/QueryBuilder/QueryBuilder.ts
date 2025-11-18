@@ -3,6 +3,8 @@ import {
   BaseQueryBuilder,
   type EntityItemByToken,
   type EntityToken,
+  type HasIndexFor,
+  type IndexRangeKeyOf,
   type PageKeyByIndex,
   type ShardQueryFunction,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -76,7 +78,15 @@ export class QueryBuilder<
    *
    * @returns - The modified {@link ShardQueryMap | `ShardQueryMap`} instance.
    */
-  addRangeKeyCondition(indexToken: string, condition: RangeKeyCondition): this {
+  addRangeKeyCondition<IT extends ITS>(
+    indexToken: IT,
+    condition: Omit<RangeKeyCondition, 'property'> & {
+      // If CF carries indexes and IT is one, restrict property to its rangeKey; else string
+      property: HasIndexFor<CF, IT> extends true
+        ? IndexRangeKeyOf<CF, IT>
+        : string;
+    },
+  ): this {
     addRangeKeyCondition(this, indexToken, condition);
     return this;
   }
@@ -89,7 +99,7 @@ export class QueryBuilder<
    *
    * @returns - The modified {@link ShardQueryMap | `ShardQueryMap`} instance.
    */
-  addFilterCondition(indexToken: string, condition: FilterCondition<C>): this {
+  addFilterCondition(indexToken: ITS, condition: FilterCondition<C>): this {
     addFilterCondition(this, indexToken, condition);
     return this;
   }

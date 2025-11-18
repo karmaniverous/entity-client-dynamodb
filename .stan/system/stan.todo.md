@@ -114,3 +114,15 @@
     while preserving strongly typed overloads for call sites.
 
 - Interop: added projection‑aware typed query results note for entity-manager at .stan/interop/entity-manager/projection-aware-typed-query-results.md (type-only K channel through QueryOptions/Result/SQF; no runtime changes)
+
+- DX: removeKeys literal overloads (token-aware)
+  - Added overloads to EntityClient.getItem/getItems that narrow return types
+    when options.removeKeys is a literal true/false. No runtime changes.
+  - Added tuple-aware overloads for token-aware calls with attributes declared
+    as const tuples; results narrow to Pick<…> over those keys, combined with
+    removeKeys literal when provided.
+
+- QueryBuilder typing (CF-aware, optional)
+  - Tightened addRangeKeyCondition param types: indexToken accepts ITS, and
+    when a config literal (CF) is supplied, the condition.property narrows to
+    the index’s rangeKey; otherwise remains string. No runtime changes.

@@ -46,6 +46,12 @@ import { transactDeleteItems as transactDeleteItemsFn } from './methods/transact
 import { transactPutItems as transactPutItemsFn } from './methods/transactPutItems';
 import type { WaiterConfig } from './WaiterConfig';
 
+// Local type helper for tuple-based projection narrowing
+type Projected<T, A extends readonly string[]> = Pick<
+  T,
+  Extract<A[number], keyof T>
+>;
+
 /**
  * Convenience wrapper around the AWS DynamoDB SDK in addition to
  * {@link BaseEntityClient | BaseEntityClient} functionality.
@@ -260,6 +266,56 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
   /**
    * Token-aware getItem overloads, with optional key stripping (removeKeys) in options.
    */
+  // Literal-flag + attributes tuple (removeKeys true)
+  async getItem<ET extends EntityToken<C>>(
+    entityToken: ET,
+    key: EntityKey<C>,
+    attributes: readonly string[],
+    options: GetItemOptions & { removeKeys: true },
+  ): Promise<
+    ReplaceKey<GetCommandOutput, 'Item', EntityItemByToken<C, ET> | undefined>
+  >;
+  // Literal-flag + attributes tuple (removeKeys false)
+  async getItem<ET extends EntityToken<C>>(
+    entityToken: ET,
+    key: EntityKey<C>,
+    attributes: readonly string[],
+    options: GetItemOptions & { removeKeys: false },
+  ): Promise<
+    ReplaceKey<GetCommandOutput, 'Item', EntityRecordByToken<C, ET> | undefined>
+  >;
+  // Literal-flag (removeKeys true)
+  async getItem<ET extends EntityToken<C>>(
+    entityToken: ET,
+    key: EntityKey<C>,
+    options: GetItemOptions & { removeKeys: true },
+  ): Promise<
+    ReplaceKey<GetCommandOutput, 'Item', EntityItemByToken<C, ET> | undefined>
+  >;
+  // Literal-flag (removeKeys false)
+  async getItem<ET extends EntityToken<C>>(
+    entityToken: ET,
+    key: EntityKey<C>,
+    options: GetItemOptions & { removeKeys: false },
+  ): Promise<
+    ReplaceKey<GetCommandOutput, 'Item', EntityRecordByToken<C, ET> | undefined>
+  >;
+  // Projection tuple narrowing when attributes is a const tuple
+  async getItem<ET extends EntityToken<C>, A extends readonly string[]>(
+    entityToken: ET,
+    key: EntityKey<C>,
+    attributes: A,
+    options?: GetItemOptions,
+  ): Promise<
+    ReplaceKey<
+      GetCommandOutput,
+      'Item',
+      | Projected<EntityRecordByToken<C, ET>, A>
+      | Projected<EntityItemByToken<C, ET>, A>
+      | undefined
+    >
+  >;
+
   async getItem<ET extends EntityToken<C>>(
     entityToken: ET,
     key: EntityKey<C>,
@@ -425,6 +481,40 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
    * @param attributes - Optional list of attributes to project.
    * @param options - BatchGetOptions.
    */
+  // Projection tuple + literal-flag (removeKeys true)
+  async getItems<ET extends EntityToken<C>, A extends readonly string[]>(
+    entityToken: ET,
+    keys: EntityKey<C>[],
+    attributes: A,
+    options: GetItemsOptions & { removeKeys: true },
+  ): Promise<{
+    items: Projected<EntityItemByToken<C, ET>, A>[];
+    outputs: BatchGetCommandOutput[];
+  }>;
+  // Projection tuple + literal-flag (removeKeys false)
+  async getItems<ET extends EntityToken<C>, A extends readonly string[]>(
+    entityToken: ET,
+    keys: EntityKey<C>[],
+    attributes: A,
+    options: GetItemsOptions & { removeKeys: false },
+  ): Promise<{
+    items: Projected<EntityRecordByToken<C, ET>, A>[];
+    outputs: BatchGetCommandOutput[];
+  }>;
+  // Projection tuple general (union)
+  async getItems<ET extends EntityToken<C>, A extends readonly string[]>(
+    entityToken: ET,
+    keys: EntityKey<C>[],
+    attributes: A,
+    options?: GetItemsOptions,
+  ): Promise<{
+    items: Projected<
+      EntityRecordByToken<C, ET> | EntityItemByToken<C, ET>,
+      A
+    >[];
+    outputs: BatchGetCommandOutput[];
+  }>;
+  // Token-aware with attributes string[]
   async getItems<ET extends EntityToken<C>>(
     entityToken: ET,
     keys: EntityKey<C>[],
@@ -447,6 +537,24 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     options?: GetItemsOptions,
   ): Promise<{
     items: EntityRecordByToken<C, ET>[] | EntityItemByToken<C, ET>[];
+    outputs: BatchGetCommandOutput[];
+  }>;
+  // Literal-flag token-aware without attributes: removeKeys true
+  async getItems<ET extends EntityToken<C>>(
+    entityToken: ET,
+    keys: EntityKey<C>[],
+    options: GetItemsOptions & { removeKeys: true },
+  ): Promise<{
+    items: EntityItemByToken<C, ET>[];
+    outputs: BatchGetCommandOutput[];
+  }>;
+  // Literal-flag token-aware without attributes: removeKeys false
+  async getItems<ET extends EntityToken<C>>(
+    entityToken: ET,
+    keys: EntityKey<C>[],
+    options: GetItemsOptions & { removeKeys: false },
+  ): Promise<{
+    items: EntityRecordByToken<C, ET>[];
     outputs: BatchGetCommandOutput[];
   }>;
   /**
