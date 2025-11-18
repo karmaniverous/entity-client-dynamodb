@@ -10,6 +10,11 @@ stan-core:
       - ../entity-manager/.stan/system/stan.todo.md
       - ../entity-manager/dist/index.d.ts
       - ../entity-manager/.stan/interop/entity-client-dynamodb/**
+    entity-manager-demo:
+      - ../entity-manager-demo/.stan/system/stan.requirements.md
+      - ../entity-manager-demo/.stan/system/stan.todo.md
+      - ../entity-manager-demo/dist/index.d.ts
+      - ../entity-manager-demo/.stan/interop/entity-client-dynamodb/**
     entity-tools:
       - ../entity-tools/.stan/system/stan.requirements.md
       - ../entity-tools/.stan/system/stan.todo.md

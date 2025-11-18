@@ -112,3 +112,5 @@
 - DX: finalize getItems overload compatibility
   - Widened implementation signature return to Promise<any> to satisfy TS2394
     while preserving strongly typed overloads for call sites.
+
+- Interop: added projection‑aware typed query results note for entity-manager at .stan/interop/entity-manager/projection-aware-typed-query-results.md (type-only K channel through QueryOptions/Result/SQF; no runtime changes)
