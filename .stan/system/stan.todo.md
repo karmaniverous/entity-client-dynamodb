@@ -74,4 +74,15 @@
 
 - Docs warning cleanup
   - Updated JSDoc in TranscodeAttributeTypeMap to reference
-    DefaultTranscodeRegistry (was DefaultTranscodeMap).
+    DefaultTranscodeRegistry (was DefaultTranscodeMap).
+
+- DX: createQueryBuilder factory (CF-aware)
+  - Added createQueryBuilder<C, ET, CF> that infers ET from entityToken and CF
+    from options, deriving ITS as IndexTokensOf<CF>. Returns a typed
+    QueryBuilder without generic arguments at call sites.
+
+- DX: getItems ET-specific overloads
+  - Added non-breaking overloads to EntityClient.getItems that accept an
+    entityToken value and return items typed as EntityRecordByToken<C, ET>[].
+    Implementation remains unified and ignores the token at runtime; call sites
+    get narrower types without generics.

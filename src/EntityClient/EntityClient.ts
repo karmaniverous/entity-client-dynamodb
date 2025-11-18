@@ -20,6 +20,8 @@ import {
   BaseEntityClient,
   type EntityKey,
   type EntityRecord,
+  type EntityRecordByToken,
+  type EntityToken,
 } from '@karmaniverous/entity-manager';
 import type { MakeOptional, ReplaceKey } from '@karmaniverous/entity-tools';
 import AWSXray from 'aws-xray-sdk';
@@ -330,6 +332,37 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
    * @param attributes - Optional list of attributes to project.
    * @param options - BatchGetOptions.
    */
+  async getItems<ET extends EntityToken<C>>(
+    entityToken: ET,
+    keys: EntityKey<C>[],
+    attributes: string[],
+    options?: BatchGetOptions,
+  ): Promise<{
+    items: EntityRecordByToken<C, ET>[];
+    outputs: BatchGetCommandOutput[];
+  }>;
+  /**
+   * Gets multiple items from a DynamoDB table in batches (token-aware).
+   *
+   * @param entityToken - Entity token to narrow the item type.
+   * @param keys - Array of EntityKey.
+   * @param options - BatchGetOptions.
+   */
+  async getItems<ET extends EntityToken<C>>(
+    entityToken: ET,
+    keys: EntityKey<C>[],
+    options?: BatchGetOptions,
+  ): Promise<{
+    items: EntityRecordByToken<C, ET>[];
+    outputs: BatchGetCommandOutput[];
+  }>;
+  /**
+   * Gets multiple items from a DynamoDB table in batches.
+   *
+   * @param keys - Array of EntityKey.
+   * @param attributes - Optional list of attributes to project.
+   * @param options - BatchGetOptions.
+   */
   async getItems(
     keys: EntityKey<C>[],
     attributes: string[],
@@ -346,10 +379,30 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     options?: BatchGetOptions,
   ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }>;
   async getItems(
-    keys: EntityKey<C>[],
-    attributesOrOptions?: string[] | BatchGetOptions,
-    options?: BatchGetOptions,
+    entityTokenOrKeys: EntityToken<C> | EntityKey<C>[],
+    keysOrAttributesOrOptions?: EntityKey<C>[] | string[] | BatchGetOptions,
+    attributesOrOptionsMaybe?: string[] | BatchGetOptions,
+    maybeOptions?: BatchGetOptions,
   ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }> {
+    // Normalize arguments to original 3-argument form:
+    // keys, attributesOrOptions, options
+    let keys: EntityKey<C>[];
+    let attributesOrOptions: string[] | BatchGetOptions | undefined;
+    let options: BatchGetOptions | undefined;
+
+    if (Array.isArray(entityTokenOrKeys)) {
+      keys = entityTokenOrKeys;
+      attributesOrOptions = keysOrAttributesOrOptions as
+        | string[]
+        | BatchGetOptions
+        | undefined;
+      options = attributesOrOptionsMaybe as BatchGetOptions | undefined;
+    } else {
+      keys = keysOrAttributesOrOptions as EntityKey<C>[];
+      attributesOrOptions = attributesOrOptionsMaybe;
+      options = maybeOptions;
+    }
+
     return Array.isArray(attributesOrOptions)
       ? getItemsFn(this, keys, attributesOrOptions, options ?? {})
       : getItemsFn(this, keys, attributesOrOptions ?? {});
