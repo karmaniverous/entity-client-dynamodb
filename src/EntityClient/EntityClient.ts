@@ -378,29 +378,32 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     keys: EntityKey<C>[],
     options?: BatchGetOptions,
   ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }>;
-  async getItems(
-    entityTokenOrKeys: EntityToken<C> | EntityKey<C>[],
-    keysOrAttributesOrOptions?: EntityKey<C>[] | string[] | BatchGetOptions,
-    attributesOrOptionsMaybe?: string[] | BatchGetOptions,
-    maybeOptions?: BatchGetOptions,
-  ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }> {
-    // Normalize arguments to original 3-argument form:
-    // keys, attributesOrOptions, options
+  async getItems(...args: unknown[]): Promise<unknown> {
+    // Normalize to: keys, attributesOrOptions, options
     let keys: EntityKey<C>[];
     let attributesOrOptions: string[] | BatchGetOptions | undefined;
     let options: BatchGetOptions | undefined;
 
-    if (Array.isArray(entityTokenOrKeys)) {
-      keys = entityTokenOrKeys;
-      attributesOrOptions = keysOrAttributesOrOptions as
-        | string[]
-        | BatchGetOptions
-        | undefined;
-      options = attributesOrOptionsMaybe as BatchGetOptions | undefined;
+    if (Array.isArray(args[0])) {
+      // getItems(keys, attributes?, options?)
+      keys = args[0] as EntityKey<C>[];
+      if (Array.isArray(args[1])) {
+        attributesOrOptions = args[1] as string[];
+        options = args[2] as BatchGetOptions | undefined;
+      } else {
+        attributesOrOptions = args[1] as BatchGetOptions | undefined;
+        options = args[2] as BatchGetOptions | undefined;
+      }
     } else {
-      keys = keysOrAttributesOrOptions as EntityKey<C>[];
-      attributesOrOptions = attributesOrOptionsMaybe;
-      options = maybeOptions;
+      // getItems(entityToken, keys, attributes?, options?)
+      keys = args[1] as EntityKey<C>[];
+      if (Array.isArray(args[2])) {
+        attributesOrOptions = args[2] as string[];
+        options = args[3] as BatchGetOptions | undefined;
+      } else {
+        attributesOrOptions = args[2] as BatchGetOptions | undefined;
+        options = args[3] as BatchGetOptions | undefined;
+      }
     }
 
     return Array.isArray(attributesOrOptions)

@@ -26,12 +26,11 @@ export function createQueryBuilder<
   cf: CF;
   pageKeyMap?: string;
 }) {
-  const { cf: _cf, ...rest } = options;
+  const { cf, ...rest } = options;
+  void cf; // ensure CF is referenced for lint/usage; CF flows into typing only
 
   // CF/ITS flow into the typed instance; CF is not needed at runtime.
   return new QueryBuilder<C, ET, IndexTokensOf<CF>, CF>({
     ...rest,
   });
 }
-
-export default createQueryBuilder;

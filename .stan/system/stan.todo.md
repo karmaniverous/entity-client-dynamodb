@@ -85,4 +85,16 @@
   - Added non-breaking overloads to EntityClient.getItems that accept an
     entityToken value and return items typed as EntityRecordByToken<C, ET>[].
     Implementation remains unified and ignores the token at runtime; call sites
-    get narrower types without generics.
+    get narrower types without generics.
+
+- DX: getItems overload compatibility (TS2394)
+  - Switched implementation signature to varargs and normalized inputs
+    internally to satisfy all overloads.
+
+- Build: createQueryBuilder export cleanup
+  - Removed default export and referenced CF via `void cf` to resolve rollup
+    mixed-exports warning and lint error.
+
+- DX: finalize getItems overload compatibility
+  - Widened implementation signature return to Promise<any> to satisfy TS2394
+    while preserving strongly typed overloads for call sites.
