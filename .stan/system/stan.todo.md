@@ -2,10 +2,43 @@
 
 ## Next up
 
-- Consider adding a lightweight docker-availability helper for reuse across
+- Hotfix: resolve TS2394 in QueryBuilder.addRangeKeyCondition
+  - Remove the CF-aware overload and keep a single implementation signature
+    (RangeKeyCondition) to restore typecheck/docs immediately.
+  - Record CF-aware property narrowing as design intent for a safe follow-up
+    that avoids overload vs implementation conflicts.
+
+- Design a safe CF-aware property narrowing path for range key property (no
+  overload/impl mismatch)
+  - Option A (preferred): introduce a typed helper (e.g., rangeKeyProp) that
+    encodes IndexRangeKeyOf<CF, ITS> at the call site and returns a narrowed
+    property string; implementation remains a single signature.
+  - Option B: explore a d.ts-only augmentation that exposes a CF-aware
+    overload while leaving the .ts implementation signature unchanged;
+    validate across tsc/rollup/typedoc to ensure no TS2394.
+
+- Pin new DX typing with tsd tests
+  - EntityClient.getItem/getItems:
+    • removeKeys literal true/false → narrow to Item/Record variants.
+    • attributes as const tuple → Pick<…> projection narrowing (with token).
+    • combined cases (tuple + removeKeys literal).
+  - QueryBuilder/EntityManager query typing:
+    • createQueryBuilder({ cf }) → ITS derived from cf; PageKeyByIndex typed
+      by index; ShardQueryFunction pageKey param narrowing.
+    • Negative cases for invalid index keys and wrong page-key shapes.
+
+- Document adapter ProjectionExpression policy
+  - When a projection is supplied, auto-include uniqueProperty and any sort
+    keys to preserve dedupe/sort invariants at runtime. Add a concise note to
+    README/Typedoc and, where feasible, a focused test asserting invariants.
+
+- Expand tsd coverage for public types
+  - TranscodeAttributeTypeMap usage and QueryBuilder public types
+    (index params, addFilterCondition/addRangeKeyCondition inputs).
+
+- Optional DX: add a lightweight docker-availability helper for reuse across
   integration tests (shared test util).
-- Expand tsd coverage for exported types (TranscodeAttributeTypeMap usage and
-  QueryBuilder public types).
+
 - Add batch write unprocessed requeue tests. (Planned)
 
 ## Completed (recent)

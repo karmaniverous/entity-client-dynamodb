@@ -2,26 +2,29 @@
 
 ## Next up (in priority order)
 
-- Client integration: update entity-client-dynamodb QueryBuilder<CC, EM, ET, ITS> to adopt new SQFBI/QO/QR; typed page keys (PKBI/PKMBIS); add typed getItems overloads keyed by ET. Provide convenience helpers to build typed ShardQueryMap from config literals (CF-aware).
-- Update entity-manager-demo to use entitiesSchema factory + token-aware calls; refresh examples.
+- Typecheck red → projection K: fix tsd failure (test-d/projection-typing.test-d.ts) by ensuring Projected<T, K> ignores index-signature keys. Update TokenAware.Projected to select from keyof Exactify<T> so const‑tuple K (e.g., ['userId','created'] as const) narrows correctly. No runtime changes. Add/adjust tsd to assert QueryResult<…, K>.items narrows to Pick<…, 'userId' | 'created'>[].
 
-- Step 4 — Documentation and examples (DX)
-  - Update README and API docs to:
-    - Prefer the factory (values-first) + “satisfies/as ~const” guidance.
-    - Demonstrate token-aware add/remove/keys and index-aware page keys, with inference across values (no explicit generics). Include CF helpers (QueryOptionsByCF, ShardQueryMapByCF).
-  - Provide concise usage snippets for PageKey typing by index; sorting with defineSortOrder<E> (entity-tools); and config authoring patterns.
+- Docs (DX) — projection K + builder threading:
+  - README/API: add a focused section showing:
+    - How to use projection K with const tuples (end‑to‑end narrowing in ShardQueryFunction/Map, QueryOptions/Result).
+    - Dedupe/sort invariants: include uniqueProperty and any explicit sort keys in K, or document that adapters should auto‑include them at runtime.
+  - Cross‑link QueryOptionsByCF/ByCC and ShardQueryMapByCF/ByCC for index‑aware typing; add a short snippet for defineSortOrder<E>.
 
-- Step 5 — Type tests and guardrails
-  - Optional: add a CI check that scans generated d.ts to enforce strict acronym dictionary for template params.
-  - Optional: add a simple CI check or script to scan generated d.ts and assert template parameter names follow the strict acronym dictionary.
+- Interop (entity-client-dynamodb):
+  - Add tsd coverage mirroring the new K path: const‑tuple attrs narrow items across SQF/Map/Options/Result; include getItem/getItems removeKeys literal overload combos.
+  - Implement/confirm ProjectionExpression auto‑inclusion of uniqueProperty + explicit sort keys when attrs omit them (preserves dedupe/sort invariants at runtime).
+  - Ensure createQueryBuilder examples show CF‑aware typed page keys alongside K usage.
 
-- Step 6 — Release and coordination
-  - Bump version with release notes summarizing:
-    - values-first factory, strict acronyms, token/index-aware typing, decodeGeneratedProperty requiring ET.
-  - Open/refresh the interop note for entity-client-dynamodb (provisional) and proceed with its refactor:
-    - QueryBuilder<CC, EM, ET, ITS> adopting SQFBI, QO, QR; typed page keys per index (PKBI/PKMBIS).
-    - Add typed overloads for getItems returning ERBT<CC, EM, ET>[] keyed by ET (retain broad fallback).
-  - Update entity-manager-demo after client integration.
+- Demo repo:
+  - Update to use entitiesSchema factory + token‑aware calls; add a small example demonstrating projection K and index‑aware page keys (DX validation).
+
+- Release notes & coordination:
+  - Prepare notes: projection K channel and BaseQueryBuilder typing updates; no runtime behavior changes; defaults remain back‑compatible.
+  - Reference interop notes for entity-client-dynamodb; coordinate downstream release once docs/tests land.
+
+- Optional guardrails (low priority):
+  - CI checks scanning generated d.ts for acronym dictionary conformance.
+  - Keep knip/lint/typecheck/test/docs green post‑changes.
 
 ## Completed (append-only)
 
@@ -197,7 +200,8 @@
   - Added .stan/interop/entity-client-dynamodb/interop-response.md summarizing delivered features and DX enhancements beyond the original request.
 
 - Interop — zod infer in d.ts
-  - Replaced zod named/aliased infer import with a type-only namespace import and z.infer in EntitiesFromSchema to avoid d.ts parse errors downstream. No runtime import added; prepare patch release.
+  - Replaced zod named/aliased infer import with a type-only namespace import and z.infer in EntitiesFromSchema to avoid d.ts parse errors downstream. No runtime import added; prepare patch release.
+
 - Projection-aware typed results (type-only K in entity-manager)
   - Added helper types KeysFrom, Projected, ProjectedItemByToken to TokenAware.
   - Threaded an optional generic K through ShardQueryFunction/Result/Map,
@@ -226,4 +230,11 @@
   - Added interop note at .stan/interop/entity-client-dynamodb/projection-k-integration.md
     detailing how to adopt K, invariants (uniqueProperty/sort keys), recommended
     adapter behaviors, and suggested tsd coverage.
-  - No runtime changes; typecheck/lint/tests/build/docs remain green.
+  - No runtime changes; typecheck/lint/tests/build/docs remain green.
+
+- Typecheck red — projection K narrowing (index-signature guard)
+  - Fixed TokenAware.Projected to select keys from KeysFrom<K> intersected with
+    keyof Exactify<T>, avoiding collapse to `never` when T has an index signature.
+  - This ensures const‑tuple K (e.g., ['userId','created'] as const) narrows to
+    Pick<…, 'userId' | 'created'>[] in QueryResult<…, K>.items as intended.
+  - No runtime changes; tsd projection-typing.test-d.ts now passes.

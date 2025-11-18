@@ -67,6 +67,19 @@ Naming and acronym policy (hard rule)
 - Acronyms are reserved for type-parameter names only (e.g., CC, EM, ET, IT, ITS, EOT, EIBT, ERBT as template parameter identifiers).
 - Never export abbreviated type aliases. All exported types must be fully named (e.g., EntityOfToken, EntityItemByToken, EntityRecordByToken).
 
+Projection-aware typing (type-only K channel; provider-agnostic)
+
+- Add a type-only “projection” channel K that narrows item shapes when a provider projects a subset of attributes.
+  - Helpers:
+    - KeysFrom<K>, Projected<T, K>, ProjectedItemByToken<CC, ET, K>.
+  - Thread K (default unknown) through:
+    - ShardQueryFunction/ShardQueryResult/ShardQueryMap,
+    - QueryOptions/QueryResult (and ByCF/ByCC aliases),
+    - EntityManager.query,
+    - BaseQueryBuilder (getShardQueryFunction, build, query).
+- No runtime behavior changes. Projection execution remains an adapter/provider concern.
+- Sort typing alignment: QueryOptions.sortOrder is typed over ProjectedItemByToken<CC, ET, K>. Callers should include sort keys in K or adapters should auto-include them at runtime to preserve invariants.
+
 Strict capitalized type-parameter dictionary (type parameters only; no alias exports)
 
 - EM — EntityMap
@@ -80,7 +93,7 @@ Strict capitalized type-parameter dictionary (type parameters only; no alias exp
 - RKT — RangeKeyToken
 - SGKT — ShardedGeneratedKeyToken
 - UGKT — UnshardedGeneratedKeyToken
-- PT — PropertyToken (transcodable scalar property token)
+- PT — PropertyToken (transcodable scalar property)
 - IT — IndexToken (keys of config.indexes)
 - ITS — IndexTokenSubset (subset of IT valid for ET in context)
 - EIBT — EntityItemByToken (partial EOT + key/generated tokens as strings)
@@ -134,6 +147,11 @@ Inference-first API and typing (entity-manager)
   - Inference:
     - ET inferred from options.entityToken.
     - ITS inferred from the literal keys of options.shardQueryMap (subset of IT).
+    - Optional K (projection) narrows result item shape when provided; defaults to unknown for back-compat.
+- BaseQueryBuilder (adapters) carries ET/ITS/CF/K
+  - getShardQueryFunction(indexToken): ShardQueryFunction<…, CF, K>
+  - build(): ShardQueryMap<…, CF, K>
+  - query(): forwards K to EntityManager.query<…, CF, K>
 - Low-level helpers (thread ET/IT; inference-first)
   - getIndexComponents<CC, EM, ET, IT>(…): Array<HKT<CC> | RKT<CC> | SGKT<CC> | UGKT<CC> | PT>
   - unwrapIndex<CC, EM, ET, IT>(…): Array<PT>
@@ -241,7 +259,7 @@ Runtime config validation (selected checks)
 - updateItemHashKey(entityManager, entityToken, item, overwrite=false):
   - Computes hashKey suffix based on the shard bump applicable to the entity’s timestampProperty:
     - Determine bump by timestamp; compute radix = 2\*\*charBits.
-    - Compute space = radix \*\* chars (full shard space).
+    - Compute space = radix\*\*chars (full shard space).
     - Compute suffix = (stringHash(uniquePropertyValue) % space).toString(radix).padStart(chars, '0').
     - Prefix = entityToken + shardKeyDelimiter; final hashKey = prefix + suffix.
     - If chars == 0, suffix is empty (unsharded: “<entity>!”).
@@ -269,12 +287,6 @@ Runtime config validation (selected checks)
 ---
 
 ## Page key map dehydration/rehydration
-
-- PKMBIS<CC, EM, ET, ITS>:
-  - A two-layer map of page keys for a given entity token (ET) and index subset (ITS).
-  - The outer keys are index tokens (ITS).
-  - The inner keys are the shard-space hashKey values enumerated for the query window.
-  - The leaf values are PKBI<CC, EM, ET, IT> or undefined.
 
 - dehydratePageKeyMap(entityManager, entityToken, pageKeyMap):
   - Validates entityToken; if pageKeyMap is empty, returns [].
@@ -337,6 +349,10 @@ Runtime config validation (selected checks)
     - Accumulate items; repeat while any pageKey remains defined and item count < limit.
   - De-duplicate by uniqueProperty and sort by sortOrder.
   - Dehydrate, compress, and return.
+  - Projection channel K (type-only):
+    - Narrows result item shape to Pick<EntityItemByToken<…, ET>, KeysFrom<K>>.
+    - Does not alter runtime behavior; adapters/providers execute projections and may auto-include uniqueProperty and any sortOrder keys to preserve dedupe/sort invariants.
+    - QueryOptions.sortOrder is typed over the projected shape; include used keys in K or auto-include at the adapter.
 
 ---
 
@@ -367,3 +383,6 @@ Runtime config validation (selected checks)
 - Show “values-first” config patterns using satisfies and as const to preserve literal keys for indexes and generatedProperties.
 - Prefer examples that do not require explicit generic parameters at call sites; demonstrate narrowing via values (entityToken, index tokens).
 - Provide concise examples of PageKey typing by index, token-aware add/remove/keys, and value-first factory usage.
+- Add a brief example of projection-aware typing:
+  - Attributes as const tuples (K) narrow item shapes.
+  - Note that sort keys and uniqueProperty should be included in K or automatically included by adapters.
