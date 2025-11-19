@@ -524,21 +524,6 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     items: EntityRecordByToken<C, ET>[] | EntityItemByToken<C, ET>[];
     outputs: BatchGetCommandOutput[];
   }>;
-  /**
-   * Gets multiple items from a DynamoDB table in batches (token-aware).
-   *
-   * @param entityToken - Entity token to narrow the item type.
-   * @param keys - Array of EntityKey.
-   * @param options - BatchGetOptions.
-   */
-  async getItems<ET extends EntityToken<C>>(
-    entityToken: ET,
-    keys: EntityKey<C>[],
-    options?: GetItemsOptions,
-  ): Promise<{
-    items: EntityRecordByToken<C, ET>[] | EntityItemByToken<C, ET>[];
-    outputs: BatchGetCommandOutput[];
-  }>;
   // Literal-flag token-aware without attributes: removeKeys true
   async getItems<ET extends EntityToken<C>>(
     entityToken: ET,
@@ -555,6 +540,21 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     options: GetItemsOptions & { removeKeys: false },
   ): Promise<{
     items: EntityRecordByToken<C, ET>[];
+    outputs: BatchGetCommandOutput[];
+  }>;
+  /**
+   * Gets multiple items from a DynamoDB table in batches (token-aware).
+   *
+   * @param entityToken - Entity token to narrow the item type.
+   * @param keys - Array of EntityKey.
+   * @param options - BatchGetOptions.
+   */
+  async getItems<ET extends EntityToken<C>>(
+    entityToken: ET,
+    keys: EntityKey<C>[],
+    options?: GetItemsOptions,
+  ): Promise<{
+    items: EntityRecordByToken<C, ET>[] | EntityItemByToken<C, ET>[];
     outputs: BatchGetCommandOutput[];
   }>;
   /**

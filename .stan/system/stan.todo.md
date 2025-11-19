@@ -281,3 +281,7 @@
 - TSD: added non-literal removeKeys flag assertions to ensure union typing
   persists for token-aware getItems/getItem when the flag is boolean, matching
   documented DX (test-d/entityclient-removekeys.test-d.ts).
+
+- Fix: Reordered token-aware getItems overloads so the literal removeKeys
+  signatures appear before the broad union signature, restoring intended
+  narrowing for removeKeys: true/false in tsd tests.
