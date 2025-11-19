@@ -1,305 +1,42 @@
 # Development plan
 
-## Next up
+## Next up (priority order)
+
+- Interop typing (local; no upstream dependency)
+  - Ensure helper acceptance is fully local: addRangeKeyCondition/addFilterCondition
+    accept a generic BaseQueryBuilder plus a minimal structural contract
+    (indexParamsMap + logger).
+  - Remove/avoid any variance-bridging casts in QueryBuilder; keep all calls
+    strictly assignable.
+  - TSD: add tests asserting that a minimal builder shape and
+    QueryBuilder<C, ET, ITS, CF, K> are assignable to helper params (no casts).
+
+- TSD coverage hardening
+  - Negative: invalid index token when CF is present (excess property checks).
+  - Non-literal removeKeys:
+    • getItems('token', …, { removeKeys: boolean }) → union-of-arrays:
+    EntityRecordByToken[] | EntityItemByToken[].
+    • getItem('token', …, { removeKeys: boolean }) → union (with undefined).
+  - Tuple projections: assert Pick<…> over the correct base (Item vs Record)
+    for removeKeys true/false.
+
+- Docs (requirements-level polish)
+  - README/API:
+    • Add a compact example showing CF + PageKeyByIndex typed flow and link to
+    the API docs.
+    • Document non-literal removeKeys typing (union-of-arrays) and tuple
+    projection behavior (Item vs Record).
+    • Call out adapter ProjectionExpression policy (auto-include uniqueProperty
+    and explicit sort keys) as runtime note.
+
+- Batch write retries
+  - Add “unprocessed requeue” tests for put/delete to pin behavior under
+    throttling/unprocessed responses.
 
 - Release v0.4.0
-  - Run npm run release (uses release-it; CHANGELOG generated; tag/publish).
-  - Ensure .env.local has GITHUB_TOKEN when running locally.
+  - Run `npm run release` (release-it; CHANGELOG, tag, publish).
+  - Ensure `.env.local` has GITHUB_TOKEN if releasing locally.
 
-## Post‑release (optional polish)
+## Completed
 
-- README/docs: add one compact example showing CF + PageKeyByIndex typed flow (link to API docs).
-- TSD: add a short negative for invalid index token when CF present (excess property checks).
-- Batch: add “unprocessed requeue” nicety tests (planned).
-
-- Internals/variance (deferred; requires upstream)
-  - Requirements update (done): Document the need for variance-friendly helper acceptance in entity‑manager (structural or generic builder).
-  - Interop request: file .stan/interop/entity-manager/basequerybuilder-variance-and-helper-acceptance.md with:
-    • Problem: helper parameter typing forces downstream casts for extended builder generics.
-    • Proposal: generic builder acceptance or minimal structural interface for helper params (indexParamsMap + logger).
-    • No runtime changes; backward-compatible typing.
-    • Acceptance criteria: compile-clean upstream and enables removal of “unknown as …” casts downstream.
-  - Adapter follow-up (after upstream merges):
-    • Remove variance-bridging casts in this repo’s QueryBuilder when calling addFilterCondition/addRangeKeyCondition.
-    • Keep tests and tsd coverage intact.
-
-- Tiny docs polish
-  - Add API docs notes on:
-    • Helper method behavior (runtime vs K typing).
-    • Projection policy (auto-include uniqueProperty and explicit sort keys with projections).
-  - Cross-link the README and TypeDoc sections where appropriate.
-
-- Pin new DX typing with tsd tests
-  - EntityClient.getItem/getItems:
-    • removeKeys literal true/false → narrow to Item/Record variants.
-    • attributes as const tuple → Pick<…> projection narrowing (with token).
-    • combined cases (tuple + removeKeys literal).
-  - QueryBuilder/EntityManager query typing:
-    • createQueryBuilder({ cf }) → ITS derived from cf; PageKeyByIndex typed
-    by index; ShardQueryFunction pageKey param narrowing.
-    • Negative cases for invalid index keys and wrong page-key shapes.
-
-- Document adapter ProjectionExpression policy
-  - When a projection is supplied, auto-include uniqueProperty and any sort
-    keys to preserve dedupe/sort invariants at runtime. Add a concise note to
-    README/Typedoc and, where feasible, a focused test asserting invariants.
-
-- Expand tsd coverage for public types
-  - TranscodeAttributeTypeMap usage and QueryBuilder public types
-    (index params, addFilterCondition/addRangeKeyCondition inputs).
-
-- Optional DX: add a lightweight docker-availability helper for reuse across
-  integration tests (shared test util).
-
-- Add batch write unprocessed requeue tests. (Planned)
-
-## Completed (recent)
-
-- QueryBuilder: preserve native scalar types in ExpressionAttributeValues for
-  comparison/between/contains/in (no .toString()), and filter undefined values
-  in "in" conditions. This fixes numeric BETWEEN on created in integration test.
-
-- BatchWrite retries: fixed unprocessed item extraction to return original
-  Items/Keys from WriteRequest objects for both putItems and deleteItems,
-  ensuring correct retry behavior.
-
-- Purge robustness: refactored purgeItems() to iterate using LastEvaluatedKey
-  rather than items.length, ensuring complete table scans even when pages are
-  sparsely populated.
-
-- Single tsconfig: keep all TS (src, tests, configs) type-checked by tsc; let tsd
-  own test/types/**. Fixed tsconfig exclude to "test/types/**" so rollup/tsc do
-  not type-check .test-d.ts files.
-
-- Vitest migration: replaced remaining Mocha lifecycle usage with `beforeAll`/
-  `afterAll` in nested suites.
-
-- Integration test stability: removed skip gating and added a Docker preflight
-  wait with retries; tests no longer skip on first run and remain green on
-  subsequent runs.
-
-- Test timeouts: consolidated with Vitest global `hookTimeout` in
-  `vitest.config.ts`.
-
-- Removed unused `@types/eslint__js` devDependency and cleaned knip config
-  (dropped obsolete ignoreDependencies). Knip runs clean.
-
-- Decompose EntityClient monolith
-  - Split src/EntityClient/EntityClient.ts into small method modules under
-    src/EntityClient/methods/\*. Class now delegates to helpers; public API
-    unchanged and each file is well under the 300 LOC threshold.
-
-- getItems projection: add attributes[] overload
-  - Added getItems(keys, attributes, options?) overload and wired per-table
-    ProjectionExpression and ExpressionAttributeNames in BatchGet.
-  - Kept existing behavior and return types; no consolidation with getItem.
-
-- Interop: drafted z.infer d.ts bug report to entity-manager and saved at
-  .stan/interop/entity-manager/z-infer-dts-bug.md. Proposed upstream fix:
-  remove the named zod “infer” import and use z.infer<...> at type sites,
-  republish a patch so tsc/typedoc/build pass downstream.
-
-- QueryBuilder SQF return shape
-  - Updated getShardQueryFunction to return items as EntityItemByToken<C, ET>[]
-    and to include pageKey only when present (optional), matching
-    ShardQueryFunction<C, ET, ITS, CF>.
-
-- QueryBuilder SQF return typing
-  - Eliminated inferred union by anchoring the return to ShardQueryResult and
-    setting pageKey conditionally on presence (optional property).
-
-- QueryBuilder SQF assignability
-  - Explicitly typed the returned async function as ShardQueryFunction<C, ET, ITS, CF>
-    to satisfy conditional typing and resolve TS2322 during build/docs/typecheck.
-
-- QueryBuilder SQF conditional cast
-  - Due to conditional typing on ShardQueryFunction with CF/IT, returned async
-    function is cast via unknown as ShardQueryFunction<C, ET, ITS, CF> to avoid
-    TS2322 while preserving the correct public signature and runtime behavior.
-
-- Types import/export fix (build/docs/lint)
-  - Fixed TS2304 by importing type EntityItemByToken from @karmaniverous/entity-manager
-    in src/EntityClient/EntityClient.ts wherever it was referenced in public
-    return types.
-  - Re-exported EntityToken, EntityItemByToken, and EntityRecordByToken from
-    the package root (src/index.ts) to match README DX guidance.
-  - Suppressed a false-positive ESLint no-unnecessary-condition on the token-
-    aware guard in EntityClient.getItems(). Lint/typecheck/docs now pass locally
-    with this change set.
-
-- Docs: external symbol mapping cleanup
-  - Added externalSymbolLinkMappings for entity-manager Config and ConfigMap,
-    and entity-tools EntityMap to silence remaining Typedoc warnings about
-    unresolved links in public comments.
-- Docs warning cleanup
-  - Updated JSDoc in TranscodeAttributeTypeMap to reference
-    DefaultTranscodeRegistry (was DefaultTranscodeMap).
-
-- DX: createQueryBuilder factory (CF-aware)
-  - Added createQueryBuilder<C, ET, CF> that infers ET from entityToken and CF
-    from options, deriving ITS as IndexTokensOf<CF>. Returns a typed
-    QueryBuilder without generic arguments at call sites.
-
-- DX: getItems ET-specific overloads
-  - Added non-breaking overloads to EntityClient.getItems that accept an
-    entityToken value and return items typed as EntityRecordByToken<C, ET>[].
-    Implementation remains unified and ignores the token at runtime; call sites
-    get narrower types without generics.
-
-- DX: getItems overload compatibility (TS2394)
-  - Switched implementation signature to varargs and normalized inputs
-    internally to satisfy all overloads.
-
-- Build: createQueryBuilder export cleanup
-  - Removed default export and referenced CF via `void cf` to resolve rollup
-    mixed-exports warning and lint error.
-
-- DX: finalize getItems overload compatibility
-  - Widened implementation signature return to Promise<any> to satisfy TS2394
-    while preserving strongly typed overloads for call sites.
-
-- Interop: added projection‑aware typed query results note for entity-manager at .stan/interop/entity-manager/projection-aware-typed-query-results.md (type-only K channel through QueryOptions/Result/SQF; no runtime changes)
-
-- DX: removeKeys literal overloads (token-aware)
-  - Added overloads to EntityClient.getItem/getItems that narrow return types
-    when options.removeKeys is a literal true/false. No runtime changes.
-  - Added tuple-aware overloads for token-aware calls with attributes declared
-    as const tuples; results narrow to Pick<…> over those keys, combined with
-    removeKeys literal when provided.
-
-- QueryBuilder typing (CF-aware, optional)
-  - Tightened addRangeKeyCondition param types: indexToken accepts ITS, and
-    when a config literal (CF) is supplied, the condition.property narrows to
-    the index’s rangeKey; otherwise remains string. No runtime changes.
-
-- Fix: QueryBuilder addRangeKeyCondition overloads
-  - Added CF-aware overload while keeping implementation signature as RangeKeyCondition to satisfy TS union assignability and avoid TS2345 during build/docs.
-
-- Fix: QueryBuilder overload compatibility (TS2394)
-  - Removed extra generic from CF-aware overload and used IndexRangeKeyOf<CF, ITS> directly; dropped unused HasIndexFor import. Implementation remains (ITS, RangeKeyCondition). No runtime changes.
-
-- Fix: QueryBuilder CF-aware overload fallback
-  - Ensured CF-aware property type falls back to string when no literal can be
-    resolved (avoids ‘never’ and keeps overload compatible with implementation).
-
-- Amendment: Retained CF-aware property narrowing without overloads
-  - Replaced the overloadimplementation pair with a single CF-aware method
-    signature for addRangeKeyCondition that narrows `condition.property` via
-    IndexRangeKeyOf<CF, ITS>. This resolves TS2394 while preserving CF-aware
-    DX. No runtime changes; Typedoc/rollup/tsc remain compatible.
-
-- Amendment: CF-aware property fallback guard (no runtime change)
-  - Updated addRangeKeyCondition signature to use an IfNever-style conditional
-    for `property`, so when CF is absent the type falls back to `string`.
-  - Preserves CF-aware narrowing when CF is provided; restores typecheck/build/
-    docs by avoiding `never` at call sites.
-
-- QueryBuilder: thread K (projection) and add setProjection
-  - Added K generic to QueryBuilder extending BaseQueryBuilder<…, CF, K>.
-  - Implemented setProjection(indexToken, attributes) to set per-index
-    projections; method narrows K for callers passing const tuples.
-  - Overrode query() to auto-include uniqueProperty and any explicit sort keys
-    when projections are present, preserving dedupe/sort invariants.
-  - getDocumentQueryArgs now emits ProjectionExpression and augments
-    ExpressionAttributeNames when projections are set.
-
-- Tests: projection and CF-aware narrowing
-  - Added tsd test (test/types/querybuilder-range-key.test-d.ts) pinning
-    CF-aware range-key property narrowing and fallback to string without CF.
-  - Added unit test for ProjectionExpression emission in
-    getDocumentQueryArgs.test.ts.
-
-- Docs: export Projected and fix TypeDoc warnings
-  - Exported Projected type from EntityClient and re-exported at package root;
-    updated README to document projection policy and Projected helper.
-  - Added replace-text rules in typedoc.json to fix smithy symbol links.
-
-- Helper typing (variance): relaxed addRangeKeyCondition/addFilterCondition
-  to accept a generic BaseQueryBuilder plus minimal structural contract
-  (indexParamsMap + logger). Removed variance-bridging casts at call sites in
-  QueryBuilder; no runtime behavior changes.
-
-- QueryBuilder ergonomics: added setScanIndexForward, resetProjection,
-  resetAllProjections, and setProjectionAll. Added unit tests covering scan
-  direction and projection lifecycle; extended getDocumentQueryArgs tests to
-  assert ScanIndexForward=false emission.
-
-- Amendment: Fixed discriminant narrowing in addFilterCondition, switched to
-  helper aliases in QueryBuilder, and completed ergonomics method surface.
-
-- Lint: resolved no-unnecessary-condition in QueryBuilder resets by guarding
-  params presence in resetProjection and removing optional chaining in
-  resetAllProjections (keys are known from Object.keys()).
-
-- Docs & TSD:
-  - README: added “Projections and scan direction” section showing
-    setProjectionAll, setScanIndexForward, and resets with K-channel notes.
-  - TSD: added querybuilder-projection-k.test-d.ts to pin K narrowing/widening.
-
-- TSD & Lint scope:
-  - Moved tsd tests to test-d/ and updated typecheck to run "tsc && tsd".
-  - Scoped @typescript-eslint/no-unused-expressions off only for \*_/_.test.ts
-    (vitest tests), leaving the rule active for source files.
-  - Updated knip.json to ignore test-d/\*\* to keep knip clean for
-    compile-time-only tests.
-
-- TSD: pinned removeKeys literal typing for getItem/getItems (with and without
-  tuple projections) under test-d/entityclient-removekeys.test-d.ts.
-- README: added typed removeKeys examples and a CF note on per-index page-key
-  typing when CF is supplied.
-
-- TSD: added non-literal removeKeys flag assertions to ensure union typing
-  persists for token-aware getItems/getItem when the flag is boolean, matching
-  documented DX (test-d/entityclient-removekeys.test-d.ts).
-
-- Fix: Reordered token-aware getItems overloads so the literal removeKeys
-  signatures appear before the broad union signature, restoring intended
-  narrowing for removeKeys: true/false in tsd tests.
-
-- Fix (types): Replaced token-aware, no-attributes union overloads for
-  getItem/getItems with single conditional-generic signatures keyed to
-  options.removeKeys. This removes reliance on overload order in generated
-  .d.ts and guarantees narrowing for literal true/false while preserving union
-  when removeKeys is non-literal.
-
-- Fix (types): getItems (token-aware, non-literal removeKeys) now returns an
-  array-of-union for items ((Record|Item)[]) instead of a union-of-arrays.
-
-- Fix (types): getItem return type now exposes an optional Item property with
-  undefined in the value union (Item?: … | undefined) rather than a required
-  Item with a union including undefined. This aligns tsd’s ItemOf<> extraction.
-
-- Revert (types): Align API to tsd pins
-  • getItem (token-aware) returns ReplaceKey<GetCommandOutput, 'Item', T | undefined>
-  (required Item with undefined in the union), ensuring ItemOf<> infers T | undefined.
-  • getItems (token-aware, non-literal removeKeys) returns a union-of-arrays
-  (EntityRecordByToken[] | EntityItemByToken[]) as asserted by tsd.
-
-- Fix (types): Align to tsd extraction rules
-  • getItem (token-aware) now returns Omit<GetCommandOutput, 'Item'> & { Item?: T | undefined }
-  so ItemOf<> consistently infers T | undefined.
-  • getItems (token-aware, non-literal removeKeys) now returns an array-of-union ((Record|Item)[]).
-
-- Fix (types): Removed invalid ReplaceKey<never, never, never> cast in
-  EntityClient.getItem implementation that triggered TS2352. Cast the helper
-  result via unknown to the intended optional-Item shape to satisfy tsc/typedoc.
-
-- Fix (types): getItems (token-aware, non-literal removeKeys) now returns a
-  union-of-arrays (EntityRecordByToken[] | EntityItemByToken[]) instead of an
-  array-of-union, matching tsd expectations.
-
-- Ready-to-release: all gates green (tsc+tsd, lint, tests, build, docs, knip);
-  token-aware removeKeys contract is stable and pinned:
-  • getItems('token', ..., { removeKeys: true/false }) → Items/Records
-  • getItem('token', ..., { removeKeys: true/false }) → Item|Record | undefined
-  • Non-literal boolean → union-of-arrays (getItems) / union (getItem)
-  • Tuple projections preserve Pick<…> over the correct base (Item vs Record)
-
-- Stabilize API typing and tsd pins
-  • Locked getItem (token-aware) to optional Item shape with undefined in value
-    union: Omit<GetCommandOutput, 'Item'> & { Item?: T | undefined }.
-  • Locked getItems (token-aware, non-literal removeKeys) to union-of-arrays
-    (EntityRecordByToken[] | EntityItemByToken[]), reflecting runtime.
-  • Updated tsd tests to use expectAssignable for optional Item assertions and
-    to assert union-of-arrays for the non-literal removeKeys case, avoiding
-    brittle exact-equality checks while pinning the intended behavior.
+- None
