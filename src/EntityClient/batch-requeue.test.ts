@@ -4,6 +4,13 @@ import { describe, expect, it } from 'vitest';
 import { entityManager, type MyConfigMap } from '../../test/entityManager';
 import { EntityClient } from './EntityClient';
 
+type BatchWriteInput = {
+  RequestItems: Record<string, Record<string, unknown>[]>;
+} & Record<string, unknown>;
+interface DocBatchWriteSpy {
+  batchWrite: (input: BatchWriteInput) => Promise<BatchWriteCommandOutput>;
+}
+
 describe('EntityClient - batch requeue on UnprocessedItems', () => {
   const makeClient = () =>
     new EntityClient<MyConfigMap>({
@@ -21,26 +28,25 @@ describe('EntityClient - batch requeue on UnprocessedItems', () => {
       RequestItems: Record<string, Record<string, unknown>[]>;
     }[] = [];
 
-    const original = client.doc.batchWrite.bind(client.doc);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    (client.doc as any).batchWrite = async (input: unknown) => {
-      const req = input as {
-        RequestItems: Record<string, Record<string, unknown>[]>;
-      };
+    const docSpy = client.doc as unknown as DocBatchWriteSpy;
+    const original = docSpy.batchWrite.bind(client.doc);
+    docSpy.batchWrite = async (input: BatchWriteInput) => {
+      // satisfy require-await while keeping behavior
+      await Promise.resolve();
+      const req = input;
       calls.push(req);
 
       // Half of the current batch is "unprocessed" on the first call only.
       const batch = req.RequestItems[tableName] ?? [];
       const half = Math.ceil(batch.length / 2);
-      const unprocessed =
-        calls.length === 1 ? (batch.slice(0, half) as unknown[]) : [];
+      const unprocessed = calls.length === 1 ? batch.slice(0, half) : [];
 
-      const out = {
+      const out: BatchWriteCommandOutput = {
         $metadata: { httpStatusCode: 200 },
-        UnprocessedItems: {
-          [tableName]: unprocessed,
-        },
-      } as unknown as BatchWriteCommandOutput;
+        ...(unprocessed.length
+          ? { UnprocessedItems: { [tableName]: unprocessed } }
+          : {}),
+      };
 
       return out;
     };
@@ -77,8 +83,7 @@ describe('EntityClient - batch requeue on UnprocessedItems', () => {
       });
     } finally {
       // Restore original
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      (client.doc as any).batchWrite = original;
+      docSpy.batchWrite = original;
     }
   });
 
@@ -90,25 +95,24 @@ describe('EntityClient - batch requeue on UnprocessedItems', () => {
       RequestItems: Record<string, Record<string, unknown>[]>;
     }[] = [];
 
-    const original = client.doc.batchWrite.bind(client.doc);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    (client.doc as any).batchWrite = async (input: unknown) => {
-      const req = input as {
-        RequestItems: Record<string, Record<string, unknown>[]>;
-      };
+    const docSpy = client.doc as unknown as DocBatchWriteSpy;
+    const original = docSpy.batchWrite.bind(client.doc);
+    docSpy.batchWrite = async (input: BatchWriteInput) => {
+      // satisfy require-await while keeping behavior
+      await Promise.resolve();
+      const req = input;
       calls.push(req);
 
       const batch = req.RequestItems[tableName] ?? [];
       const half = Math.ceil(batch.length / 2);
-      const unprocessed =
-        calls.length === 1 ? (batch.slice(0, half) as unknown[]) : [];
+      const unprocessed = calls.length === 1 ? batch.slice(0, half) : [];
 
-      const out = {
+      const out: BatchWriteCommandOutput = {
         $metadata: { httpStatusCode: 200 },
-        UnprocessedItems: {
-          [tableName]: unprocessed,
-        },
-      } as unknown as BatchWriteCommandOutput;
+        ...(unprocessed.length
+          ? { UnprocessedItems: { [tableName]: unprocessed } }
+          : {}),
+      };
 
       return out;
     };
@@ -129,8 +133,7 @@ describe('EntityClient - batch requeue on UnprocessedItems', () => {
       const second = calls[1].RequestItems[tableName] ?? [];
       expect(second.length).to.equal(Math.ceil(first.length / 2));
     } finally {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      (client.doc as any).batchWrite = original;
+      docSpy.batchWrite = original;
     }
   });
 });

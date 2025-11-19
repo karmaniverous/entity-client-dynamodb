@@ -34,3 +34,8 @@
 - Batch nicety tests
   - Added “unprocessed requeue” tests for batch put/delete to pin behavior
     when UnprocessedItems are returned (requeue verified).
+
+- Tests/lint hardening
+  - Refined batch requeue tests to avoid `any` casts and satisfy
+    `@typescript-eslint/require-await`; stubs now omit `UnprocessedItems`
+    when empty so later outputs match the expected undefined property.
