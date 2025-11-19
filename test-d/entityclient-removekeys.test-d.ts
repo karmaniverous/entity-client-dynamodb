@@ -75,3 +75,25 @@ type OneProjTrue = ItemOf<typeof oneProjTrue>;
 expectType<Pick<EntityItemByToken<MyConfigMap, 'user'>, 'created'> | undefined>(
   null as unknown as OneProjTrue,
 );
+
+// Non-literal boolean flag → union persists
+declare const flag: boolean;
+
+// getItems — removeKeys: boolean → union of Item/Record arrays
+const giFlag = client.getItems('user', keys, { removeKeys: flag });
+type GIFlagItems = ItemsOf<typeof giFlag>;
+expectType<
+  (
+    | EntityRecordByToken<MyConfigMap, 'user'>
+    | EntityItemByToken<MyConfigMap, 'user'>
+  )[]
+>(null as unknown as GIFlagItems);
+
+// getItem — removeKeys: boolean → union of Item/Record (plus undefined)
+const oneFlag = client.getItem('user', key, { removeKeys: flag });
+type OneFlagItem = ItemOf<typeof oneFlag>;
+expectType<
+  | EntityRecordByToken<MyConfigMap, 'user'>
+  | EntityItemByToken<MyConfigMap, 'user'>
+  | undefined
+>(null as unknown as OneFlagItem);

@@ -268,12 +268,16 @@
 
 - TSD & Lint scope:
   - Moved tsd tests to test-d/ and updated typecheck to run "tsc && tsd".
-  - Scoped @typescript-eslint/no-unused-expressions off only for **/*.test.ts
+  - Scoped @typescript-eslint/no-unused-expressions off only for \*_/_.test.ts
     (vitest tests), leaving the rule active for source files.
-  - Updated knip.json to ignore test-d/** to keep knip clean for
+  - Updated knip.json to ignore test-d/\*\* to keep knip clean for
     compile-time-only tests.
 
 - TSD: pinned removeKeys literal typing for getItem/getItems (with and without
   tuple projections) under test-d/entityclient-removekeys.test-d.ts.
 - README: added typed removeKeys examples and a CF note on per-index page-key
-  typing when CF is supplied.
+  typing when CF is supplied.
+
+- TSD: added non-literal removeKeys flag assertions to ensure union typing
+  persists for token-aware getItems/getItem when the flag is boolean, matching
+  documented DX (test-d/entityclient-removekeys.test-d.ts).
