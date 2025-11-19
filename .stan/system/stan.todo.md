@@ -255,4 +255,8 @@
   assert ScanIndexForward=false emission.
 
 - Amendment: Fixed discriminant narrowing in addFilterCondition, switched to
-  helper aliases in QueryBuilder, and completed ergonomics method surface.
+  helper aliases in QueryBuilder, and completed ergonomics method surface.
+
+- Lint: resolved no-unnecessary-condition in QueryBuilder resets by guarding
+  params presence in resetProjection and removing optional chaining in
+  resetAllProjections (keys are known from Object.keys()).

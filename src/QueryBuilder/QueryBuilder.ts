@@ -129,9 +129,14 @@ export class QueryBuilder<
    * Reset projection attributes for a single index. Widens K back to unknown.
    */
   resetProjection(indexToken: ITS): QueryBuilder<C, ET, ITS, CF> {
-    if (this.indexParamsMap[indexToken]) {
-      delete this.indexParamsMap[indexToken].projectionAttributes;
+    if (!(indexToken in this.indexParamsMap)) {
+      this.indexParamsMap[indexToken] = {
+        expressionAttributeNames: {},
+        expressionAttributeValues: {},
+        filterConditions: [],
+      };
     }
+    delete this.indexParamsMap[indexToken].projectionAttributes;
     return this as unknown as QueryBuilder<C, ET, ITS, CF>;
   }
 
@@ -140,7 +145,7 @@ export class QueryBuilder<
    */
   resetAllProjections(): QueryBuilder<C, ET, ITS, CF> {
     for (const key of Object.keys(this.indexParamsMap) as ITS[]) {
-      delete this.indexParamsMap[key]?.projectionAttributes;
+      delete this.indexParamsMap[key].projectionAttributes;
     }
     return this as unknown as QueryBuilder<C, ET, ITS, CF>;
   }
