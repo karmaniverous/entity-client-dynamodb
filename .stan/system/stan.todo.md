@@ -2,7 +2,62 @@
 
 ## Next up
 
-- (empty)
+- TSD: pin removeKeys literal overloads and tuple projections (token-aware)
+  - getItems('token', keys, { removeKeys: true }) → items: EntityItemByToken<…, 'token'>[].
+  - getItems('token', keys, { removeKeys: false }) → items: EntityRecordByToken<…, 'token'>[].
+  - getItems('token', keys, attrs as const, { removeKeys: true }) → items: Projected<EntityItemByToken<…, 'token'>, typeof attrs>[].
+  - getItems('token', keys, attrs as const, { removeKeys: false }) → items: Projected<EntityRecordByToken<…, 'token'>, typeof attrs>[].
+  - Non‑literal flag (const flag: boolean): union persists (assert with expectType).
+  - Token-less overloads: unchanged (broad EntityRecord<…> items).
+
+- QueryBuilder ergonomics: implement helper methods
+  - setScanIndexForward(indexToken: ITS, value: boolean): this
+    • Runtime: set IndexParams.scanIndexForward; emitted by getDocumentQueryArgs.
+    • Typing: no change to K.
+  - resetProjection(indexToken: ITS): QueryBuilder<…, unknown>
+    • Runtime: delete per‑index projectionAttributes; full item shape for that index.
+    • Typing: widen K → unknown (merged results are no longer uniformly projected).
+  - resetAllProjections(): QueryBuilder<…, unknown>
+    • Runtime: delete projectionAttributes for all indices; full items.
+    • Typing: widen K → unknown.
+  - setProjectionAll<KAttr extends readonly string[]>(indices: ITS[] | readonly ITS[], attrs: KAttr): QueryBuilder<…, KAttr>
+    • Runtime: set a uniform ProjectionExpression for supplied indices (or all indices if we choose to add an “apply to all current indices” variant).
+    • Typing: narrow builder K to KAttr (uniform projected result shape).
+  - Unit tests:
+    • Assert scanIndexForward is emitted in QueryCommandInput by getDocumentQueryArgs.
+    • Verify ProjectionExpression emission remains intact when using setProjectionAll.
+  - Docs (API/README):
+    • Document runtime policy (auto‑include uniqueProperty and explicit sort keys when projections are supplied).
+    • Clarify K behavior on setProjectionAll (narrows) vs resets (widens).
+
+- README examples (after helpers implemented)
+  - Provide a focused example showing:
+    • setProjectionAll([...], ['created'] as const) → typed narrowing of QueryResult.items.
+    • setScanIndexForward('created', false) for reverse chronological results.
+    • resetProjection / resetAllProjections and effect on result typing.
+
+- TSD: QueryBuilder projection K chain
+  - setProjection('created', ['created'] as const) returns builder with K=['created'].
+  - query(...) returns QueryResult items: Pick<EntityItemByToken<…, ET>, 'created'>[].
+  - resetProjection('created') / resetAllProjections() returns builder with K=unknown; query returns full shape.
+  - setProjectionAll([...], ['a','b'] as const) returns builder with K=['a','b']; query narrows accordingly.
+
+- Internals/variance (deferred; requires upstream)
+  - Requirements update (done): Document the need for variance-friendly helper acceptance in entity‑manager (structural or generic builder).
+  - Interop request: file .stan/interop/entity-manager/basequerybuilder-variance-and-helper-acceptance.md with:
+    • Problem: helper parameter typing forces downstream casts for extended builder generics.
+    • Proposal: generic builder acceptance or minimal structural interface for helper params (indexParamsMap + logger).
+    • No runtime changes; backward-compatible typing.
+    • Acceptance criteria: compile-clean upstream and enables removal of “unknown as …” casts downstream.
+  - Adapter follow-up (after upstream merges):
+    • Remove variance-bridging casts in this repo’s QueryBuilder when calling addFilterCondition/addRangeKeyCondition.
+    • Keep tests and tsd coverage intact.
+
+- Tiny docs polish
+  - Add API docs notes on:
+    • Helper method behavior (runtime vs K typing).
+    • Projection policy (auto-include uniqueProperty and explicit sort keys with projections).
+  - Cross-link the README and TypeDoc sections where appropriate.
 
 - Pin new DX typing with tsd tests
   - EntityClient.getItem/getItems:
@@ -187,4 +242,4 @@
 - Docs: export Projected and fix TypeDoc warnings
   - Exported Projected type from EntityClient and re-exported at package root;
     updated README to document projection policy and Projected helper.
-  - Added replace-text rules in typedoc.json to fix smithy symbol links.
+  - Added replace-text rules in typedoc.json to fix smithy symbol links.

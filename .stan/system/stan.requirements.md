@@ -1,248 +1,257 @@
-# @karmaniverous/entity-client-dynamodb — Requirements (authoritative)
+# Entity Manager — Requirements (authoritative)
 
 Scope
 
-- This document defines the desired end state and durable behaviors for the entity-client-dynamodb package. It reflects:
-  - The current implementation (EntityClient, QueryBuilder, Tables utilities, batch processing).
-  - DX-focused typing enhancements delivered in this thread (token-aware literal removeKeys overloads; projection tuple narrowing).
-  - Near-term intent consistent with upstream typing and local imports (CF-aware typing constraints in QueryBuilder and projection-aware query typing).
+- This document specifies the desired end state for entity-manager (vNext). It supersedes prior guidance where conflicts arise and reflects a coordinated, inference-first typing strategy across the “entity-\*” stack.
+- It remains provider-agnostic (DynamoDB is a common target) and retains current runtime semantics unless explicitly changed.
 
-Environment and toolchain
+Overview
 
-- Node.js 18+; TypeScript 5+.
-- Build: Rollup; outputs ESM + CJS + d.ts (preserveModules for JS, single d.ts bundle).
-- Test: Vitest; integration against DynamoDB Local (Docker) using @karmaniverous/dynamodb-local.
-- Lint/format: ESLint (flat config) with Prettier.
+- Entity Manager implements rational indexing and cross-shard querying at scale in your NoSQL database so you can focus on application logic.
+- Core responsibilities:
+  - Generate and maintain database-facing keys (global hashKey and rangeKey) and other generated properties used by indexes.
+  - Encode/decode generated property elements via transcodes.
+  - Dehydrate/rehydrate page keys for multi-index, cross-shard paging.
+  - Execute provider-agnostic, parallel shard queries through injected shard query functions, combining, de-duplicating, and sorting results.
 
-Data model (provider-agnostic baseline)
+Key concepts and terminology
 
-- The package is a DynamoDB adapter that plugs cleanly into the Entity Manager ecosystem:
-  - EntityManager is configured upstream (schema, generated keys, indexes, shard bumps).
-  - This package focuses on DynamoDB client ergonomics, batch operations, and a fluent query builder over AWS SDK v3 (DynamoDBDocument).
+- Entity: application data type; accepts unknown keys (record-like).
+- Generated properties:
+  - Sharded: include the hashKey value and one or more property=value elements; require all elements to be present (atomic), otherwise undefined.
+  - Unsharded: one or more property=value elements; missing element values are encoded as empty strings.
+- Keys:
+  - Global hashKey (shared name across entities) with shard suffix.
+  - Global rangeKey (shared name across entities) in the form "uniqueProperty#value".
+- Shard bump: a time-windowed rule (timestamp, charBits, chars) defining shard key width and radix for records created within/after that timestamp.
+- Index components: tokens defining index hashKey and rangeKey. Tokens may be:
+  - Global hashKey or rangeKey.
+  - A sharded generated property (hashKey side only).
+  - An unsharded generated property or a transcodable scalar property (rangeKey side).
 
-Package surfaces (high-level)
+Compatibility and assumptions
 
-1. EntityClient<C extends BaseConfigMap>
-   - Wraps DynamoDBClient + DynamoDBDocument and integrates with an EntityManager instance.
-   - Options (extends DynamoDBClientConfig, excludes logger):
-     - tableName: string (required) — default table target.
-     - entityManager: EntityManager<C> (required).
-     - logger?: { debug; error } (default: console).
-     - enableXray?: boolean — capture AWS v3 client when AWS_XRAY_DAEMON_ADDRESS present.
-     - batchProcessOptions?: default settings for batchProcess helper.
-   - Public properties:
-     - client: DynamoDBClient
-     - doc: DynamoDBDocument (marshallOptions.removeUndefinedValues = true)
-     - tableName: string
-   - Tables:
-     - createTable(options: CreateTableCommandInput|Omit<TableName>): waiter waitUntilTableExists; TableName defaults to this.tableName.
-     - deleteTable(options?: DeleteTableCommandInput|Omit<TableName>): waiter waitUntilTableNotExists; TableName defaults to this.tableName.
-   - Items (single):
-     - putItem(item: EntityRecord<C>, options?) OR putItem(options: ReplaceKey<Item, EntityRecord<C>>): 200 ok or throw.
-     - deleteItem(key: EntityKey<C>, options?) OR deleteItem(options: ReplaceKey<Key, EntityKey<C>>): 200 ok or throw.
-     - getItem overloads (see “DX typing requirements” below for token-aware/literal projection typing):
-       - token-aware forms return EntityRecordByToken<C, ET> | EntityItemByToken<C, ET> depending on removeKeys at runtime.
-       - non-token forms return EntityRecord<C>.
-       - supports attributes projection for both forms (AttributesToGet → ProjectionExpression/ExpressionAttributeNames).
-   - Items (batch):
-     - putItems(items: EntityRecord<C>[], options?): BatchWrite with retries until UnprocessedItems fully re-queued; returns BatchWriteCommandOutput[].
-     - deleteItems(keys: EntityKey<C>[], options?): BatchWrite with retries; returns BatchWriteCommandOutput[].
-     - transactPutItems(items): DocumentClient.transactWrite (Put); returns TransactWriteCommandOutput.
-     - transactDeleteItems(keys): DocumentClient.transactWrite (Delete); returns TransactWriteCommandOutput.
-     - purgeItems(options?): scan with LastEvaluatedKey loop; collect and batch delete only hashKey/rangeKey; returns number purged.
-   - Logging and failures:
-     - All methods log debug success contexts; on non-200 outcomes or exceptions, log error and throw with concise message.
-     - No silent fallbacks; runtime semantics are explicit and deterministic.
+- Provider-agnostic orchestration; intended to work over platforms like DynamoDB.
+- Canonicalization (e.g., name search fields) is an application concern; Entity Manager treats such strings as opaque values and provides transcodes for ordering/encoding.
 
-2. QueryBuilder<C, ET, ITS, CF>
-   - Extends BaseQueryBuilder from entity-manager and wires DocumentClient.query to ShardQueryFunction.
-   - Construction (recommended factory already provided in package): createQueryBuilder({ entityClient, entityToken, hashKeyToken, cf? })
-     - Infers ET from entityToken; when cf is provided (values-first literal), narrows ITS to keys of cf.indexes and page keys per index.
-   - Query assembly:
-     - indexParamsMap per indexToken holds:
-       - expressionAttributeNames: Record<string, string>
-       - expressionAttributeValues: Record<string, NativeScalarAttributeValue>
-       - filterConditions: string[]
-       - rangeKeyCondition?: string
-       - scanIndexForward?: boolean
-     - addRangeKeyCondition(indexToken, condition): one condition per index (no replacement except explicitly intended “between {} → replace” behavior for unbounded turns).
-     - addFilterCondition(indexToken, condition): multiple filter conditions may be added; supports: <, <=, =, >, >=, <>, begins_with, between, in, contains, attribute_exists, attribute_not_exists, and/or/not with grouping.
-   - Execution path:
-     - getShardQueryFunction(indexToken) returns a ShardQueryFunction that builds a DocumentClient QueryCommandInput using getDocumentQueryArgs and executes doc.query.
-     - The BaseQueryBuilder.query collates results via EntityManager.query (dedupe by uniqueProperty, sort by sortOrder, merge paging).
-   - Typing guarantees (current):
-     - ITS defaults to string; when cf is provided, ITS narrows to keys of cf.indexes; pageKey typing narrows per index.
-     - RangeKey/filter condition property typing remains broad (string) at call sites today (see “Intent” for CF-aware narrowing).
+Non-requirements (current behavior)
 
-3. Tables utilities
-   - generateTableDefinition(entityManager): returns Pick<CreateTableCommandInput, 'AttributeDefinitions' | 'GlobalSecondaryIndexes' | 'KeySchema'> based on EntityManager config:
-     - Builds AttributeDefinitions for global keys and any index component properties; uses defaultTranscodeAttributeTypeMap to map numeric transcodes (bigint/fix6/int/number/timestamp) to 'N'; others default to 'S'.
-     - Produces all GSIs from config.indexes with projection policy:
-       - Projections omitted => ProjectionType 'ALL'.
-       - projections: [] => 'KEYS_ONLY'.
-       - projections: string[] => 'INCLUDE' + NonKeyAttributes.
-   - TranscodeAttributeTypeMap + defaultTranscodeAttributeTypeMap exported.
+- No automatic fan-out reduction relative to remaining limit in the query loop.
+- No enforcement of globally unique (hashKey, rangeKey) pairs across separate index tokens.
 
-4. Low-level helper
-   - getDocumentQueryArgs<C, ET, IT, CF>({ tableName, hashKeyToken, indexParamsMap, indexToken, hashKey, pageKey?, pageSize? }):
-     - Assembles ExpressionAttributeNames/Values, KeyConditionExpression (hashKey + optional rangeKeyCondition), FilterExpression (AND-joined), Limit, ExclusiveStartKey, ScanIndexForward.
-     - Accepts a per-index typed pageKey (via PageKeyByIndex).
+---
 
-Batch processing invariants
+## Inference-first typing (refactor) — strict acronyms and API requirements
 
-- putItems/deleteItems:
-  - batchProcess keys/items, invoke BatchWrite for each batch, and implement unprocessedItemExtractor that returns the original Items/Keys from WriteRequest shapes.
-  - Retries continue until no unprocessed items remain; return an array of outputs from all successful invocations.
-- purgeItems:
-  - Iterate via LastEvaluatedKey until fully exhausted; never rely on items.length sentinel for loop termination.
+Goals
 
-Logging and error policy
+- Inference-first configuration: callers pass a literal config value; Entity Manager captures tokens and index names directly from the value (no explicit generic parameters required in normal use).
+- Token-aware and index-aware typing end-to-end: entity token (ET) and index token (IT/ITS) narrow items, records, page keys, low-level helpers, shard query contracts, and query results without casts.
+- Value-first helpers and patterns ensure literal keys are preserved across module boundaries (use "as const" and "satisfies").
+- Runtime behavior remains unchanged: Zod-based validation persists; we intersect parsed configuration with captured literal types at the type level.
 
-- logger implements { debug; error } (default console). All operations log success (debug) and failures (error with minimal context). Failures throw with a concise message; no swallowing.
+Zod-schema-first EM inference (no generics at call sites)
 
-DX and typing requirements (current)
+- Factory supports optional entitiesSchema: Record<entityToken, Zod schema>.
+- When provided, EM is inferred as { [ET]: z.infer<typeof schema[ET]> } directly from values.
+- When omitted, EM falls back to a broad EntityMap (no breaking change).
+- Schemas define only non-generated properties (base/domain fields). Do not include:
+  - global keys (hashKey/rangeKey),
+  - generated property tokens (sharded/unsharded keys such as userPK, firstNameRK).
+- Item-facing types layer optional key/token strings and base properties over schemas where applicable.
+- Record-facing types layer required global keys (hashKey/rangeKey) over schemas for storage-facing shapes.
+- Runtime config parsing/validation remains unchanged; entitiesSchema is used for type capture only.
 
-Token-aware value stripping (removeKeys) — literal overloads
+Naming and acronym policy (hard rule)
 
-- getItem/getItems include additive token-aware overloads that narrow return types when options.removeKeys is a literal:
-  - removeKeys: true — returns EntityItemByToken<C, ET> (domain item without generated/global keys).
-  - removeKeys: false — returns EntityRecordByToken<C, ET> (record with generated/global keys).
-  - When options.removeKeys is dynamic/omitted, maintain union types (EntityRecordByToken | EntityItemByToken).
-- Behavior is type-only; at runtime, key stripping is applied only when a token-aware overload is used and options.removeKeys === true.
+- Acronyms are reserved for type-parameter names only (e.g., CC, EM, ET, IT, ITS, EOT, EIBT, ERBT as template parameter identifiers).
+- Never export abbreviated type aliases. All exported types must be fully named (e.g., EntityOfToken, EntityItemByToken, EntityRecordByToken).
 
-Projection tuple narrowing — token-aware calls
+Projection-aware typing (type-only K channel; provider-agnostic)
 
-- getItem/getItems provide overloads that accept attributes as const tuples (readonly string[]). When used in token-aware forms:
-  - Return Item/Record shapes narrow to Pick<…> over the projected keys (combined with the removeKeys literal when present).
-  - Example:
-    - getItems('user', keys, ['a', 'b'] as const, { removeKeys: true }) → items: Pick<EntityItemByToken<C, 'user'>, 'a' | 'b'>[]
-    - getItem('user', key, ['a', 'b'] as const, { removeKeys: false }) → Item: Pick<EntityRecordByToken<C, 'user'>, 'a' | 'b'>
-- This is compile-time only; runtime projection is implemented via ProjectionExpression/ExpressionAttributeNames in the adapter (already in place).
+- Add a type-only "projection" channel K that narrows item shapes when a provider projects a subset of attributes.
+  - Helpers:
+    - KeysFrom<K>, Projected<T, K>, ProjectedItemByToken<CC, ET, K>.
+  - Thread K (default unknown) through:
+    - ShardQueryFunction/ShardQueryResult/ShardQueryMap,
+    - QueryOptions/QueryResult (and ByCF/ByCC aliases),
+    - EntityManager.query,
+    - BaseQueryBuilder (getShardQueryFunction, build, query).
+- No runtime behavior changes. Projection execution remains an adapter/provider concern.
+- Sort typing alignment: QueryOptions.sortOrder is typed over ProjectedItemByToken<CC, ET, K>. Callers should include sort keys in K or adapters should auto-include them at runtime to preserve invariants.
 
-QueryBuilder typing guarantees (current)
+Strict capitalized type-parameter dictionary (type parameters only; no alias exports)
 
-- Page key typing by index (CF-aware):
-  - When a values-first config literal (cf) with indexes is supplied via createQueryBuilder({ cf }), pageKey typing is narrowed per index via PageKeyByIndex.
-  - ITS (index token subset) narrows to keys of cf.indexes; excess map keys are rejected by excess property checks.
-- Filter/range key condition operators and shape:
-  - RangeKeyCondition supports: '<' | '<=' | '=' | '>' | '>=' | '<>' | 'between' | 'begins_with'.
-  - FilterCondition supports: comparison operators, begins_with, between, contains, attribute_exists/attribute_not_exists, in (array or Set), and/or/not groupings.
-- Current typing for condition.property remains string to preserve compatibility (see “Intent” below for CF-aware narrowing).
+- EM — EntityMap
+- E — Entity (single entity shape)
+- ET — EntityToken (keys of EM)
+- EOT — EntityOfToken (Exactify<EM[ET]>)
+- TR — TranscodeRegistry (name → value type)
+- TN — TranscodeName (keys of TR)
+- CC — CapturedConfig (inference-first config type captured from the literal value)
+- HKT — HashKeyToken
+- RKT — RangeKeyToken
+- SGKT — ShardedGeneratedKeyToken
+- UGKT — UnshardedGeneratedKeyToken
+- PT — PropertyToken (transcodable scalar property)
+- IT — IndexToken (keys of config.indexes)
+- ITS — IndexTokenSubset (subset of IT valid for ET in context)
+- EIBT — EntityItemByToken (partial EOT + key/generated tokens as strings)
+- ERBT — EntityRecordByToken (EIBT + required HKT/RKT)
+- PKBI — PageKeyByIndex
+- PKMBIS — PageKeyMapByIndexSet
+- SQFBI — ShardQueryFunctionByIndex
+- QO — QueryOptions
+- QR — QueryResult
+- PK — PropertyKey (utility)
+- V — Value (utility)
 
-Runtime query composition
+Inference-first API and typing (entity-manager)
 
-- getShardQueryFunction(indexToken) constructs a ShardQueryFunction that calls getDocumentQueryArgs and executes DynamoDBDocument.query.
-- BaseQueryBuilder.query (from entity-manager) handles shard fan-out, parallelism (throttle), dedupe by uniqueProperty, sort (SortOrder), and pageKey dehydration/rehydration across shards.
+- Factory (values-first)
+  - createEntityManager<const CC extends ConfigInput, EM extends EntityMap = EntitiesFromSchema<CC>>(config: CC, logger?): EntityManager<CC, EM>
+  - Behavior:
+    - CC is captured from the literal value; callers should prefer "satisfies" for structure checks and "as const" for nested records (indexes, generatedProperties) to preserve literal keys.
+    - EM is optional; if entitiesSchema is provided, EM is inferred from the Zod schemas. Otherwise, EM falls back to a broad EntityMap.
+    - Zod still validates at runtime; the parsed result is intersected with the captured literal types at the type level (no runtime change).
+- Items/records (entity-token aware)
+  - EIBT<CC, EM, ET extends keyof EM> — partial EOT with key/generated tokens string-typed.
+  - ERBT<CC, EM, ET> — EIBT plus required keys HKT|RKT present as strings.
+- Core methods (no explicit generics at call sites; inferred from parameters)
+  - addKeys<CC, EM, ET>(entityToken: ET, item: EIBT<CC, EM, ET>, overwrite?): ERBT<CC, EM, ET>
+  - removeKeys<CC, EM, ET>(entityToken: ET, item: ERBT<CC, EM, ET>): EIBT<CC, EM, ET>
+  - getPrimaryKey<CC, EM, ET>(entityToken: ET, item: EIBT<CC, EM, ET>, overwrite?): EntityKey<CC>[]
+- Query (entity + index aware; values-first)
+  - Page keys:
+    - PKBI<CC, EM, ET, IT> — index-specific page-key object type
+    - PKMBIS<CC, EM, ET, ITS> — per-index map of per-hashKey page keys
+  - Shard query:
+    - SQFBI<CC, EM, ET, IT> = (hashKey: string, pageKey?: PKBI<CC, EM, ET, IT>, pageSize?: number) => Promise<{ count: number; items: EIBT<CC, EM, ET>[]; pageKey?: PKBI<CC, EM, ET, IT> }>
+  - Options/results:
+    - QO<CC, EM, ET extends keyof EM, ITS extends ITSubsetForEntity<CC, EM, ET>>
+    - QR<CC, EM, ET, ITS>
+  - query<CC, EM, ET extends keyof EM, ITS extends ITSubsetForEntity<CC, EM, ET>>(options: QO<CC, EM, ET, ITS>): Promise<QR<CC, EM, ET, ITS>>
+  - Inference:
+    - ET inferred from options.entityToken.
+    - ITS inferred from the literal keys of options.shardQueryMap (subset of IT).
+    - Optional K (projection) narrows result item shape when provided; defaults to unknown for back-compat.
 
-Intent (near-term; type-only, additive)
+Configuration model (runtime shape; validated with Zod)
 
-- CF-aware property narrowing in QueryBuilder:
-  - When a config literal (cf) is provided, allow a type-only CF-aware narrowing so that addRangeKeyCondition’s condition.property can be constrained to the index rangeKey token for the selected index.
-  - Constraint: must not introduce overload vs implementation incompatibilities; changes must be compatible with the imported addRangeKeyCondition helper (no runtime changes). If an overload approach is used, ensure the overload is a subtype of the implementation signature.
+- ParsedConfig (authoritative runtime object) includes:
+  - entities: Record<entityToken, { timestampProperty; uniqueProperty; shardBumps?; defaultLimit?; defaultPageSize? }>
+  - generatedProperties: { sharded: Record<ShardedKey, string[]>; unsharded: Record<UnshardedKey, string[]> }
+  - indexes: Record<indexToken, { hashKey; rangeKey; projections? }>
+  - propertyTranscodes: Record<TranscodedProperties, keyof TranscodeRegistry>
+  - transcodes: Transcodes<TranscodeRegistry>
+  - hashKey, rangeKey; delimiters; throttle
 
-- Projection-aware query (upstream) and adapter alignment:
-  - Upstream entity-manager introduces an optional K generic for projection keys; this adapter may opt into K to carry const-tuple projections end-to-end.
-  - Policy: projection typing is type-only; at runtime the adapter should auto-include uniqueProperty and any explicit sort keys in ProjectionExpression to preserve dedupe/sort invariants when projections are provided.
+Runtime config validation (selected checks)
 
-Provider-specific boundaries (DynamoDB)
+- Delimiters must be non-word sequences, not containing each other.
+- Keys sets mutually exclusive; types consistent with transcodes.
+- Generated elements non-empty, unique, properly transcodable.
+- Indexes valid (hash side: global or sharded generated; range side: global range, unsharded generated, or scalar).
+- Entities valid; shardBumps sorted, monotonic; defaults injected.
 
-- Table/index assumptions:
-  - EntityManager config expresses GSIs; generateTableDefinition mirrors that config (AttributeDefinitions, GSIs, KeySchema).
-  - Page keys always include the record’s global hash and range keys (DynamoDB contract); PageKey dehydration/rehydration in entity-manager accounts for this; adapter must pass/receive these unmodified.
-- Query shape:
-  - Single-index, single-shard query at adapter level; elements of the cross-shard, cross-index fan-out are managed by entity-manager.
+Generated property encoding
 
-Public exports (DX)
+- Sharded: "<hashKey>|k#v|k#v…" (atomic; undefined if any element nil).
+- Unsharded: "k#v|k#v…" (missing → empty string).
+- decodeGeneratedProperty reverses into EIBT patch.
 
-- Re-export commonly used types for convenience:
-  - EntityToken, EntityItemByToken, EntityRecordByToken (from entity-manager).
-  - TranscodeAttributeTypeMap, defaultTranscodeAttributeTypeMap; generateTableDefinition; getDocumentQueryArgs; QueryBuilder and helpers.
+Global key updates
 
-Testing and integration
+- updateItemHashKey: computes shard suffix based on bump/window; returns updated hashKey.
+- updateItemRangeKey: "uniqueProperty#value".
+- addKeys/removeKeys/getPrimaryKey implement the expected flows.
 
-- Unit and integration tests must cover:
-  - Table create/delete with waiter success.
-  - put/get/delete for single items; round-trips on attributes projection.
-  - Batch put/delete with retry paths; purge deletes all items; transacts succeed.
-  - QueryBuilder addRangeKeyCondition/addFilterCondition behaviors (all operator branches); getDocumentQueryArgs assembly (filter + key conditions + page key).
-  - DynamoDB Local integration stable across re-runs; test suite includes Docker preflight wait.
+Page key map dehydration/rehydration
 
-Performance and reliability
+- dehydratePageKeyMap: stable, typed emission per index/token/hashKey set; strings for compact carry-over.
+- rehydratePageKeyMap: validates index set; reconstructs per-hash/per-index typed keys; error on shape mismatch.
 
-- Batch operations use @karmaniverous/batch-process with a safe unprocessed item extractor that returns original items/keys; retries until drained.
-- Scan-based purge uses LastEvaluatedKey; no data-dependent termination.
+Shard space enumeration
 
-Non-requirements
+- getHashKeySpace enumerates suffixes across shard bumps for a time window; yields properly formed global/alternate hash key values.
 
-- No runtime projection enforcement based on type-only narrowing beyond what is already implemented in getItem/getItems with ProjectionExpression.
-- No provider-agnostic modeling inside this adapter; complex sharding/page key logic remains in entity-manager.
-- No breaking changes to public API shape for DX improvements; all typing enhancements remain additive and compile-time only.
+Query orchestration
 
-Documentation
+- QO/QR typed; dedupe by uniqueProperty and sort by provided order; rehydrate/dehydrate loop for paging; optional K type-only narrowing.
+- Adapter-level projection policy: when projections are supplied, auto-include uniqueProperty and explicit sort keys to preserve dedupe/sort invariants.
 
-- Maintain README and Typedoc so that:
-  - Token-aware semantics and overloads are visible (removeKeys literal narrowing; tuple-based projection narrowing).
-  - QueryBuilder usage is demonstrated with and without cf; page-key typing and ITS narrowing explained.
-  - Tables utility (generateTableDefinition) documented with examples and linkouts to AWS docs.
-  - ExternalSymbolLinkMappings remain up to date to silence unresolved links in public comments.
+Transcodes (entity-tools; canonical names)
 
-Release and compatibility
+- DefaultTranscodeRegistry, defaultTranscodes authored via defineTranscodes; encode/decode agreement at compile time.
 
-- Literal removeKeys overloads and projection tuple narrowing are considered minor, additive DX changes (no runtime changes).
-- CF-aware QueryBuilder property narrowing is a goal; any rollout must ensure typecheck/build/docs remain green (avoid overload/impl signature conflicts).
+Logging and errors
 
-Quality gates
+- Injected logger with debug/error; helpers log context and rethrow errors.
 
-- Lint, typecheck, tests, docs, and build must pass prior to release.
-- Large files (> ~300 LOC) must be proactively split; current structure adheres to this rule.
+Documentation guidance (DX)
 
-Examples (concise)
+- Show “values-first” config patterns using satisfies and as const to preserve literal keys.
+- Prefer examples that do not require explicit generic parameters at call sites; demonstrate narrowing via values (entityToken, index tokens).
+- Provide concise examples of PageKey typing by index, token-aware add/remove/keys, and value-first factory usage.
+- Provide a projection K example with const tuples and document adapter projection policy.
 
-Token-aware + literal removeKeys:
+---
 
-```ts
-// Records with keys
-const res1 = await entityClient.getItems('user', keys, { removeKeys: false });
-// res1.items: EntityRecordByToken<C, 'user'>[]
+## Adapter-level QueryBuilder ergonomics (DynamoDB) — helper methods
 
-// Items without keys
-const res2 = await entityClient.getItems('user', keys, { removeKeys: true });
-// res2.items: EntityItemByToken<C, 'user'>[]
-```
+Purpose
 
-Tuple projection narrowing (token-aware):
+- Provide small, explicit helpers for common per-index query parameters and projection lifecycle while preserving the type-only K channel invariants in adapters.
 
-```ts
-const attrs = ['a', 'b'] as const;
-const res3 = await entityClient.getItems('user', keys, attrs, {
-  removeKeys: true,
-});
-// res3.items: Pick<EntityItemByToken<C, 'user'>, 'a' | 'b'>[]
+Helpers and behavior (adapter-level)
 
-const res4 = await entityClient.getItem('user', key, attrs, {
-  removeKeys: false,
-});
-// res4.Item: Pick<EntityRecordByToken<C, 'user'>, 'a' | 'b'> | undefined
-```
+- setScanIndexForward(indexToken: ITS, value: boolean): this
+  - Runtime: sets IndexParams.scanIndexForward for the index; getDocumentQueryArgs emits ScanIndexForward.
+  - Typing: no effect on K (pure query-direction toggle).
 
-QueryBuilder (page-key typing by index; cf-aware ITS):
+- setProjection<KAttr extends readonly string[]>(indexToken: ITS, attrs: KAttr): QueryBuilder<…, KAttr>
+  - Runtime: sets per-index projection attributes; getDocumentQueryArgs emits ProjectionExpression.
+  - Query-time invariant: when any projections are present, auto-include uniqueProperty and explicit sort keys to preserve dedupe/sort invariants.
+  - Typing: narrows the builder’s K to KAttr (global to the builder; reflects the merged result shape).
 
-```ts
-const qb = createQueryBuilder({
-  entityClient,
-  entityToken: 'user',
-  hashKeyToken: 'hashKey2',
-  cf: myConfigLiteral, // narrows ITS and page-key typing per index
-});
-qb.addRangeKeyCondition('created', {
-  operator: 'between',
-  property: 'created',
-  value: { from: 1, to: 2 },
-});
-qb.addFilterCondition('created', {
-  operator: 'attribute_exists',
-  property: 'updated',
-});
-const shardQueryMap = qb.build();
-// Pass to entityManager.query({ entityToken: 'user', item: {}, shardQueryMap, ... })
-```
+- resetProjection(indexToken: ITS): QueryBuilder<…, unknown>
+  - Runtime: clears projectionAttributes for the index (no ProjectionExpression ⇒ full items).
+  - Typing: widens K back to unknown (result items are no longer uniformly projected).
+
+- resetAllProjections(): QueryBuilder<…, unknown>
+  - Runtime: clears projections for all indices on the builder.
+  - Typing: widens K to unknown (result items are full shape).
+
+- setProjectionAll<KAttr extends readonly string[]>(indices: ITS[] | readonly ITS[], attrs: KAttr): QueryBuilder<…, KAttr>
+  - Runtime: applies the same ProjectionExpression across the supplied indices (or all, if a “current indices” form is later added).
+  - Typing: narrows K to KAttr, keeping a uniform projected shape aligned with EntityManager’s merged result semantics.
+
+Notes
+
+- K remains a single, builder-wide type parameter to match merged results across all indices. Uniform projections via setProjectionAll are recommended to keep typing and runtime aligned.
+- The adapter’s runtime policy continues to auto-include uniqueProperty and explicit sort keys when projections are present, ensuring stable dedupe/sort.
+
+---
+
+## Internals / variance (typing contract with entity‑manager)
+
+Problem
+
+- Downstream adapters (this repo) extend BaseQueryBuilder with CF/K and sometimes need to call helper functions exported by entity‑manager (e.g., addFilterCondition/addRangeKeyCondition).
+- Current helper parameter typing can force downstreams into variance‑bridging casts (unknown as QueryBuilder<C>) even though the helpers only rely on a small structural subset (indexParamsMap, entityClient.logger).
+
+Proposed upstream support (typing-only; no runtime change)
+
+- Relax helper function parameter types to accept a generic builder shape rather than a concrete/bounded one, or accept a minimal structural interface:
+  - Structural option: accept any object with indexParamsMap and a logger-like entityClient.
+  - BaseQueryBuilder option: generic in BaseQueryBuilder with unconstrained generics (ET/ITS/CF/K) so extensions remain assignable without casts.
+
+Expected outcome
+
+- No runtime changes in entity‑manager.
+- Downstream adapters can call helpers without variance casts, improving safety and readability while preserving exact output behavior.
+
+Acceptance criteria
+
+- Updated helper signatures in entity‑manager compile clean and are backward‑compatible.
+- This repo removes variance‑bridging casts (unknown as …) on those helper calls after upstream merges.
