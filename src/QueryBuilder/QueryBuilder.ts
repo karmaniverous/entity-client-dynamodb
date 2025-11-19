@@ -44,7 +44,7 @@ export class QueryBuilder<
     ) => {
       const {
         Count: count = 0,
-        Items: items = [],
+        Items: rawItems = [],
         LastEvaluatedKey: newPageKey,
       } = await this.entityClient.doc.query(
         getDocumentQueryArgs<C, ET, ITS, CF>({
@@ -58,10 +58,12 @@ export class QueryBuilder<
         }),
       );
 
+      // Narrow to the projected shape at the boundary.
+      const projectedItems = rawItems as ProjectedItemByToken<C, ET, K>[];
       const result: ShardQueryResult<C, ET, ITS, CF, K> = {
         count,
         // K-aware: project item shape when a projection K is supplied.
-        items: items as unknown as ProjectedItemByToken<C, ET, K>[],
+        items: projectedItems,
       };
 
       if (newPageKey) {
@@ -148,7 +150,8 @@ export class QueryBuilder<
     for (const indexToken of Object.keys(this.indexParamsMap) as ITS[]) {
       const params = this.indexParamsMap[indexToken];
       const attrs = params.projectionAttributes;
-      if (attrs?.length) {
+      // Use Array.isArray so eslint --fix doesn’t re-introduce optional chaining.
+      if (Array.isArray(attrs) && attrs.length > 0) {
         const extras = [uniqueProperty, ...sortKeys].filter(
           (x): x is string => !!x,
         );
