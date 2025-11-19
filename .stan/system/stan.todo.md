@@ -293,4 +293,8 @@
   when removeKeys is non-literal.
 
 - Fix (types): getItems (token-aware, non-literal removeKeys) now returns an
-  array-of-union for items ((Record|Item)[]) instead of a union-of-arrays.
+  array-of-union for items ((Record|Item)[]) instead of a union-of-arrays.
+
+- Fix (types): getItem return type now exposes an optional Item property with
+  undefined in the value union (Item?: … | undefined) rather than a required
+  Item with a union including undefined. This aligns tsd’s ItemOf<> extraction.
