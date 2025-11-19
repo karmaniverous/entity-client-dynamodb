@@ -5,6 +5,7 @@ import {
   type EntityToken,
   type IndexRangeKeyOf,
   type PageKeyByIndex,
+  type ProjectedItemByToken,
   type QueryBuilderQueryOptions,
   type QueryResult,
   type ShardQueryFunction,
@@ -60,7 +61,8 @@ export class QueryBuilder<
 
       const result: ShardQueryResult<C, ET, ITS, CF, K> = {
         count,
-        items: items as EntityItemByToken<C, ET>[],
+        // K-aware: project item shape when a projection K is supplied.
+        items: items as unknown as ProjectedItemByToken<C, ET, K>[],
       };
 
       if (newPageKey) {
@@ -95,7 +97,11 @@ export class QueryBuilder<
         : IndexRangeKeyOf<CF, ITS>;
     },
   ): this {
-    addRangeKeyCondition(this, indexToken, condition);
+    // Narrow builder variance at helper boundary to avoid generic incompatibility.
+    // Helper only relies on indexParamsMap and entityClient logger.
+    addRangeKeyCondition(this as unknown as QueryBuilder<C>, indexToken, {
+      ...(condition as unknown as Record<string, unknown>),
+    } as never);
     return this;
   }
 
@@ -112,6 +118,7 @@ export class QueryBuilder<
     attributes: KAttr,
   ): QueryBuilder<C, ET, ITS, CF, KAttr> {
     // Ensure params map entry
+
     this.indexParamsMap[indexToken] ??= {
       expressionAttributeNames: {},
       expressionAttributeValues: {},
@@ -161,7 +168,13 @@ export class QueryBuilder<
    * @returns - The modified {@link ShardQueryMap | `ShardQueryMap`} instance.
    */
   addFilterCondition(indexToken: ITS, condition: FilterCondition<C>): this {
-    addFilterCondition(this, indexToken, condition);
+    // Narrow builder variance at helper boundary to avoid generic incompatibility.
+    // Helper only relies on indexParamsMap and entityClient logger.
+    addFilterCondition(
+      this as unknown as QueryBuilder<C>,
+      indexToken,
+      condition as never,
+    );
     return this;
   }
 }

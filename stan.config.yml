@@ -20,12 +20,6 @@ stan-core:
       - ../entity-tools/.stan/system/stan.todo.md
       - ../entity-tools/dist/index.d.ts
       - ../entity-tools/.stan/interop/entity-client-dynamodb/**
-    karmanivero.us:
-      - ../karmanivero.us/collections/_entity-manager/00-intro.md
-      - ../karmanivero.us/collections/_entity-manager/01-sql-vs-nosql.md
-      - ../karmanivero.us/collections/_entity-manager/02-evolving-a-nosql-db-schema.md
-      - ../karmanivero.us/collections/_entity-manager/03-demo.md
-      - ../karmanivero.us/collections/_entity-manager/04-configuration.md
 stan-cli:
   cliDefaults:
     run:
