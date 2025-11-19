@@ -45,3 +45,12 @@ const qb2 = createQueryBuilder({
   hashKeyToken: 'hashKey2' as never,
 });
 qb2.addRangeKeyCondition('anything', { property: 'whatever', operator: '=', value: 1 });
+
+// Invalid index token when CF is present should be rejected (excess property checks)
+// cf.indexes only includes 'created' and 'firstName'
+// @ts-expect-error invalid index token not present in cf.indexes
+qb.addRangeKeyCondition('missing', {
+  property: 'created',
+  operator: '=',
+  value: 1,
+});

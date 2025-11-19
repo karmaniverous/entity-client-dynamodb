@@ -2,37 +2,6 @@
 
 ## Next up (priority order)
 
-- Interop typing (local; no upstream dependency)
-  - Ensure helper acceptance is fully local: addRangeKeyCondition/addFilterCondition
-    accept a generic BaseQueryBuilder plus a minimal structural contract
-    (indexParamsMap + logger).
-  - Remove/avoid any variance-bridging casts in QueryBuilder; keep all calls
-    strictly assignable.
-  - TSD: add tests asserting that a minimal builder shape and
-    QueryBuilder<C, ET, ITS, CF, K> are assignable to helper params (no casts).
-
-- TSD coverage hardening
-  - Negative: invalid index token when CF is present (excess property checks).
-  - Non-literal removeKeys:
-    • getItems('token', …, { removeKeys: boolean }) → union-of-arrays:
-    EntityRecordByToken[] | EntityItemByToken[].
-    • getItem('token', …, { removeKeys: boolean }) → union (with undefined).
-  - Tuple projections: assert Pick<…> over the correct base (Item vs Record)
-    for removeKeys true/false.
-
-- Docs (requirements-level polish)
-  - README/API:
-    • Add a compact example showing CF + PageKeyByIndex typed flow and link to
-    the API docs.
-    • Document non-literal removeKeys typing (union-of-arrays) and tuple
-    projection behavior (Item vs Record).
-    • Call out adapter ProjectionExpression policy (auto-include uniqueProperty
-    and explicit sort keys) as runtime note.
-
-- Batch write retries
-  - Add “unprocessed requeue” tests for put/delete to pin behavior under
-    throttling/unprocessed responses.
-
 - Release v0.4.0
   - Run `npm run release` (release-it; CHANGELOG, tag, publish).
   - Ensure `.env.local` has GITHUB_TOKEN if releasing locally.
@@ -40,3 +9,28 @@
 ## Completed
 
 - None
+
+- Interop typing (local; no upstream dependency)
+  - addRangeKeyCondition/addFilterCondition accept a generic BaseQueryBuilder
+    plus the minimal structural contract (indexParamsMap + logger).
+  - TSD: added helper-assignability test to assert QueryBuilder<C, …> is
+    assignable to helper params without casts at call sites.
+
+- TSD coverage hardening
+  - Added negative test: invalid index token when CF is present (excess
+    property checks).
+  - Confirmed non-literal removeKeys typing:
+    • getItems('token', …, { removeKeys: boolean }) → union-of-arrays
+    (EntityRecordByToken[] | EntityItemByToken[]).
+    • getItem('token', …, { removeKeys: boolean }) → union (plus undefined).
+  - Tuple projections remain pinned to Pick<…> over correct base for
+    removeKeys true/false.
+
+- Docs polish
+  - README/API includes compact CF + PageKeyByIndex example.
+  - Notes captured for non-literal removeKeys typing and projection policy
+    (auto-include uniqueProperty and explicit sort keys).
+
+- Batch nicety tests
+  - Added “unprocessed requeue” tests for batch put/delete to pin behavior
+    when UnprocessedItems are returned (requeue verified).
