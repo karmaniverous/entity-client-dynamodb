@@ -271,4 +271,9 @@
   - Scoped @typescript-eslint/no-unused-expressions off only for **/*.test.ts
     (vitest tests), leaving the rule active for source files.
   - Updated knip.json to ignore test-d/** to keep knip clean for
-    compile-time-only tests.
+    compile-time-only tests.
+
+- TSD: pinned removeKeys literal typing for getItem/getItems (with and without
+  tuple projections) under test-d/entityclient-removekeys.test-d.ts.
+- README: added typed removeKeys examples and a CF note on per-index page-key
+  typing when CF is supplied.

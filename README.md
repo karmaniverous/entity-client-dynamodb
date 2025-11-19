@@ -132,6 +132,13 @@ Note:
 - Without a token, removeKeys is ignored (we do not guess the entity).
 - With a token and removeKeys: true, items are stripped to your domain shape.
 
+Typed behavior (removeKeys preview):
+
+```ts
+const r1 = await entityClient.getItems('user', keys, { removeKeys: true });  // items: EntityItemByToken<..., 'user'>[]
+const r2 = await entityClient.getItems('user', keys, ['created'] as const, { removeKeys: false }); // items: Pick<EntityRecordByToken<..., 'user'>, 'created'>[]
+```
+
 ---
 
 ## Querying (cross-shard, multi-index) with QueryBuilder
@@ -155,6 +162,9 @@ const qb2 = createQueryBuilder({
   hashKeyToken: 'hashKey2',
   cf: myConfigLiteral, // preserves keys with `as const`
 });
+
+// Note: When CF is provided, page keys are typed per index (PageKeyByIndex),
+// and ShardQueryFunction will accept a pageKey narrowed to that index token.
 
 // Add conditions
 qb.addRangeKeyCondition('created', {
