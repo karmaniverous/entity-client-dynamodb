@@ -1,7 +1,6 @@
 import {
   type BaseConfigMap,
   BaseQueryBuilder,
-  type EntityItemByToken,
   type EntityToken,
   type IndexRangeKeyOf,
   type PageKeyByIndex,
@@ -85,16 +84,16 @@ export class QueryBuilder<
    *
    * @returns - The modified {@link ShardQueryMap | `ShardQueryMap`} instance.
    */
-  addRangeKeyCondition(
-    indexToken: ITS,
+  addRangeKeyCondition<IT extends ITS>(
+    indexToken: IT,
     condition: RangeKeyCondition & {
       // CF-aware narrowing: when CF carries indexes and ITS is constrained to those keys,
       // property narrows to that index's rangeKey token; otherwise falls back to string.
       // Use an IfNever-style non-distributive conditional so that `never`
       // falls back to `string` when CF is absent.
-      property: [IndexRangeKeyOf<CF, ITS>] extends [never]
+      property: [IndexRangeKeyOf<CF, IT>] extends [never]
         ? string
-        : IndexRangeKeyOf<CF, ITS>;
+        : IndexRangeKeyOf<CF, IT>;
     },
   ): this {
     // Narrow builder variance at helper boundary to avoid generic incompatibility.
@@ -118,12 +117,16 @@ export class QueryBuilder<
     attributes: KAttr,
   ): QueryBuilder<C, ET, ITS, CF, KAttr> {
     // Ensure params map entry
+    if (!(indexToken in this.indexParamsMap)) {
+      this.indexParamsMap[indexToken] = {
+        expressionAttributeNames: {},
+        expressionAttributeValues: {},
+        filterConditions: [],
+      };
+    }
 
-    this.indexParamsMap[indexToken] ??= {
-      expressionAttributeNames: {},
-      expressionAttributeValues: {},
-      filterConditions: [],
-    };
+    // Merge and dedupe
+
     const current = this.indexParamsMap[indexToken].projectionAttributes ?? [];
     const next = Array.from(new Set<string>([...current, ...attributes]));
     this.indexParamsMap[indexToken].projectionAttributes = next;
