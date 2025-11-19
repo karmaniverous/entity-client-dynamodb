@@ -243,3 +243,13 @@
   - Exported Projected type from EntityClient and re-exported at package root;
     updated README to document projection policy and Projected helper.
   - Added replace-text rules in typedoc.json to fix smithy symbol links.
+
+- Helper typing (variance): relaxed addRangeKeyCondition/addFilterCondition
+  to accept a generic BaseQueryBuilder plus minimal structural contract
+  (indexParamsMap + logger). Removed variance-bridging casts at call sites in
+  QueryBuilder; no runtime behavior changes.
+
+- QueryBuilder ergonomics: added setScanIndexForward, resetProjection,
+  resetAllProjections, and setProjectionAll. Added unit tests covering scan
+  direction and projection lifecycle; extended getDocumentQueryArgs tests to
+  assert ScanIndexForward=false emission.

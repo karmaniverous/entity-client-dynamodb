@@ -1,8 +1,14 @@
-import type { BaseConfigMap } from '@karmaniverous/entity-manager';
+import type {
+  BaseConfigMap,
+  BaseEntityClient,
+  BaseQueryBuilder,
+  EntityToken,
+} from '@karmaniverous/entity-manager';
 
 import { addQueryConditionBeginsWith } from './addQueryConditionBeginsWith';
 import { addQueryConditionBetween } from './addQueryConditionBetween';
 import { addQueryConditionComparison } from './addQueryConditionComparison';
+import type { IndexParams } from './IndexParams';
 import { QueryBuilder } from './QueryBuilder';
 import type {
   ComposeCondition,
@@ -37,9 +43,19 @@ export type RangeKeyCondition =
  * @param indexToken - Index token in {@link QueryBuilder | `QueryBuilder`} `indexParamsMap`.
  * @param condition - {@link RangeKeyCondition | `RangeKeyCondition`} object.
  */
-export const addRangeKeyCondition = <C extends BaseConfigMap>(
-  builder: QueryBuilder<C>,
-  indexToken: string,
+export const addRangeKeyCondition = <
+  C extends BaseConfigMap,
+  Client extends BaseEntityClient<C>,
+  ET extends EntityToken<C>,
+  ITS extends string,
+  CF = unknown,
+  K = unknown,
+>(
+  builder: BaseQueryBuilder<C, Client, IndexParams, ET, ITS, CF, K> & {
+    indexParamsMap: Record<ITS, IndexParams>;
+    entityClient: { logger: Pick<Console, 'debug' | 'error'> };
+  },
+  indexToken: ITS,
   condition: RangeKeyCondition,
 ): void => {
   /**
@@ -52,22 +68,27 @@ export const addRangeKeyCondition = <C extends BaseConfigMap>(
    * @returns - Condition string or `undefined`.
    */
   const composeCondition: ComposeCondition<C, RangeKeyCondition> = (
-    builder,
-    indexToken,
-    condition,
+    b,
+    idx,
+    cond,
   ): string | undefined => {
-    switch (condition.operator) {
+    // Internal helpers accept QueryBuilder<C>; cast locally to satisfy their parameter types.
+    const qb = b as unknown as QueryBuilder<C>;
+    const token = idx as unknown as string;
+    const c = cond;
+
+    switch (c.operator) {
       case 'begins_with':
-        return addQueryConditionBeginsWith(builder, indexToken, condition);
+        return addQueryConditionBeginsWith(qb, token, c);
       case 'between':
-        return addQueryConditionBetween(builder, indexToken, condition);
+        return addQueryConditionBetween(qb, token, c);
       case '<':
       case '<=':
       case '=':
       case '>':
       case '>=':
       case '<>':
-        return addQueryConditionComparison(builder, indexToken, condition);
+        return addQueryConditionComparison(qb, token, c);
       default:
         throw new Error('invalid operator');
     }
@@ -86,7 +107,11 @@ export const addRangeKeyCondition = <C extends BaseConfigMap>(
       throw new Error('range key condition already exists');
 
     // Compose condition string.
-    const conditionString = composeCondition(builder, indexToken, condition);
+    const conditionString = composeCondition(
+      builder as unknown as QueryBuilder<C>,
+      indexToken as unknown as string,
+      condition,
+    );
 
     builder.entityClient.logger.debug(
       conditionString === undefined

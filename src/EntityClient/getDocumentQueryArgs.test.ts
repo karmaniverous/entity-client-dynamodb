@@ -69,6 +69,20 @@ describe('getDocumentQueryArgs', function () {
     });
   });
 
+  it('should carry ScanIndexForward=false when set', function () {
+    defaultArgs.indexParamsMap.index1.scanIndexForward = false;
+
+    const result = getDocumentQueryArgs(defaultArgs);
+
+    expect(result).to.deep.include({
+      IndexName: 'index1',
+      ScanIndexForward: false,
+      TableName: 'tableName',
+    });
+    // Verify hashKey token mapping preserved
+    expect(result.ExpressionAttributeNames?.['#hashKey2']).to.equal('hashKey2');
+  });
+
   it('should include ProjectionExpression when projection attributes are present', function () {
     // Add projections to index params
     defaultArgs.indexParamsMap.index1.projectionAttributes = ['foo', 'bar'];

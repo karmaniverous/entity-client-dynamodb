@@ -1,4 +1,9 @@
-import type { BaseConfigMap } from '@karmaniverous/entity-manager';
+import type {
+  BaseConfigMap,
+  BaseEntityClient,
+  BaseQueryBuilder,
+  EntityToken,
+} from '@karmaniverous/entity-manager';
 
 import { addQueryConditionBeginsWith } from './addQueryConditionBeginsWith';
 import { addQueryConditionBetween } from './addQueryConditionBetween';
@@ -8,6 +13,7 @@ import { addQueryConditionExists } from './addQueryConditionExists';
 import { addQueryConditionGroup } from './addQueryConditionGroup';
 import { addQueryConditionIn } from './addQueryConditionIn';
 import { addQueryConditionNot } from './addQueryConditionNot';
+import type { IndexParams } from './IndexParams';
 import { QueryBuilder } from './QueryBuilder';
 import type {
   ActuallyScalarAttributeValue,
@@ -60,9 +66,19 @@ export type FilterCondition<C extends BaseConfigMap> =
  * @param indexToken - Index token in {@link QueryBuilder | `QueryBuilder`} `indexParamsMap`.
  * @param condition - {@link FilterCondition | `FilterCondition`} object.
  */
-export const addFilterCondition = <C extends BaseConfigMap>(
-  builder: QueryBuilder<C>,
-  indexToken: string,
+export const addFilterCondition = <
+  C extends BaseConfigMap,
+  Client extends BaseEntityClient<C>,
+  ET extends EntityToken<C>,
+  ITS extends string,
+  CF = unknown,
+  K = unknown,
+>(
+  builder: BaseQueryBuilder<C, Client, IndexParams, ET, ITS, CF, K> & {
+    indexParamsMap: Record<ITS, IndexParams>;
+    entityClient: { logger: Pick<Console, 'debug' | 'error'> };
+  },
+  indexToken: ITS,
   condition: FilterCondition<C>,
 ): void => {
   /**
@@ -75,42 +91,46 @@ export const addFilterCondition = <C extends BaseConfigMap>(
    * @returns - Condition string or `undefined`.
    */
   const composeCondition: ComposeCondition<C, FilterCondition<C>> = (
-    builder,
-    indexToken,
-    condition,
+    b,
+    idx,
+    cond,
   ): string | undefined => {
+    // Note: internal helpers accept QueryBuilder<C>; cast locally to satisfy their parameter types.
+    const qb = b as unknown as QueryBuilder<C>;
+    const token = idx as unknown as string;
+    const conditionLocal = cond;
     switch (condition.operator) {
       case 'begins_with':
-        return addQueryConditionBeginsWith(builder, indexToken, condition);
+        return addQueryConditionBeginsWith(qb, token, conditionLocal);
       case 'between':
-        return addQueryConditionBetween(builder, indexToken, condition);
+        return addQueryConditionBetween(qb, token, conditionLocal);
       case '<':
       case '<=':
       case '=':
       case '>':
       case '>=':
       case '<>':
-        return addQueryConditionComparison(builder, indexToken, condition);
+        return addQueryConditionComparison(qb, token, conditionLocal);
       case 'contains':
-        return addQueryConditionContains(builder, indexToken, condition);
+        return addQueryConditionContains(qb, token, conditionLocal);
       case 'attribute_exists':
       case 'attribute_not_exists':
-        return addQueryConditionExists(builder, indexToken, condition);
+        return addQueryConditionExists(qb, token, conditionLocal);
       case 'in':
-        return addQueryConditionIn(builder, indexToken, condition);
+        return addQueryConditionIn(qb, token, conditionLocal);
       case 'and':
       case 'or':
         return addQueryConditionGroup(
-          builder,
-          indexToken,
-          condition,
+          qb,
+          token,
+          conditionLocal,
           composeCondition,
         );
       case 'not':
         return addQueryConditionNot(
-          builder,
-          indexToken,
-          condition,
+          qb,
+          token,
+          conditionLocal,
           composeCondition,
         );
       default:
@@ -127,7 +147,11 @@ export const addFilterCondition = <C extends BaseConfigMap>(
     };
 
     // Compose condition string.
-    const conditionString = composeCondition(builder, indexToken, condition);
+    const conditionString = composeCondition(
+      builder as unknown as QueryBuilder<C>,
+      indexToken as unknown as string,
+      condition,
+    );
 
     builder.entityClient.logger.debug(
       conditionString === undefined

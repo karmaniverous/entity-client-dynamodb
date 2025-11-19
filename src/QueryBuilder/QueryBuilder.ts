@@ -15,9 +15,12 @@ import {
 
 import { EntityClient } from '../EntityClient';
 import { getDocumentQueryArgs } from '../EntityClient/getDocumentQueryArgs';
-import { addFilterCondition, type FilterCondition } from './addFilterCondition';
 import {
-  addRangeKeyCondition,
+  addFilterCondition as addFilterConditionHelper,
+  type FilterCondition,
+} from './addFilterCondition';
+import {
+  addRangeKeyCondition as addRangeKeyConditionHelper,
   type RangeKeyCondition,
 } from './addRangeKeyCondition';
 import type { IndexParams } from './IndexParams';
