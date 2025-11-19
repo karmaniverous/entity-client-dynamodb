@@ -284,21 +284,24 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
   ): Promise<
     ReplaceKey<GetCommandOutput, 'Item', EntityRecordByToken<C, ET> | undefined>
   >;
-  // Literal-flag (removeKeys true)
-  async getItem<ET extends EntityToken<C>>(
+  // Token-aware (no attributes) — conditional return based on removeKeys
+  async getItem<
+    ET extends EntityToken<C>,
+    RK extends boolean | undefined = undefined,
+  >(
     entityToken: ET,
     key: EntityKey<C>,
-    options: GetItemOptions & { removeKeys: true },
+    options?: Omit<GetItemOptions, 'removeKeys'> & { removeKeys?: RK },
   ): Promise<
-    ReplaceKey<GetCommandOutput, 'Item', EntityItemByToken<C, ET> | undefined>
-  >;
-  // Literal-flag (removeKeys false)
-  async getItem<ET extends EntityToken<C>>(
-    entityToken: ET,
-    key: EntityKey<C>,
-    options: GetItemOptions & { removeKeys: false },
-  ): Promise<
-    ReplaceKey<GetCommandOutput, 'Item', EntityRecordByToken<C, ET> | undefined>
+    ReplaceKey<
+      GetCommandOutput,
+      'Item',
+      RK extends true
+        ? EntityItemByToken<C, ET> | undefined
+        : RK extends false
+          ? EntityRecordByToken<C, ET> | undefined
+          : EntityRecordByToken<C, ET> | EntityItemByToken<C, ET> | undefined
+    >
   >;
   // Projection tuple narrowing when attributes is a const tuple
   async getItem<ET extends EntityToken<C>, A extends readonly string[]>(
@@ -320,18 +323,6 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     entityToken: ET,
     key: EntityKey<C>,
     attributes: string[],
-    options?: GetItemOptions,
-  ): Promise<
-    ReplaceKey<
-      GetCommandOutput,
-      'Item',
-      EntityRecordByToken<C, ET> | EntityItemByToken<C, ET> | undefined
-    >
-  >;
-
-  async getItem<ET extends EntityToken<C>>(
-    entityToken: ET,
-    key: EntityKey<C>,
     options?: GetItemOptions,
   ): Promise<
     ReplaceKey<
@@ -524,37 +515,20 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     items: EntityRecordByToken<C, ET>[] | EntityItemByToken<C, ET>[];
     outputs: BatchGetCommandOutput[];
   }>;
-  // Literal-flag token-aware without attributes: removeKeys true
-  async getItems<ET extends EntityToken<C>>(
+  // Token-aware (no attributes) — conditional return based on removeKeys
+  async getItems<
+    ET extends EntityToken<C>,
+    RK extends boolean | undefined = undefined,
+  >(
     entityToken: ET,
     keys: EntityKey<C>[],
-    options: GetItemsOptions & { removeKeys: true },
+    options?: Omit<GetItemsOptions, 'removeKeys'> & { removeKeys?: RK },
   ): Promise<{
-    items: EntityItemByToken<C, ET>[];
-    outputs: BatchGetCommandOutput[];
-  }>;
-  // Literal-flag token-aware without attributes: removeKeys false
-  async getItems<ET extends EntityToken<C>>(
-    entityToken: ET,
-    keys: EntityKey<C>[],
-    options: GetItemsOptions & { removeKeys: false },
-  ): Promise<{
-    items: EntityRecordByToken<C, ET>[];
-    outputs: BatchGetCommandOutput[];
-  }>;
-  /**
-   * Gets multiple items from a DynamoDB table in batches (token-aware).
-   *
-   * @param entityToken - Entity token to narrow the item type.
-   * @param keys - Array of EntityKey.
-   * @param options - BatchGetOptions.
-   */
-  async getItems<ET extends EntityToken<C>>(
-    entityToken: ET,
-    keys: EntityKey<C>[],
-    options?: GetItemsOptions,
-  ): Promise<{
-    items: EntityRecordByToken<C, ET>[] | EntityItemByToken<C, ET>[];
+    items: RK extends true
+      ? EntityItemByToken<C, ET>[]
+      : RK extends false
+        ? EntityRecordByToken<C, ET>[]
+        : EntityRecordByToken<C, ET>[] | EntityItemByToken<C, ET>[];
     outputs: BatchGetCommandOutput[];
   }>;
   /**

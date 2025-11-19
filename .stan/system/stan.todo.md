@@ -284,4 +284,10 @@
 
 - Fix: Reordered token-aware getItems overloads so the literal removeKeys
   signatures appear before the broad union signature, restoring intended
-  narrowing for removeKeys: true/false in tsd tests.
+  narrowing for removeKeys: true/false in tsd tests.
+
+- Fix (types): Replaced token-aware, no-attributes union overloads for
+  getItem/getItems with single conditional-generic signatures keyed to
+  options.removeKeys. This removes reliance on overload order in generated
+  .d.ts and guarantees narrowing for literal true/false while preserving union
+  when removeKeys is non-literal.
