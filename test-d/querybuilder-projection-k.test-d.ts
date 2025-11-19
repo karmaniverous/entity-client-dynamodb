@@ -9,7 +9,7 @@ import { expectType } from 'tsd';
 // Minimal, types-only builder for MyConfigMap/'user'.
 declare const entityClient: EntityClient<MyConfigMap>;
 const qb0 = createQueryBuilder({
-  entityClient: entityClient as never,
+  entityClient,
   entityToken: 'user' as const,
   hashKeyToken: 'hashKey2' as const,
 });
@@ -22,24 +22,24 @@ type QueryItemsOf<B> = B extends {
   : never;
 
 // Narrow K via setProjection (single index)
-const qb1 = qb0.setProjection('created' as never, ['created'] as const);
+const qb1 = qb0.setProjection('created', ['created'] as const);
 type Items1 = QueryItemsOf<typeof qb1>;
 expectType<Array<Pick<EntityItemByToken<MyConfigMap, 'user'>, 'created'>>>(
   null as unknown as Items1,
 );
 
 // Widen K back to unknown via resetProjection (single index)
-const qb2 = qb1.resetProjection('created' as never);
+const qb2 = qb1.resetProjection('created');
 type Items2 = QueryItemsOf<typeof qb2>;
 expectType<Array<EntityItemByToken<MyConfigMap, 'user'>>>(
   null as unknown as Items2,
 );
 
 // Uniform projection across indices narrows K to the provided tuple
-const qb3 = qb0.setProjectionAll(['created'] as never[], [
-  'created',
-  'updated',
-] as const);
+const qb3 = qb0.setProjectionAll(
+  ['created'] as const,
+  ['created', 'updated'] as const,
+);
 type Items3 = QueryItemsOf<typeof qb3>;
 expectType<
   Array<Pick<EntityItemByToken<MyConfigMap, 'user'>, 'created' | 'updated'>>
