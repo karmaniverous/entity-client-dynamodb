@@ -69,6 +69,27 @@ describe('getDocumentQueryArgs', function () {
     });
   });
 
+  it('should include ProjectionExpression when projection attributes are present', function () {
+    // Add projections to index params
+    defaultArgs.indexParamsMap.index1.projectionAttributes = ['foo', 'bar'];
+
+    const result = getDocumentQueryArgs(defaultArgs);
+
+    expect(result).to.deep.include({
+      ProjectionExpression: '#foo,#bar',
+    });
+
+    expect(result.ExpressionAttributeNames).to.deep.include({
+      '#foo': 'foo',
+      '#bar': 'bar',
+    });
+
+    // Still preserves required hashKey token mapping
+    expect(result.ExpressionAttributeNames).to.deep.include({
+      '#hashKey2': 'hashKey2',
+    });
+  });
+
   it('should handle empty properties', function () {
     defaultArgs.indexParamsMap.index1.expressionAttributeNames = {};
     defaultArgs.indexParamsMap.index1.expressionAttributeValues = {};

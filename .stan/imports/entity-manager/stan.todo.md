@@ -239,4 +239,13 @@
 - Amended: Projected<T, K> object guard (TS2344)
   - Wrapped Exactify usage in `T extends object ? … : T` so the type parameter
     no longer violates the `object` constraint in tooling (tsc/rollup/typedoc).
-  - No runtime changes; typecheck/build/docs should pass cleanly.
+  - No runtime changes; typecheck/build/docs should pass cleanly.
+
+- Docs: README projection K and helper references
+  - Added a new README section “Projection‑aware typing (K)” with a complete example.
+  - Expanded DX highlights and listed projection helper types under “Types you’ll reach for”.
+  - Reiterated dedupe/sort invariants (auto‑include `uniqueProperty` and sort keys at adapter when projecting).
+
+- Interop: response note for entity‑client‑dynamodb
+  - Created .stan/interop/entity-client-dynamodb/projection-k-and-rangekey-narrowing-response.md
+  - Summarized shipped changes (K channel, CF/CC typing, BaseQueryBuilder K threading) and guidance for CF‑aware range‑key property narrowing.

@@ -2,14 +2,7 @@
 
 ## Next up
 
-- Design a safe CF-aware property narrowing path for range key property (no
-  overload/impl mismatch)
-  - Option A (preferred): introduce a typed helper (e.g., rangeKeyProp) that
-    encodes IndexRangeKeyOf<CF, ITS> at the call site and returns a narrowed
-    property string; implementation remains a single signature.
-  - Option B: explore a d.ts-only augmentation that exposes a CF-aware
-    overload while leaving the .ts implementation signature unchanged;
-    validate across tsc/rollup/typedoc to ensure no TS2394.
+- (empty)
 
 - Pin new DX typing with tsd tests
   - EntityClient.getItem/getItems:
@@ -175,3 +168,23 @@
     for `property`, so when CF is absent the type falls back to `string`.
   - Preserves CF-aware narrowing when CF is provided; restores typecheck/build/
     docs by avoiding `never` at call sites.
+
+- QueryBuilder: thread K (projection) and add setProjection
+  - Added K generic to QueryBuilder extending BaseQueryBuilder<…, CF, K>.
+  - Implemented setProjection(indexToken, attributes) to set per-index
+    projections; method narrows K for callers passing const tuples.
+  - Overrode query() to auto-include uniqueProperty and any explicit sort keys
+    when projections are present, preserving dedupe/sort invariants.
+  - getDocumentQueryArgs now emits ProjectionExpression and augments
+    ExpressionAttributeNames when projections are set.
+
+- Tests: projection and CF-aware narrowing
+  - Added tsd test (test/types/querybuilder-range-key.test-d.ts) pinning
+    CF-aware range-key property narrowing and fallback to string without CF.
+  - Added unit test for ProjectionExpression emission in
+    getDocumentQueryArgs.test.ts.
+
+- Docs: export Projected and fix TypeDoc warnings
+  - Exported Projected type from EntityClient and re-exported at package root;
+    updated README to document projection policy and Projected helper.
+  - Added replace-text rules in typedoc.json to fix smithy symbol links.

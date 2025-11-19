@@ -5,6 +5,8 @@ import {
   type EntityToken,
   type IndexRangeKeyOf,
   type PageKeyByIndex,
+  type QueryBuilderQueryOptions,
+  type QueryResult,
   type ShardQueryFunction,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   type ShardQueryMap, // imported to support API docs
@@ -30,8 +32,11 @@ export class QueryBuilder<
   ET extends EntityToken<C> = EntityToken<C>,
   ITS extends string = string,
   CF = unknown,
-> extends BaseQueryBuilder<C, EntityClient<C>, IndexParams, ET, ITS, CF> {
-  getShardQueryFunction(indexToken: ITS): ShardQueryFunction<C, ET, ITS, CF> {
+  K = unknown,
+> extends BaseQueryBuilder<C, EntityClient<C>, IndexParams, ET, ITS, CF, K> {
+  getShardQueryFunction(
+    indexToken: ITS,
+  ): ShardQueryFunction<C, ET, ITS, CF, K> {
     const fn = async (
       hashKey: string,
       pageKey?: PageKeyByIndex<C, ET, ITS, CF>,
@@ -53,7 +58,7 @@ export class QueryBuilder<
         }),
       );
 
-      const result: ShardQueryResult<C, ET, ITS, CF> = {
+      const result: ShardQueryResult<C, ET, ITS, CF, K> = {
         count,
         items: items as EntityItemByToken<C, ET>[],
       };
@@ -66,7 +71,7 @@ export class QueryBuilder<
       return result;
     };
 
-    return fn as unknown as ShardQueryFunction<C, ET, ITS, CF>;
+    return fn as unknown as ShardQueryFunction<C, ET, ITS, CF, K>;
   }
 
   /**
@@ -92,6 +97,59 @@ export class QueryBuilder<
   ): this {
     addRangeKeyCondition(this, indexToken, condition);
     return this;
+  }
+
+  /**
+   * Set a projection (attributes) for an index token.
+   * - Type-only: narrows K when called with a const tuple.
+   * - Runtime: populates ProjectionExpression for the index.
+   *
+   * Note: At query time, uniqueProperty and any explicit sort keys will be
+   * auto-included to preserve dedupe/sort invariants.
+   */
+  setProjection<KAttr extends readonly string[]>(
+    indexToken: ITS,
+    attributes: KAttr,
+  ): QueryBuilder<C, ET, ITS, CF, KAttr> {
+    // Ensure params map entry
+    this.indexParamsMap[indexToken] ??= {
+      expressionAttributeNames: {},
+      expressionAttributeValues: {},
+      filterConditions: [],
+    };
+    const current = this.indexParamsMap[indexToken].projectionAttributes ?? [];
+    const next = Array.from(new Set<string>([...current, ...attributes]));
+    this.indexParamsMap[indexToken].projectionAttributes = next;
+    // Type-channel cast to carry K
+    return this as unknown as QueryBuilder<C, ET, ITS, CF, KAttr>;
+  }
+
+  /**
+   * Override query to auto-include uniqueProperty and any explicit sort keys
+   * when projections are present (preserves dedupe/sort invariants).
+   */
+  async query(
+    options: QueryBuilderQueryOptions<C, CF>,
+  ): Promise<QueryResult<C, ET, ITS, K>> {
+    const uniqueProperty =
+      this.entityClient.entityManager.config.entities[this.entityToken]
+        ?.uniqueProperty;
+    const sortKeys = (options.sortOrder ?? []).map((s) => s.property as string);
+    for (const indexToken of Object.keys(this.indexParamsMap) as ITS[]) {
+      const params = this.indexParamsMap[indexToken];
+      const attrs = params.projectionAttributes;
+      if (attrs?.length) {
+        const extras = [uniqueProperty, ...sortKeys].filter(
+          (x): x is string => !!x,
+        );
+        params.projectionAttributes = Array.from(
+          new Set<string>([...attrs, ...extras]),
+        );
+      }
+    }
+    return super.query(options) as unknown as Promise<
+      QueryResult<C, ET, ITS, K>
+    >;
   }
 
   /**

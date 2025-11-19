@@ -61,7 +61,7 @@ export function createQueryBuilder<
   if ('cf' in options) {
     const { cf, ...rest } = options;
     void cf;
-    return new QueryBuilder<C, ET, IndexTokensOf<CF>, CF>({ ...rest });
+    return new QueryBuilder<C, ET, IndexTokensOf<CF>, CF, unknown>({ ...rest });
   }
-  return new QueryBuilder<C, ET, string, unknown>(options);
+  return new QueryBuilder<C, ET, string, unknown, unknown>(options);
 }

@@ -47,7 +47,7 @@ import { transactPutItems as transactPutItemsFn } from './methods/transactPutIte
 import type { WaiterConfig } from './WaiterConfig';
 
 // Local type helper for tuple-based projection narrowing
-type Projected<T, A extends readonly string[]> = Pick<
+export type Projected<T, A extends readonly string[]> = Pick<
   T,
   Extract<A[number], keyof T>
 >;

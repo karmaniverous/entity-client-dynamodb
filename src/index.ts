@@ -8,3 +8,5 @@ export type {
   EntityRecordByToken,
   EntityToken,
 } from '@karmaniverous/entity-manager';
+// Re-export Projected type used in token-aware projection overloads
+export type { Projected } from './EntityClient/EntityClient';

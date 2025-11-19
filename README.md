@@ -178,6 +178,27 @@ To fetch the next page, pass the returned `pageKeyMap` back into `EntityManager.
 
 ---
 
+## Projections with QueryBuilder (adapter policy)
+
+- You can set projections per index on the builder. At runtime the adapter emits a DynamoDB ProjectionExpression and:
+  - auto-includes the entity’s uniqueProperty (used for dedupe),
+  - auto-includes any explicit sort keys provided via QueryOptions.sortOrder.
+- This preserves dedupe/sort invariants when callers ask for a subset.
+
+Example:
+
+```ts
+const qb = createQueryBuilder({
+  entityClient,
+  entityToken: 'user',
+  hashKeyToken: 'hashKey2',
+});
+
+qb.setProjection('created', ['created'] as const);
+```
+
+---
+
 ## Batch operations
 
 ```ts
@@ -258,6 +279,12 @@ import type {
   EntityItemByToken,
   EntityRecordByToken,
 } from '@karmaniverous/entity-client-dynamodb';
+```
+
+When using tuple-based projection narrowing you can also import the Projected<T, A> helper:
+
+```ts
+import type { Projected } from '@karmaniverous/entity-client-dynamodb';
 ```
 
 Note: Runtime re-exports (e.g., EntityManager) are intentionally not provided — import them from their source packages to keep module graphs clear.

@@ -13,6 +13,8 @@ export interface IndexParams {
     NativeScalarAttributeValue | undefined
   >;
   filterConditions: (string | undefined)[];
+  /** Optional list of attributes to project for this index. */
+  projectionAttributes?: string[];
   rangeKeyCondition?: string;
   scanIndexForward?: boolean;
 }

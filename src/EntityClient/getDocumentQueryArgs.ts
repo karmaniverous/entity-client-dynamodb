@@ -43,15 +43,28 @@ export const getDocumentQueryArgs = <
     filterConditions,
     rangeKeyCondition,
     scanIndexForward,
+    projectionAttributes,
   } = indexParamsMap[indexToken];
 
   const siftedFilterConditions = sift(filterConditions);
+
+  // Build projection expression components (optional).
+  const projectionNameMap: Record<string, string> = {};
+  const projectionExpression = projectionAttributes?.length
+    ? Array.from(new Set(projectionAttributes))
+        .map((a) => {
+          projectionNameMap[`#${a}`] = a;
+          return `#${a}`;
+        })
+        .join(',')
+    : undefined;
 
   return {
     ...(pageKey === undefined ? {} : { ExclusiveStartKey: pageKey }),
     ExpressionAttributeNames: {
       [`#${hashKeyToken}`]: hashKeyToken,
       ...shake(expressionAttributeNames),
+      ...(projectionExpression ? projectionNameMap : {}),
     },
     ExpressionAttributeValues: {
       ':hashKey': hashKey,
@@ -69,6 +82,9 @@ export const getDocumentQueryArgs = <
       `#${hashKeyToken} = :hashKey`,
       ...(rangeKeyCondition ? [rangeKeyCondition] : []),
     ].join(' AND '),
+    ...(projectionExpression
+      ? { ProjectionExpression: projectionExpression }
+      : {}),
     ...(pageSize ? { Limit: pageSize } : {}),
     ...(scanIndexForward === undefined
       ? {}

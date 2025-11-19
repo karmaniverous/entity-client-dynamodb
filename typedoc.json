@@ -99,6 +99,16 @@
         "pattern": "<!-- TYPEDOC_EXCLUDE -->.*?<!-- /TYPEDOC_EXCLUDE -->",
         "flags": "gis",
         "replace": ""
+      },
+      {
+        "pattern": "@smithy\\/types#ChecksumConstructor",
+        "flags": "g",
+        "replace": "@smithy/types!ChecksumConstructor"
+      },
+      {
+        "pattern": "@smithy\\/smithy-client#DefaultsMode",
+        "flags": "g",
+        "replace": "@smithy/smithy-client!DefaultsMode"
       }
     ]
   },
