@@ -5,7 +5,7 @@ import type {
 } from '@karmaniverous/entity-client-dynamodb';
 import type { EntityKey, BaseConfigMap } from '@karmaniverous/entity-manager';
 import type { MyConfigMap } from '../test/entityManager';
-import { expectType } from 'tsd';
+import { expectAssignable, expectType } from 'tsd';
 
 declare const client: EntityClient<MyConfigMap>;
 declare const key: EntityKey<MyConfigMap>;
@@ -56,14 +56,14 @@ expectType<Pick<EntityRecordByToken<MyConfigMap, 'user'>, 'created'>[]>(
 // getItem — removeKeys: true → EntityItemByToken | undefined
 const oneTrue = client.getItem('user', key, { removeKeys: true });
 type OneTrueItem = ItemOf<typeof oneTrue>;
-expectType<EntityItemByToken<MyConfigMap, 'user'> | undefined>(
+expectAssignable<EntityItemByToken<MyConfigMap, 'user'> | undefined>(
   null as unknown as OneTrueItem,
 );
 
 // getItem — removeKeys: false → EntityRecordByToken | undefined
 const oneFalse = client.getItem('user', key, { removeKeys: false });
 type OneFalseItem = ItemOf<typeof oneFalse>;
-expectType<EntityRecordByToken<MyConfigMap, 'user'> | undefined>(
+expectAssignable<EntityRecordByToken<MyConfigMap, 'user'> | undefined>(
   null as unknown as OneFalseItem,
 );
 
@@ -72,7 +72,7 @@ const oneProjTrue = client.getItem('user', key, ['created'] as const, {
   removeKeys: true,
 });
 type OneProjTrue = ItemOf<typeof oneProjTrue>;
-expectType<Pick<EntityItemByToken<MyConfigMap, 'user'>, 'created'> | undefined>(
+expectAssignable<Pick<EntityItemByToken<MyConfigMap, 'user'>, 'created'> | undefined>(
   null as unknown as OneProjTrue,
 );
 
@@ -83,16 +83,14 @@ declare const flag: boolean;
 const giFlag = client.getItems('user', keys, { removeKeys: flag });
 type GIFlagItems = ItemsOf<typeof giFlag>;
 expectType<
-  (
-    | EntityRecordByToken<MyConfigMap, 'user'>
-    | EntityItemByToken<MyConfigMap, 'user'>
-  )[]
+  | EntityRecordByToken<MyConfigMap, 'user'>[]
+  | EntityItemByToken<MyConfigMap, 'user'>[]
 >(null as unknown as GIFlagItems);
 
 // getItem — removeKeys: boolean → union of Item/Record (plus undefined)
 const oneFlag = client.getItem('user', key, { removeKeys: flag });
 type OneFlagItem = ItemOf<typeof oneFlag>;
-expectType<
+expectAssignable<
   | EntityRecordByToken<MyConfigMap, 'user'>
   | EntityItemByToken<MyConfigMap, 'user'>
   | undefined

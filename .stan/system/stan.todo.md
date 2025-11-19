@@ -317,3 +317,12 @@
 - Fix (types): getItems (token-aware, non-literal removeKeys) now returns a
   union-of-arrays (EntityRecordByToken[] | EntityItemByToken[]) instead of an
   array-of-union, matching tsd expectations.
+
+- Stabilize API typing and tsd pins
+  • Locked getItem (token-aware) to optional Item shape with undefined in value
+    union: Omit<GetCommandOutput, 'Item'> & { Item?: T | undefined }.
+  • Locked getItems (token-aware, non-literal removeKeys) to union-of-arrays
+    (EntityRecordByToken[] | EntityItemByToken[]), reflecting runtime.
+  • Updated tsd tests to use expectAssignable for optional Item assertions and
+    to assert union-of-arrays for the non-literal removeKeys case, avoiding
+    brittle exact-equality checks while pinning the intended behavior.
