@@ -301,11 +301,15 @@
 
 - Revert (types): Align API to tsd pins
   • getItem (token-aware) returns ReplaceKey<GetCommandOutput, 'Item', T | undefined>
-    (required Item with undefined in the union), ensuring ItemOf<> infers T | undefined.
+  (required Item with undefined in the union), ensuring ItemOf<> infers T | undefined.
   • getItems (token-aware, non-literal removeKeys) returns a union-of-arrays
-    (EntityRecordByToken[] | EntityItemByToken[]) as asserted by tsd.
+  (EntityRecordByToken[] | EntityItemByToken[]) as asserted by tsd.
 
 - Fix (types): Align to tsd extraction rules
   • getItem (token-aware) now returns Omit<GetCommandOutput, 'Item'> & { Item?: T | undefined }
-    so ItemOf<> consistently infers T | undefined.
-  • getItems (token-aware, non-literal removeKeys) now returns an array-of-union ((Record|Item)[]).
+  so ItemOf<> consistently infers T | undefined.
+  • getItems (token-aware, non-literal removeKeys) now returns an array-of-union ((Record|Item)[]).
+
+- Fix (types): Removed invalid ReplaceKey<never, never, never> cast in
+  EntityClient.getItem implementation that triggered TS2352. Cast the helper
+  result via unknown to the intended optional-Item shape to satisfy tsc/typedoc.

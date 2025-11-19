@@ -444,7 +444,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
       keyOrOptions as never,
       attributesOrOptions as never,
       options as never,
-    )) as ReplaceKey<never, never, never> as Omit<GetCommandOutput, 'Item'> & {
+    )) as unknown as Omit<GetCommandOutput, 'Item'> & {
       Item?: Record<string, unknown> | undefined;
     };
 
