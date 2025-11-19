@@ -273,7 +273,9 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     attributes: readonly string[],
     options: GetItemOptions & { removeKeys: true },
   ): Promise<
-    ReplaceKey<GetCommandOutput, 'Item', EntityItemByToken<C, ET> | undefined>
+    Omit<GetCommandOutput, 'Item'> & {
+      Item?: EntityItemByToken<C, ET> | undefined;
+    }
   >;
   // Literal-flag + attributes tuple (removeKeys false)
   async getItem<ET extends EntityToken<C>>(
@@ -282,7 +284,9 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     attributes: readonly string[],
     options: GetItemOptions & { removeKeys: false },
   ): Promise<
-    ReplaceKey<GetCommandOutput, 'Item', EntityRecordByToken<C, ET> | undefined>
+    Omit<GetCommandOutput, 'Item'> & {
+      Item?: EntityRecordByToken<C, ET> | undefined;
+    }
   >;
   // Token-aware (no attributes) — conditional return based on removeKeys
   async getItem<
@@ -293,15 +297,15 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     key: EntityKey<C>,
     options?: Omit<GetItemOptions, 'removeKeys'> & { removeKeys?: RK },
   ): Promise<
-    ReplaceKey<
-      GetCommandOutput,
-      'Item',
-      RK extends true
-        ? EntityItemByToken<C, ET> | undefined
-        : RK extends false
-          ? EntityRecordByToken<C, ET> | undefined
-          : EntityRecordByToken<C, ET> | EntityItemByToken<C, ET> | undefined
-    >
+    Omit<GetCommandOutput, 'Item'> & {
+      Item?:
+        | (RK extends true
+            ? EntityItemByToken<C, ET> | undefined
+            : RK extends false
+              ? EntityRecordByToken<C, ET> | undefined
+              : EntityRecordByToken<C, ET> | EntityItemByToken<C, ET>)
+        | undefined;
+    }
   >;
   // Projection tuple narrowing when attributes is a const tuple
   async getItem<ET extends EntityToken<C>, A extends readonly string[]>(
@@ -310,13 +314,12 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     attributes: A,
     options?: GetItemOptions,
   ): Promise<
-    ReplaceKey<
-      GetCommandOutput,
-      'Item',
-      | Projected<EntityRecordByToken<C, ET>, A>
-      | Projected<EntityItemByToken<C, ET>, A>
-      | undefined
-    >
+    Omit<GetCommandOutput, 'Item'> & {
+      Item?:
+        | Projected<EntityRecordByToken<C, ET>, A>
+        | Projected<EntityItemByToken<C, ET>, A>
+        | undefined;
+    }
   >;
 
   async getItem<ET extends EntityToken<C>>(
@@ -325,22 +328,18 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     attributes: string[],
     options?: GetItemOptions,
   ): Promise<
-    ReplaceKey<
-      GetCommandOutput,
-      'Item',
-      EntityRecordByToken<C, ET> | EntityItemByToken<C, ET> | undefined
-    >
+    Omit<GetCommandOutput, 'Item'> & {
+      Item?: EntityRecordByToken<C, ET> | EntityItemByToken<C, ET> | undefined;
+    }
   >;
 
   async getItem<ET extends EntityToken<C>>(
     entityToken: ET,
     options: MakeOptional<GetCommandInput, 'TableName'>,
   ): Promise<
-    ReplaceKey<
-      GetCommandOutput,
-      'Item',
-      EntityRecordByToken<C, ET> | EntityItemByToken<C, ET> | undefined
-    >
+    Omit<GetCommandOutput, 'Item'> & {
+      Item?: EntityRecordByToken<C, ET> | EntityItemByToken<C, ET> | undefined;
+    }
   >;
 
   /**
@@ -445,11 +444,9 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
       keyOrOptions as never,
       attributesOrOptions as never,
       options as never,
-    )) as ReplaceKey<
-      GetCommandOutput,
-      'Item',
-      Record<string, unknown> | undefined
-    >;
+    )) as ReplaceKey<never, never, never> as Omit<GetCommandOutput, 'Item'> & {
+      Item?: Record<string, unknown> | undefined;
+    };
 
     if (
       entityToken &&
@@ -528,7 +525,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
       ? EntityItemByToken<C, ET>[]
       : RK extends false
         ? EntityRecordByToken<C, ET>[]
-        : EntityRecordByToken<C, ET>[] | EntityItemByToken<C, ET>[];
+        : (EntityRecordByToken<C, ET> | EntityItemByToken<C, ET>)[];
     outputs: BatchGetCommandOutput[];
   }>;
   /**
