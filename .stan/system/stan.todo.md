@@ -297,4 +297,10 @@
 
 - Fix (types): getItem return type now exposes an optional Item property with
   undefined in the value union (Item?: … | undefined) rather than a required
-  Item with a union including undefined. This aligns tsd’s ItemOf<> extraction.
+  Item with a union including undefined. This aligns tsd’s ItemOf<> extraction.
+
+- Revert (types): Align API to tsd pins
+  • getItem (token-aware) returns ReplaceKey<GetCommandOutput, 'Item', T | undefined>
+    (required Item with undefined in the union), ensuring ItemOf<> infers T | undefined.
+  • getItems (token-aware, non-literal removeKeys) returns a union-of-arrays
+    (EntityRecordByToken[] | EntityItemByToken[]) as asserted by tsd.
