@@ -31,8 +31,8 @@ qb.addRangeKeyCondition('firstName', {
   value: 'a',
 });
 
-// @ts-expect-error wrong property for created index
 qb.addRangeKeyCondition('created', {
+  // @ts-expect-error wrong property for created index
   property: 'firstNameRK',
   operator: '=',
   value: 'x',
