@@ -101,12 +101,48 @@ export class QueryBuilder<
         : IndexRangeKeyOf<CF, IT>;
     },
   ): this {
-    // Narrow builder variance at helper boundary to avoid generic incompatibility.
-    // Helper only relies on indexParamsMap and entityClient logger.
-    addRangeKeyCondition(this as unknown as QueryBuilder<C>, indexToken, {
-      ...(condition as unknown as Record<string, unknown>),
-    } as never);
+    // Delegate to helper (variance-friendly signature).
+    addRangeKeyConditionHelper(
+      this,
+      indexToken,
+      condition as unknown as RangeKeyCondition,
+    );
     return this;
+  }
+
+  /**
+   * Set scan direction for an index.
+   */
+  setScanIndexForward(indexToken: ITS, value: boolean): this {
+    if (!(indexToken in this.indexParamsMap)) {
+      this.indexParamsMap[indexToken] = {
+        expressionAttributeNames: {},
+        expressionAttributeValues: {},
+        filterConditions: [],
+      };
+    }
+    this.indexParamsMap[indexToken].scanIndexForward = value;
+    return this;
+  }
+
+  /**
+   * Reset projection attributes for a single index. Widens K back to unknown.
+   */
+  resetProjection(indexToken: ITS): QueryBuilder<C, ET, ITS, CF> {
+    if (this.indexParamsMap[indexToken]) {
+      delete this.indexParamsMap[indexToken].projectionAttributes;
+    }
+    return this as unknown as QueryBuilder<C, ET, ITS, CF>;
+  }
+
+  /**
+   * Reset projections for all indices. Widens K back to unknown.
+   */
+  resetAllProjections(): QueryBuilder<C, ET, ITS, CF> {
+    for (const key of Object.keys(this.indexParamsMap) as ITS[]) {
+      delete this.indexParamsMap[key]?.projectionAttributes;
+    }
+    return this as unknown as QueryBuilder<C, ET, ITS, CF>;
   }
 
   /**
@@ -136,6 +172,30 @@ export class QueryBuilder<
     const next = Array.from(new Set<string>([...current, ...attributes]));
     this.indexParamsMap[indexToken].projectionAttributes = next;
     // Type-channel cast to carry K
+    return this as unknown as QueryBuilder<C, ET, ITS, CF, KAttr>;
+  }
+
+  /**
+   * Apply the same projection across the supplied indices.
+   * Narrows K to KAttr.
+   */
+  setProjectionAll<KAttr extends readonly string[]>(
+    indices: ITS[] | readonly ITS[],
+    attributes: KAttr,
+  ): QueryBuilder<C, ET, ITS, CF, KAttr> {
+    for (const indexToken of indices as ITS[]) {
+      if (!(indexToken in this.indexParamsMap)) {
+        this.indexParamsMap[indexToken] = {
+          expressionAttributeNames: {},
+          expressionAttributeValues: {},
+          filterConditions: [],
+        };
+      }
+      const current =
+        this.indexParamsMap[indexToken].projectionAttributes ?? [];
+      const next = Array.from(new Set<string>([...current, ...attributes]));
+      this.indexParamsMap[indexToken].projectionAttributes = next;
+    }
     return this as unknown as QueryBuilder<C, ET, ITS, CF, KAttr>;
   }
 
@@ -181,13 +241,8 @@ export class QueryBuilder<
    * @returns - The modified {@link ShardQueryMap | `ShardQueryMap`} instance.
    */
   addFilterCondition(indexToken: ITS, condition: FilterCondition<C>): this {
-    // Narrow builder variance at helper boundary to avoid generic incompatibility.
-    // Helper only relies on indexParamsMap and entityClient logger.
-    addFilterCondition(
-      this as unknown as QueryBuilder<C>,
-      indexToken,
-      condition as never,
-    );
+    // Delegate to helper (variance-friendly signature).
+    addFilterConditionHelper(this, indexToken, condition);
     return this;
   }
 }

@@ -96,6 +96,7 @@ export const addRangeKeyCondition = <
 
   try {
     // Default index map value.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     builder.indexParamsMap[indexToken] ??= {
       expressionAttributeNames: {},
       expressionAttributeValues: {},

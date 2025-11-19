@@ -252,4 +252,7 @@
 - QueryBuilder ergonomics: added setScanIndexForward, resetProjection,
   resetAllProjections, and setProjectionAll. Added unit tests covering scan
   direction and projection lifecycle; extended getDocumentQueryArgs tests to
-  assert ScanIndexForward=false emission.
+  assert ScanIndexForward=false emission.
+
+- Amendment: Fixed discriminant narrowing in addFilterCondition, switched to
+  helper aliases in QueryBuilder, and completed ergonomics method surface.

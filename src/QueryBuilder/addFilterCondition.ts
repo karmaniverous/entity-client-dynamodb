@@ -14,7 +14,6 @@ import { addQueryConditionGroup } from './addQueryConditionGroup';
 import { addQueryConditionIn } from './addQueryConditionIn';
 import { addQueryConditionNot } from './addQueryConditionNot';
 import type { IndexParams } from './IndexParams';
-import { QueryBuilder } from './QueryBuilder';
 import type {
   ActuallyScalarAttributeValue,
   ComposeCondition,
@@ -62,9 +61,9 @@ export type FilterCondition<C extends BaseConfigMap> =
 /**
  * Add filter condition to builder.
  *
- * @param builder - {@link QueryBuilder | `QueryBuilder`} instance.
- * @param indexToken - Index token in {@link QueryBuilder | `QueryBuilder`} `indexParamsMap`.
- * @param condition - {@link FilterCondition | `FilterCondition`} object.
+ * @param builder - BaseQueryBuilder-like instance (variance-friendly).
+ * @param indexToken - Index token in `indexParamsMap`.
+ * @param condition - `FilterCondition` object.
  */
 export const addFilterCondition = <
   C extends BaseConfigMap,
@@ -84,9 +83,9 @@ export const addFilterCondition = <
   /**
    * Recursively compose condition string and add expression attribute names & values to builder.
    *
-   * @param builder - {@link QueryBuilder | `QueryBuilder`} instance.
-   * @param indexToken - Index token in {@link QueryBuilder | `QueryBuilder`} `indexParamsMap`.
-   * @param condition - {@link FilterCondition | `FilterCondition`} object.
+   * @param b - Builder instance.
+   * @param idx - Index token in builder `indexParamsMap`.
+   * @param cond - FilterCondition object.
    *
    * @returns - Condition string or `undefined`.
    */
@@ -95,44 +94,31 @@ export const addFilterCondition = <
     idx,
     cond,
   ): string | undefined => {
-    // Note: internal helpers accept QueryBuilder<C>; cast locally to satisfy their parameter types.
-    const qb = b as unknown as QueryBuilder<C>;
-    const token = idx as unknown as string;
-    const conditionLocal = cond;
-    switch (condition.operator) {
+    // Narrow the discriminated union on the local parameter.
+    switch (cond.operator) {
       case 'begins_with':
-        return addQueryConditionBeginsWith(qb, token, conditionLocal);
+        return addQueryConditionBeginsWith(b as never, idx, cond);
       case 'between':
-        return addQueryConditionBetween(qb, token, conditionLocal);
+        return addQueryConditionBetween(b as never, idx, cond);
       case '<':
       case '<=':
       case '=':
       case '>':
       case '>=':
       case '<>':
-        return addQueryConditionComparison(qb, token, conditionLocal);
+        return addQueryConditionComparison(b as never, idx, cond);
       case 'contains':
-        return addQueryConditionContains(qb, token, conditionLocal);
+        return addQueryConditionContains(b as never, idx, cond);
       case 'attribute_exists':
       case 'attribute_not_exists':
-        return addQueryConditionExists(qb, token, conditionLocal);
+        return addQueryConditionExists(b as never, idx, cond);
       case 'in':
-        return addQueryConditionIn(qb, token, conditionLocal);
+        return addQueryConditionIn(b as never, idx, cond);
       case 'and':
       case 'or':
-        return addQueryConditionGroup(
-          qb,
-          token,
-          conditionLocal,
-          composeCondition,
-        );
+        return addQueryConditionGroup(b as never, idx, cond, composeCondition);
       case 'not':
-        return addQueryConditionNot(
-          qb,
-          token,
-          conditionLocal,
-          composeCondition,
-        );
+        return addQueryConditionNot(b as never, idx, cond, composeCondition);
       default:
         throw new Error('invalid operator');
     }
@@ -140,6 +126,7 @@ export const addFilterCondition = <
 
   try {
     // Default index map value.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     builder.indexParamsMap[indexToken] ??= {
       expressionAttributeNames: {},
       expressionAttributeValues: {},
@@ -148,8 +135,8 @@ export const addFilterCondition = <
 
     // Compose condition string.
     const conditionString = composeCondition(
-      builder as unknown as QueryBuilder<C>,
-      indexToken as unknown as string,
+      builder as never,
+      indexToken,
       condition,
     );
 
