@@ -17,18 +17,9 @@
     "strict": true,
     "target": "ES2020",
     "tsBuildInfoFile": "./.tsbuildinfo",
-    "types": [
-      "node",
-      "vitest/globals"
-    ]
+    "types": ["node", "vitest/globals"]
   },
-  "exclude": [
-    "coverage/",
-    "dist/",
-    "docs/",
-    "tests/**",
-    "test/types/**"
-  ],
+  "exclude": ["coverage/", "dist/", "docs/", "test-d/**"],
   "include": [
     "src/**/*.ts",
     "test/**/*.ts",

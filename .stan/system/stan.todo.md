@@ -259,4 +259,16 @@
 
 - Lint: resolved no-unnecessary-condition in QueryBuilder resets by guarding
   params presence in resetProjection and removing optional chaining in
-  resetAllProjections (keys are known from Object.keys()).
+  resetAllProjections (keys are known from Object.keys()).
+
+- Docs & TSD:
+  - README: added “Projections and scan direction” section showing
+    setProjectionAll, setScanIndexForward, and resets with K-channel notes.
+  - TSD: added querybuilder-projection-k.test-d.ts to pin K narrowing/widening.
+
+- TSD & Lint scope:
+  - Moved tsd tests to test-d/ and updated typecheck to run "tsc && tsd".
+  - Scoped @typescript-eslint/no-unused-expressions off only for **/*.test.ts
+    (vitest tests), leaving the rule active for source files.
+  - Updated knip.json to ignore test-d/** to keep knip clean for
+    compile-time-only tests.

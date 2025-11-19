@@ -122,10 +122,7 @@
     "release": "dotenvx run -f .env.local -- release-it",
     "release:pre": "npm run release -- --no-git.requireBranch --github.prerelease --preRelease",
     "test": "vitest --run --silent",
-    "typecheck": "tsc && npm run build --silent && tsd"
-  },
-  "tsd": {
-    "directory": "test/types"
+    "typecheck": "tsc && tsd"
   },
   "type": "module",
   "types": "dist/index.d.ts",

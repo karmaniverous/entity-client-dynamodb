@@ -24,7 +24,7 @@ export default defineConfig([
       'docs/**/*',
       '.rollup.cache/**/*',
       '**/*.js',
-      'test/types/**/*',
+      'test-d/**/*',
     ],
   },
   // Base + strict type-checked rules
@@ -53,10 +53,7 @@ export default defineConfig([
       prettier: prettierPlugin,
     },
     rules: {
-      '@typescript-eslint/no-non-null-assertion': 'off',
-      '@typescript-eslint/no-unused-expressions': 'off',
       '@typescript-eslint/no-unused-vars': 'error',
-      'no-unused-vars': 'off',
       'prettier/prettier': 'error',
       'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',
@@ -97,6 +94,8 @@ export default defineConfig([
       ...vitestRecommendedRules,
       // Allow Chai-style chainers provided by Vitest (e.g., .to.equal)
       'vitest/valid-expect': 'off',
+      // Tests often use expect(...).to.be.* chains that trip this rule
+      '@typescript-eslint/no-unused-expressions': 'off',
     },
   },
 ]);

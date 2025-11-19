@@ -199,6 +199,55 @@ qb.setProjection('created', ['created'] as const);
 
 ---
 
+## Projections and scan direction (ergonomics)
+
+QueryBuilder provides a few helper methods to make common DynamoDB options easy while preserving the K type channel on results:
+
+- setProjection(indexToken, attributes)
+  - Runtime: emits a ProjectionExpression for the index.
+  - Type: narrows the builder’s K to the provided attribute tuple (const).
+- setProjectionAll(indices, attributes)
+  - Runtime: applies the same ProjectionExpression across a set of index tokens.
+  - Type: narrows K to the provided attribute tuple, uniformly across the builder.
+- resetProjection(indexToken) / resetAllProjections()
+  - Runtime: clears projection(s), querying full items again.
+  - Type: widens K back to unknown (full item shape).
+- setScanIndexForward(indexToken, boolean)
+  - Runtime: sets the DynamoDB ScanIndexForward flag for the index.
+  - Type: no change (pure query-direction toggle).
+
+Example:
+
+```ts
+import { createQueryBuilder } from '@karmaniverous/entity-client-dynamodb';
+
+const qb = createQueryBuilder({
+  entityClient,
+  entityToken: 'user',
+  hashKeyToken: 'hashKey2',
+});
+
+// Uniform projection to the 'created' index (and possibly others)
+qb.setProjectionAll(['created'], ['created'] as const);
+
+// Reverse chronological results on the 'created' index
+qb.setScanIndexForward('created', false);
+
+const shardQueryMap = qb.build();
+const { items } = await entityManager.query({
+  entityToken: 'user',
+  item: {},
+  shardQueryMap,
+  pageSize: 25,
+});
+// items: Pick<EntityItemByToken<..., 'user'>, 'created'>[]
+
+// Later: widen K back to unknown (full item shape)
+const qbFull = qb.resetAllProjections();
+```
+
+Note: Runtime projection policy (adapter-level) will auto-include the entity uniqueProperty and any explicit sort keys in the ProjectionExpression to preserve dedupe/sort invariants.
+
 ## Batch operations
 
 ```ts
