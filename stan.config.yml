@@ -20,6 +20,7 @@ stan-core:
       - ../entity-tools/.stan/system/stan.todo.md
       - ../entity-tools/dist/index.d.ts
       - ../entity-tools/.stan/interop/entity-client-dynamodb/**
+  includes: []
 stan-cli:
   cliDefaults:
     run:
