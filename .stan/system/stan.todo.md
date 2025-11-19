@@ -2,45 +2,15 @@
 
 ## Next up
 
-- TSD: pin removeKeys literal overloads and tuple projections (token-aware)
-  - getItems('token', keys, { removeKeys: true }) → items: EntityItemByToken<…, 'token'>[].
-  - getItems('token', keys, { removeKeys: false }) → items: EntityRecordByToken<…, 'token'>[].
-  - getItems('token', keys, attrs as const, { removeKeys: true }) → items: Projected<EntityItemByToken<…, 'token'>, typeof attrs>[].
-  - getItems('token', keys, attrs as const, { removeKeys: false }) → items: Projected<EntityRecordByToken<…, 'token'>, typeof attrs>[].
-  - Non‑literal flag (const flag: boolean): union persists (assert with expectType).
-  - Token-less overloads: unchanged (broad EntityRecord<…> items).
+- Release v0.4.0
+  - Run npm run release (uses release-it; CHANGELOG generated; tag/publish).
+  - Ensure .env.local has GITHUB_TOKEN when running locally.
 
-- QueryBuilder ergonomics: implement helper methods
-  - setScanIndexForward(indexToken: ITS, value: boolean): this
-    • Runtime: set IndexParams.scanIndexForward; emitted by getDocumentQueryArgs.
-    • Typing: no change to K.
-  - resetProjection(indexToken: ITS): QueryBuilder<…, unknown>
-    • Runtime: delete per‑index projectionAttributes; full item shape for that index.
-    • Typing: widen K → unknown (merged results are no longer uniformly projected).
-  - resetAllProjections(): QueryBuilder<…, unknown>
-    • Runtime: delete projectionAttributes for all indices; full items.
-    • Typing: widen K → unknown.
-  - setProjectionAll<KAttr extends readonly string[]>(indices: ITS[] | readonly ITS[], attrs: KAttr): QueryBuilder<…, KAttr>
-    • Runtime: set a uniform ProjectionExpression for supplied indices (or all indices if we choose to add an “apply to all current indices” variant).
-    • Typing: narrow builder K to KAttr (uniform projected result shape).
-  - Unit tests:
-    • Assert scanIndexForward is emitted in QueryCommandInput by getDocumentQueryArgs.
-    • Verify ProjectionExpression emission remains intact when using setProjectionAll.
-  - Docs (API/README):
-    • Document runtime policy (auto‑include uniqueProperty and explicit sort keys when projections are supplied).
-    • Clarify K behavior on setProjectionAll (narrows) vs resets (widens).
+## Post‑release (optional polish)
 
-- README examples (after helpers implemented)
-  - Provide a focused example showing:
-    • setProjectionAll([...], ['created'] as const) → typed narrowing of QueryResult.items.
-    • setScanIndexForward('created', false) for reverse chronological results.
-    • resetProjection / resetAllProjections and effect on result typing.
-
-- TSD: QueryBuilder projection K chain
-  - setProjection('created', ['created'] as const) returns builder with K=['created'].
-  - query(...) returns QueryResult items: Pick<EntityItemByToken<…, ET>, 'created'>[].
-  - resetProjection('created') / resetAllProjections() returns builder with K=unknown; query returns full shape.
-  - setProjectionAll([...], ['a','b'] as const) returns builder with K=['a','b']; query narrows accordingly.
+- README/docs: add one compact example showing CF + PageKeyByIndex typed flow (link to API docs).
+- TSD: add a short negative for invalid index token when CF present (excess property checks).
+- Batch: add “unprocessed requeue” nicety tests (planned).
 
 - Internals/variance (deferred; requires upstream)
   - Requirements update (done): Document the need for variance-friendly helper acceptance in entity‑manager (structural or generic builder).
@@ -317,6 +287,13 @@
 - Fix (types): getItems (token-aware, non-literal removeKeys) now returns a
   union-of-arrays (EntityRecordByToken[] | EntityItemByToken[]) instead of an
   array-of-union, matching tsd expectations.
+
+- Ready-to-release: all gates green (tsc+tsd, lint, tests, build, docs, knip);
+  token-aware removeKeys contract is stable and pinned:
+  • getItems('token', ..., { removeKeys: true/false }) → Items/Records
+  • getItem('token', ..., { removeKeys: true/false }) → Item|Record | undefined
+  • Non-literal boolean → union-of-arrays (getItems) / union (getItem)
+  • Tuple projections preserve Pick<…> over the correct base (Item vs Record)
 
 - Stabilize API typing and tsd pins
   • Locked getItem (token-aware) to optional Item shape with undefined in value
