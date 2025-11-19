@@ -313,3 +313,7 @@
 - Fix (types): Removed invalid ReplaceKey<never, never, never> cast in
   EntityClient.getItem implementation that triggered TS2352. Cast the helper
   result via unknown to the intended optional-Item shape to satisfy tsc/typedoc.
+
+- Fix (types): getItems (token-aware, non-literal removeKeys) now returns a
+  union-of-arrays (EntityRecordByToken[] | EntityItemByToken[]) instead of an
+  array-of-union, matching tsd expectations.
