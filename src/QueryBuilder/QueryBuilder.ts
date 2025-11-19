@@ -143,9 +143,13 @@ export class QueryBuilder<
   async query(
     options: QueryBuilderQueryOptions<C, CF>,
   ): Promise<QueryResult<C, ET, ITS, K>> {
-    const uniqueProperty =
-      this.entityClient.entityManager.config.entities[this.entityToken]
-        ?.uniqueProperty;
+    // Guarded entity config read (no optional chaining).
+    const entitiesMap = this.entityClient.entityManager.config
+      .entities as Record<string, { uniqueProperty?: string }>;
+    const entityDef = entitiesMap[this.entityToken] as
+      | { uniqueProperty?: string }
+      | undefined;
+    const uniqueProperty = entityDef?.uniqueProperty;
     const sortKeys = (options.sortOrder ?? []).map((s) => s.property as string);
     for (const indexToken of Object.keys(this.indexParamsMap) as ITS[]) {
       const params = this.indexParamsMap[indexToken];
