@@ -528,7 +528,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
       ? EntityItemByToken<C, ET>[]
       : RK extends false
         ? EntityRecordByToken<C, ET>[]
-        : EntityRecordByToken<C, ET>[] | EntityItemByToken<C, ET>[];
+        : (EntityRecordByToken<C, ET> | EntityItemByToken<C, ET>)[];
     outputs: BatchGetCommandOutput[];
   }>;
   /**

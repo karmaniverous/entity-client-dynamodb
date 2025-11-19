@@ -290,4 +290,7 @@
   getItem/getItems with single conditional-generic signatures keyed to
   options.removeKeys. This removes reliance on overload order in generated
   .d.ts and guarantees narrowing for literal true/false while preserving union
-  when removeKeys is non-literal.
+  when removeKeys is non-literal.
+
+- Fix (types): getItems (token-aware, non-literal removeKeys) now returns an
+  array-of-union for items ((Record|Item)[]) instead of a union-of-arrays.
