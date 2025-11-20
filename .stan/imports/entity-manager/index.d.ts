@@ -763,6 +763,10 @@ declare abstract class BaseEntityClient<CC extends BaseConfigMap> {
     constructor(options: BaseEntityClientOptions<CC>);
 }
 
+type ConfigOfClient<EC> = EC extends BaseEntityClient<infer CC> ? CC : never;
+type EntityClientRecordByToken<EC, ET extends EntityToken<ConfigOfClient<EC>>> = EntityRecordByToken<ConfigOfClient<EC>, ET>;
+type EntityClientItemByToken<EC, ET extends EntityToken<ConfigOfClient<EC>>> = EntityItemByToken<ConfigOfClient<EC>, ET>;
+
 /**
  * Constructor options for {@link BaseQueryBuilder | `BaseQueryBuilder`}.
  *
@@ -833,4 +837,4 @@ declare abstract class BaseQueryBuilder<CC extends BaseConfigMap, EntityClient e
 }
 
 export { BaseEntityClient, BaseQueryBuilder, EntityManager, configSchema, createEntityManager };
-export type { BaseConfigMap, BaseEntityClientOptions, BaseQueryBuilderOptions, CapturedConfigMapFrom, Config, ConfigInput, ConfigMap, EntitiesFromSchema, EntityItem, EntityItemByToken, EntityKey, EntityOfToken, EntityRecord, EntityRecordByToken, EntityToken, HasIndexFor, HashKeyFrom, IndexComponentTokens, IndexHashKeyOf, IndexRangeKeyOf, IndexTokensFrom, IndexTokensOf, KeysFrom, PageKey, PageKeyByIndex, ParsedConfig, Projected, ProjectedItemByToken, QueryBuilderQueryOptions, QueryOptions, QueryOptionsByCC, QueryOptionsByCF, QueryResult, RangeKeyFrom, ShardBump, ShardQueryFunction, ShardQueryMap, ShardQueryMapByCC, ShardQueryMapByCF, ShardQueryResult, ShardedKeysFrom, TranscodedPropertiesFrom, UnshardedKeysFrom, ValidateConfigMap };
+export type { BaseConfigMap, BaseEntityClientOptions, BaseQueryBuilderOptions, CapturedConfigMapFrom, Config, ConfigInput, ConfigMap, ConfigOfClient, EntitiesFromSchema, EntityClientItemByToken, EntityClientRecordByToken, EntityItem, EntityItemByToken, EntityKey, EntityOfToken, EntityRecord, EntityRecordByToken, EntityToken, HasIndexFor, HashKeyFrom, IndexComponentTokens, IndexHashKeyOf, IndexRangeKeyOf, IndexTokensFrom, IndexTokensOf, KeysFrom, PageKey, PageKeyByIndex, ParsedConfig, Projected, ProjectedItemByToken, QueryBuilderQueryOptions, QueryOptions, QueryOptionsByCC, QueryOptionsByCF, QueryResult, RangeKeyFrom, ShardBump, ShardQueryFunction, ShardQueryMap, ShardQueryMapByCC, ShardQueryMapByCF, ShardQueryResult, ShardedKeysFrom, TranscodedPropertiesFrom, UnshardedKeysFrom, ValidateConfigMap };

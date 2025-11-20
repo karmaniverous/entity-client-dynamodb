@@ -112,4 +112,33 @@
   - Proposed a types-only change to make `QueryBuilderQueryOptions` carry `ET`
     and update `BaseQueryBuilder.query` to accept the ET-aware options. This
     eliminates the need to cast `options.item` to `never` in downstream repos
-    while preserving runtime behavior and backward compatibility.
+    while preserving runtime behavior and backward compatibility.
+
+- Consume upstream ET-aware QueryBuilder; preserve literal tokens locally
+  - Bumped deps to entity-manager ^7.1.2 and entity-client-dynamodb ^0.4.2.
+  - Preserved literal keys for generatedProperties (sharded/unsharded objects)
+    to prevent widening of special keys to `string` and remove index-signature
+    conflicts in token-aware helpers.
+  - Removed temporary `item` casts in email/user search handlers; options.item
+    is now typed by ET.
+
+- Typecheck: preserve global key tokens to restore token-aware helper typings
+  - Marked `hashKey` and `rangeKey` as string literals (`as const`) in
+    src/entity-manager/entityManager.ts to prevent widening to `string` in the
+    captured config. This fixes TS2769/TS2345 on addKeys/getPrimaryKey/putItems.
+
+- Cleanup: remove unused types
+  - Deleted the unused `MyConfigMap` interface and its imports in
+    src/entity-manager/entityManager.ts (config is values-/schemas-first now).
+  - Removed unused type aliases `EmailSchema` and `UserSchema` in schemas.ts.
+
+- Handlers: token-aware reads with literal removeKeys (no casts)
+  - Added overloads to readEmail/readUser and branched on keepKeys to pass
+    literal removeKeys flags to token-aware getItems. Removed casts and return
+    items directly (records when keepKeys=true; domain items otherwise).
+
+- Handlers: fix overload typing and ensure domain reads are keyless
+  - Derived the adapter config type (CC) from the EntityClient instance to type
+    EntityRecordByToken return for keepKeys=true.
+  - For domain reads, used const-tuple projections in token-aware getItems to
+    fetch only domain fields, guaranteeing no keys are present at runtime.
