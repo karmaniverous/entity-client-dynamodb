@@ -1,15 +1,12 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
-import type { BaseConfigMap } from '@karmaniverous/entity-manager';
 
 import { attributeValueAlias } from './attributeValueAlias';
-import { QueryBuilder } from './QueryBuilder';
-import type { QueryConditionIn } from './QueryCondition';
+import type { MinimalBuilder, QueryConditionIn } from './QueryCondition';
 
 export const addQueryConditionIn = <
-  C extends BaseConfigMap,
   V extends Exclude<NativeScalarAttributeValue, object>,
 >(
-  builder: QueryBuilder<C>,
+  builder: MinimalBuilder,
   indexToken: string,
   { operator, property, value }: QueryConditionIn<V>,
 ): string | undefined => {

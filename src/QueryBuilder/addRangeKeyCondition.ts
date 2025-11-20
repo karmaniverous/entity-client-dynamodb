@@ -9,9 +9,9 @@ import { addQueryConditionBeginsWith } from './addQueryConditionBeginsWith';
 import { addQueryConditionBetween } from './addQueryConditionBetween';
 import { addQueryConditionComparison } from './addQueryConditionComparison';
 import type { IndexParams } from './IndexParams';
-import { QueryBuilder } from './QueryBuilder';
 import type {
   ComposeCondition,
+  MinimalBuilder,
   QueryConditionBeginsWith,
   QueryConditionBetween,
   QueryConditionComparison,
@@ -67,28 +67,22 @@ export const addRangeKeyCondition = <
    *
    * @returns - Condition string or `undefined`.
    */
-  const composeCondition: ComposeCondition<C, RangeKeyCondition> = (
-    b,
-    idx,
-    cond,
-  ): string | undefined => {
-    // Internal helpers accept QueryBuilder<C>; cast locally to satisfy their parameter types.
-    const qb = b as unknown as QueryBuilder<C>;
-    const token = idx as unknown as string;
-    const c = cond;
-
-    switch (c.operator) {
+  const composeCondition: ComposeCondition<
+    MinimalBuilder,
+    RangeKeyCondition
+  > = (b, idx, cond): string | undefined => {
+    switch (cond.operator) {
       case 'begins_with':
-        return addQueryConditionBeginsWith(qb, token, c);
+        return addQueryConditionBeginsWith(b, idx, cond);
       case 'between':
-        return addQueryConditionBetween(qb, token, c);
+        return addQueryConditionBetween(b, idx, cond);
       case '<':
       case '<=':
       case '=':
       case '>':
       case '>=':
       case '<>':
-        return addQueryConditionComparison(qb, token, c);
+        return addQueryConditionComparison(b, idx, cond);
       default:
         throw new Error('invalid operator');
     }
@@ -109,8 +103,8 @@ export const addRangeKeyCondition = <
 
     // Compose condition string.
     const conditionString = composeCondition(
-      builder as unknown as QueryBuilder<C>,
-      indexToken as unknown as string,
+      builder as unknown as MinimalBuilder,
+      indexToken as unknown as ITS,
       condition,
     );
 

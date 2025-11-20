@@ -1,20 +1,15 @@
-import type { BaseConfigMap } from '@karmaniverous/entity-manager';
-
-import { QueryBuilder } from './QueryBuilder';
 import type {
   ComposeCondition,
+  MinimalBuilder,
   QueryCondition,
   QueryConditionNot,
 } from './QueryCondition';
 
-export const addQueryConditionNot = <
-  C extends BaseConfigMap,
-  Q extends QueryCondition,
->(
-  builder: QueryBuilder<C>,
+export const addQueryConditionNot = <Q extends QueryCondition>(
+  builder: MinimalBuilder,
   indexToken: string,
   { operator, condition }: QueryConditionNot<Q>,
-  composeCondition: ComposeCondition<C, Q>,
+  composeCondition: ComposeCondition<MinimalBuilder, Q>,
 ): string | undefined => {
   const conditionString = composeCondition(builder, indexToken, condition);
 

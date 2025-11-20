@@ -1,16 +1,15 @@
-import type { BaseConfigMap } from '@karmaniverous/entity-manager';
-
 import { attributeValueAlias } from './attributeValueAlias';
-import { QueryBuilder } from './QueryBuilder';
-import type { QueryConditionBeginsWith } from './QueryCondition';
+import type {
+  MinimalBuilder,
+  QueryConditionBeginsWith,
+} from './QueryCondition';
 
-export const addQueryConditionBeginsWith = <C extends BaseConfigMap>(
-  builder: QueryBuilder<C>,
+export const addQueryConditionBeginsWith = (
+  builder: MinimalBuilder,
   indexToken: string,
   { operator, property, value }: QueryConditionBeginsWith,
 ): string | undefined => {
   if (!value) return;
-
   builder.indexParamsMap[indexToken].expressionAttributeNames[`#${property}`] =
     property;
 

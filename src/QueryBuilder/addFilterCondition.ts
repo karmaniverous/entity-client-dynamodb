@@ -17,6 +17,7 @@ import type { IndexParams } from './IndexParams';
 import type {
   ActuallyScalarAttributeValue,
   ComposeCondition,
+  MinimalBuilder,
   QueryConditionBeginsWith,
   QueryConditionBetween,
   QueryConditionComparison,
@@ -89,36 +90,35 @@ export const addFilterCondition = <
    *
    * @returns - Condition string or `undefined`.
    */
-  const composeCondition: ComposeCondition<C, FilterCondition<C>> = (
-    b,
-    idx,
-    cond,
-  ): string | undefined => {
+  const composeCondition: ComposeCondition<
+    MinimalBuilder,
+    FilterCondition<C>
+  > = (b, idx, cond): string | undefined => {
     // Narrow the discriminated union on the local parameter.
     switch (cond.operator) {
       case 'begins_with':
-        return addQueryConditionBeginsWith(b as never, idx, cond);
+        return addQueryConditionBeginsWith(b, idx, cond);
       case 'between':
-        return addQueryConditionBetween(b as never, idx, cond);
+        return addQueryConditionBetween(b, idx, cond);
       case '<':
       case '<=':
       case '=':
       case '>':
       case '>=':
       case '<>':
-        return addQueryConditionComparison(b as never, idx, cond);
+        return addQueryConditionComparison(b, idx, cond);
       case 'contains':
-        return addQueryConditionContains(b as never, idx, cond);
+        return addQueryConditionContains(b, idx, cond);
       case 'attribute_exists':
       case 'attribute_not_exists':
-        return addQueryConditionExists(b as never, idx, cond);
+        return addQueryConditionExists(b, idx, cond);
       case 'in':
-        return addQueryConditionIn(b as never, idx, cond);
+        return addQueryConditionIn(b, idx, cond);
       case 'and':
       case 'or':
-        return addQueryConditionGroup(b as never, idx, cond, composeCondition);
+        return addQueryConditionGroup(b, idx, cond, composeCondition);
       case 'not':
-        return addQueryConditionNot(b as never, idx, cond, composeCondition);
+        return addQueryConditionNot(b, idx, cond, composeCondition);
       default:
         throw new Error('invalid operator');
     }

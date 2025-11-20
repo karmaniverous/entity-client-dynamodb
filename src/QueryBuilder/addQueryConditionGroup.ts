@@ -1,21 +1,17 @@
-import type { BaseConfigMap } from '@karmaniverous/entity-manager';
 import { sift } from 'radash';
 
-import { QueryBuilder } from './QueryBuilder';
 import type {
   ComposeCondition,
+  MinimalBuilder,
   QueryCondition,
   QueryConditionGroup,
 } from './QueryCondition';
 
-export const addQueryConditionGroup = <
-  C extends BaseConfigMap,
-  Q extends QueryCondition,
->(
-  builder: QueryBuilder<C>,
+export const addQueryConditionGroup = <Q extends QueryCondition>(
+  builder: MinimalBuilder,
   indexToken: string,
   { operator, conditions }: QueryConditionGroup<Q>,
-  composeCondition: ComposeCondition<C, Q>,
+  composeCondition: ComposeCondition<MinimalBuilder, Q>,
 ): string | undefined => {
   const conditionStrings = sift(
     conditions.map((condition) =>

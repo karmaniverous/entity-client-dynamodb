@@ -38,7 +38,13 @@
     `@typescript-eslint/require-await`; stubs now omit `UnprocessedItems`
     when empty so later outputs match the expected undefined property.
 
+- Variance polish (types only)
+  - Relaxed internal addQueryCondition* helpers to accept a MinimalBuilder
+    (indexParamsMap + logger) instead of a concrete QueryBuilder type.
+  - Removed local variance-bridging casts from addRangeKeyCondition and
+    addFilterCondition. No runtime behavior change.
+
 - Interop (entity-manager): make QueryBuilder.query accept ET-aware options
   - Updated QueryBuilder.query signature to
     QueryBuilderQueryOptions<C, ET, CF> and forwarded unchanged to super.
-  - Fixes TS2344/TS2345 in typecheck/build/docs with no runtime changes.
+  - Fixes TS2344/TS2345 in typecheck/build/docs with no runtime changes.

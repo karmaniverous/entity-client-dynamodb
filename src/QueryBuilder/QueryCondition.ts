@@ -1,7 +1,6 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
-import type { BaseConfigMap } from '@karmaniverous/entity-manager';
 
-import { QueryBuilder } from './QueryBuilder';
+import type { IndexParams } from './IndexParams';
 
 /**
  * Eliminates object types from the `NativeScalarAttributeValue` type.
@@ -127,11 +126,18 @@ export interface QueryConditionNot<C extends QueryCondition> {
   condition: C;
 }
 
-export type ComposeCondition<
-  C extends BaseConfigMap,
-  Q extends QueryCondition,
-> = (
-  builder: QueryBuilder<C>,
+/**
+ * Minimal builder shape required by condition helpers.
+ * - indexParamsMap: per-index mutable params
+ * - entityClient.logger: debug/error logging
+ */
+export interface MinimalBuilder {
+  indexParamsMap: Record<string, IndexParams>;
+  entityClient: { logger: Pick<Console, 'debug' | 'error'> };
+}
+
+export type ComposeCondition<B, Q extends QueryCondition> = (
+  builder: B,
   indexToken: string,
   condition: Q,
 ) => string | undefined;

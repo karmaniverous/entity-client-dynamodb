@@ -1,16 +1,13 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
-import type { BaseConfigMap } from '@karmaniverous/entity-manager';
 import { isNil } from '@karmaniverous/entity-tools';
 
 import { attributeValueAlias } from './attributeValueAlias';
-import { QueryBuilder } from './QueryBuilder';
-import type { QueryConditionBetween } from './QueryCondition';
+import type { MinimalBuilder, QueryConditionBetween } from './QueryCondition';
 
 export const addQueryConditionBetween = <
-  C extends BaseConfigMap,
   V extends Exclude<NativeScalarAttributeValue, object>,
 >(
-  builder: QueryBuilder<C>,
+  builder: MinimalBuilder,
   indexToken: string,
   {
     operator,

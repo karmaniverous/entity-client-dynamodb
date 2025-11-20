@@ -1,10 +1,7 @@
-import type { BaseConfigMap } from '@karmaniverous/entity-manager';
+import type { MinimalBuilder, QueryConditionExists } from './QueryCondition';
 
-import { QueryBuilder } from './QueryBuilder';
-import type { QueryConditionExists } from './QueryCondition';
-
-export const addQueryConditionExists = <C extends BaseConfigMap>(
-  builder: QueryBuilder<C>,
+export const addQueryConditionExists = (
+  builder: MinimalBuilder,
   indexToken: string,
   { operator, property }: QueryConditionExists,
 ): string | undefined => {
