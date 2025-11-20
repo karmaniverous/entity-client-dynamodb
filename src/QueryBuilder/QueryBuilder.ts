@@ -209,7 +209,7 @@ export class QueryBuilder<
    * when projections are present (preserves dedupe/sort invariants).
    */
   async query(
-    options: QueryBuilderQueryOptions<C, CF>,
+    options: QueryBuilderQueryOptions<C, ET, CF>,
   ): Promise<QueryResult<C, ET, ITS, K>> {
     // Guarded entity config read (no optional chaining).
     const entitiesMap = this.entityClient.entityManager.config

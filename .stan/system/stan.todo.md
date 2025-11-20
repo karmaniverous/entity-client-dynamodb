@@ -37,3 +37,8 @@
   - Refined batch requeue tests to avoid `any` casts and satisfy
     `@typescript-eslint/require-await`; stubs now omit `UnprocessedItems`
     when empty so later outputs match the expected undefined property.
+
+- Interop (entity-manager): make QueryBuilder.query accept ET-aware options
+  - Updated QueryBuilder.query signature to
+    QueryBuilderQueryOptions<C, ET, CF> and forwarded unchanged to super.
+  - Fixes TS2344/TS2345 in typecheck/build/docs with no runtime changes.
