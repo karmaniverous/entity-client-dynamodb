@@ -8,8 +8,6 @@
 
 ## Completed
 
-- None
-
 - Interop typing (local; no upstream dependency)
   - addRangeKeyCondition/addFilterCondition accept a generic BaseQueryBuilder
     plus the minimal structural contract (indexParamsMap + logger).
@@ -38,4 +36,4 @@
 - Tests/lint hardening
   - Refined batch requeue tests to avoid `any` casts and satisfy
     `@typescript-eslint/require-await`; stubs now omit `UnprocessedItems`
-    when empty so later outputs match the expected undefined property.
+    when empty so later outputs match the expected undefined property.
