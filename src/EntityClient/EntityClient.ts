@@ -18,7 +18,6 @@ import {
 import {
   type BaseConfigMap,
   BaseEntityClient,
-  type EntityItemByToken,
   type EntityKey,
   type EntityRecord,
   type EntityRecordByToken,
@@ -30,8 +29,6 @@ import AWSXray from 'aws-xray-sdk';
 import type { BatchGetOptions } from './BatchGetOptions';
 import type { BatchWriteOptions } from './BatchWriteOptions';
 import type { EntityClientOptions } from './EntityClientOptions';
-import type { GetItemOptions } from './GetItemOptions';
-import type { GetItemsOptions } from './GetItemsOptions';
 // Delegated method helpers.
 import { createTable as createTableFn } from './methods/createTable';
 import { deleteItem as deleteItemFn } from './methods/deleteItem';
@@ -264,81 +261,74 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
   }
 
   /**
-   * Token-aware getItem overloads, with optional key stripping (removeKeys) in options.
+   * Token-aware getItem overloads (records). Strip keys in handlers when needed via entityManager.removeKeys.
    */
-  // Literal-flag + attributes tuple (removeKeys true)
-  async getItem<ET extends EntityToken<C>>(
+  // Token-aware with tuple projection (attributes as const)
+  async getItem<ET extends EntityToken<C>, A extends readonly string[]>(
     entityToken: ET,
     key: EntityKey<C>,
-    attributes: readonly string[],
-    options: GetItemOptions & { removeKeys: true },
+    attributes: A,
+    options?: MakeOptional<
+      Omit<
+        GetCommandInput,
+        | 'AttributesToGet'
+        | 'ExpressionAttributeNames'
+        | 'Key'
+        | 'ProjectionExpression'
+      >,
+      'TableName'
+    >,
   ): Promise<
     Omit<GetCommandOutput, 'Item'> & {
-      Item?: EntityItemByToken<C, ET> | undefined;
+      Item?: Projected<EntityRecordByToken<C, ET>, A> | undefined;
     }
   >;
-  // Literal-flag + attributes tuple (removeKeys false)
+  // Token-aware with attributes string[]
   async getItem<ET extends EntityToken<C>>(
     entityToken: ET,
     key: EntityKey<C>,
-    attributes: readonly string[],
-    options: GetItemOptions & { removeKeys: false },
+    attributes: string[],
+    options?: MakeOptional<
+      Omit<
+        GetCommandInput,
+        | 'AttributesToGet'
+        | 'ExpressionAttributeNames'
+        | 'Key'
+        | 'ProjectionExpression'
+      >,
+      'TableName'
+    >,
   ): Promise<
     Omit<GetCommandOutput, 'Item'> & {
       Item?: EntityRecordByToken<C, ET> | undefined;
     }
   >;
-  // Token-aware (no attributes) — conditional return based on removeKeys
-  async getItem<
-    ET extends EntityToken<C>,
-    RK extends boolean | undefined = undefined,
-  >(
-    entityToken: ET,
-    key: EntityKey<C>,
-    options?: Omit<GetItemOptions, 'removeKeys'> & { removeKeys?: RK },
-  ): Promise<
-    Omit<GetCommandOutput, 'Item'> & {
-      Item?:
-        | (RK extends true
-            ? EntityItemByToken<C, ET> | undefined
-            : RK extends false
-              ? EntityRecordByToken<C, ET> | undefined
-              : EntityRecordByToken<C, ET> | EntityItemByToken<C, ET>)
-        | undefined;
-    }
-  >;
-  // Projection tuple narrowing when attributes is a const tuple
-  async getItem<ET extends EntityToken<C>, A extends readonly string[]>(
-    entityToken: ET,
-    key: EntityKey<C>,
-    attributes: A,
-    options?: GetItemOptions,
-  ): Promise<
-    Omit<GetCommandOutput, 'Item'> & {
-      Item?:
-        | Projected<EntityRecordByToken<C, ET>, A>
-        | Projected<EntityItemByToken<C, ET>, A>
-        | undefined;
-    }
-  >;
-
+  // Token-aware without attributes (records)
   async getItem<ET extends EntityToken<C>>(
     entityToken: ET,
     key: EntityKey<C>,
-    attributes: string[],
-    options?: GetItemOptions,
+    options?: MakeOptional<
+      Omit<
+        GetCommandInput,
+        | 'AttributesToGet'
+        | 'ExpressionAttributeNames'
+        | 'Key'
+        | 'ProjectionExpression'
+      >,
+      'TableName'
+    >,
   ): Promise<
     Omit<GetCommandOutput, 'Item'> & {
-      Item?: EntityRecordByToken<C, ET> | EntityItemByToken<C, ET> | undefined;
+      Item?: EntityRecordByToken<C, ET> | undefined;
     }
   >;
-
+  // Token-aware variant accepting a TableName-bearing GetCommandInput (kept per request)
   async getItem<ET extends EntityToken<C>>(
     entityToken: ET,
     options: MakeOptional<GetCommandInput, 'TableName'>,
   ): Promise<
     Omit<GetCommandOutput, 'Item'> & {
-      Item?: EntityRecordByToken<C, ET> | EntityItemByToken<C, ET> | undefined;
+      Item?: EntityRecordByToken<C, ET> | undefined;
     }
   >;
 
@@ -389,7 +379,6 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
   ): Promise<ReplaceKey<GetCommandOutput, 'Item', EntityRecord<C> | undefined>>;
   async getItem(...args: unknown[]): Promise<unknown> {
     // Normalize to: (token?), keyOrOptions, attributesOrOptions, options
-    let entityToken: EntityToken<C> | undefined;
     let keyOrOptions: EntityKey<C> | MakeOptional<GetCommandInput, 'TableName'>;
     let attributesOrOptions:
       | string[]
@@ -406,16 +395,14 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
           >,
           'TableName'
         >
-      | GetItemOptions
       | undefined;
 
     if (typeof args[0] === 'string') {
       // getItem(entityToken, key, attributes?, options?) OR getItem(entityToken, options)
-      entityToken = args[0] as EntityToken<C>;
       if (Array.isArray(args[2])) {
         keyOrOptions = args[1] as EntityKey<C>;
         attributesOrOptions = args[2] as string[];
-        options = args[3] as GetItemOptions | undefined;
+        options = args[3] as typeof options;
       } else {
         // key + options OR options only
         if (args[1] && typeof args[1] === 'object' && 'TableName' in args[1]) {
@@ -425,7 +412,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
         } else {
           keyOrOptions = args[1] as EntityKey<C>;
           attributesOrOptions = undefined;
-          options = args[2] as GetItemOptions | undefined;
+          options = args[2] as typeof options;
         }
       }
     } else {
@@ -436,7 +423,7 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
       attributesOrOptions = Array.isArray(args[1])
         ? (args[1] as string[])
         : (args[1] as never);
-      options = (Array.isArray(args[1]) ? args[2] : args[1]) as never;
+      options = (Array.isArray(args[1]) ? args[2] : args[1]) as typeof options;
     }
 
     const output = (await getItemFn(
@@ -448,58 +435,24 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
       Item?: Record<string, unknown> | undefined;
     };
 
-    if (
-      entityToken &&
-      (options as GetItemOptions | undefined)?.removeKeys &&
-      output.Item
-    ) {
-      return {
-        ...output,
-        Item: this.entityManager.removeKeys(entityToken, output.Item as never),
-      } as unknown;
-    }
-
     return output;
   }
 
   /**
-   * Gets multiple items from a DynamoDB table in batches.
+   * Gets multiple items from a DynamoDB table in batches (records). Strip keys in handlers when needed via entityManager.removeKeys.
    *
    * @param keys - Array of EntityKey.
    * @param attributes - Optional list of attributes to project.
    * @param options - BatchGetOptions.
    */
-  // Projection tuple + literal-flag (removeKeys true)
+  // Token-aware with tuple projection
   async getItems<ET extends EntityToken<C>, A extends readonly string[]>(
     entityToken: ET,
     keys: EntityKey<C>[],
     attributes: A,
-    options: GetItemsOptions & { removeKeys: true },
-  ): Promise<{
-    items: Projected<EntityItemByToken<C, ET>, A>[];
-    outputs: BatchGetCommandOutput[];
-  }>;
-  // Projection tuple + literal-flag (removeKeys false)
-  async getItems<ET extends EntityToken<C>, A extends readonly string[]>(
-    entityToken: ET,
-    keys: EntityKey<C>[],
-    attributes: A,
-    options: GetItemsOptions & { removeKeys: false },
+    options?: BatchGetOptions,
   ): Promise<{
     items: Projected<EntityRecordByToken<C, ET>, A>[];
-    outputs: BatchGetCommandOutput[];
-  }>;
-  // Projection tuple general (union)
-  async getItems<ET extends EntityToken<C>, A extends readonly string[]>(
-    entityToken: ET,
-    keys: EntityKey<C>[],
-    attributes: A,
-    options?: GetItemsOptions,
-  ): Promise<{
-    items: Projected<
-      EntityRecordByToken<C, ET> | EntityItemByToken<C, ET>,
-      A
-    >[];
     outputs: BatchGetCommandOutput[];
   }>;
   // Token-aware with attributes string[]
@@ -507,25 +460,18 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
     entityToken: ET,
     keys: EntityKey<C>[],
     attributes: string[],
-    options?: GetItemsOptions,
+    options?: BatchGetOptions,
   ): Promise<{
-    items: EntityRecordByToken<C, ET>[] | EntityItemByToken<C, ET>[];
+    items: EntityRecordByToken<C, ET>[];
     outputs: BatchGetCommandOutput[];
   }>;
-  // Token-aware (no attributes) — conditional return based on removeKeys
-  async getItems<
-    ET extends EntityToken<C>,
-    RK extends boolean | undefined = undefined,
-  >(
+  // Token-aware without attributes
+  async getItems<ET extends EntityToken<C>>(
     entityToken: ET,
     keys: EntityKey<C>[],
-    options?: Omit<GetItemsOptions, 'removeKeys'> & { removeKeys?: RK },
+    options?: BatchGetOptions,
   ): Promise<{
-    items: RK extends true
-      ? EntityItemByToken<C, ET>[]
-      : RK extends false
-        ? EntityRecordByToken<C, ET>[]
-        : EntityRecordByToken<C, ET>[] | EntityItemByToken<C, ET>[];
+    items: EntityRecordByToken<C, ET>[];
     outputs: BatchGetCommandOutput[];
   }>;
   /**
@@ -548,33 +494,33 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
    */
   async getItems(
     keys: EntityKey<C>[],
-    options?: GetItemsOptions,
+    options?: BatchGetOptions,
   ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }>;
   async getItems(...args: unknown[]): Promise<unknown> {
     // Normalize to: keys, attributesOrOptions, options
     let keys: EntityKey<C>[];
     let attributesOrOptions: string[] | BatchGetOptions | undefined;
-    let options: GetItemsOptions | undefined;
+    let options: BatchGetOptions | undefined;
 
     if (Array.isArray(args[0])) {
       // getItems(keys, attributes?, options?)
       keys = args[0] as EntityKey<C>[];
       if (Array.isArray(args[1])) {
         attributesOrOptions = args[1] as string[];
-        options = args[2] as GetItemsOptions | undefined;
+        options = args[2] as BatchGetOptions | undefined;
       } else {
-        attributesOrOptions = args[1] as GetItemsOptions | undefined;
-        options = args[2] as GetItemsOptions | undefined;
+        attributesOrOptions = args[1] as BatchGetOptions | undefined;
+        options = args[2] as BatchGetOptions | undefined;
       }
     } else {
       // getItems(entityToken, keys, attributes?, options?)
       keys = args[1] as EntityKey<C>[];
       if (Array.isArray(args[2])) {
         attributesOrOptions = args[2] as string[];
-        options = args[3] as GetItemsOptions | undefined;
+        options = args[3] as BatchGetOptions | undefined;
       } else {
-        attributesOrOptions = args[2] as GetItemsOptions | undefined;
-        options = args[3] as GetItemsOptions | undefined;
+        attributesOrOptions = args[2] as BatchGetOptions | undefined;
+        options = args[3] as BatchGetOptions | undefined;
       }
     }
 
@@ -582,15 +528,6 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
       ? await getItemsFn(this, keys, attributesOrOptions, options ?? {})
       : await getItemsFn(this, keys, attributesOrOptions ?? {});
 
-    const token =
-      typeof args[0] === 'string' ? (args[0] as EntityToken<C>) : undefined;
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (token && options?.removeKeys) {
-      return {
-        ...result,
-        items: this.entityManager.removeKeys(token, result.items as never),
-      } as unknown;
-    }
     return result;
   }
 }

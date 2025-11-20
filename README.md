@@ -85,9 +85,9 @@ const projected = await entityClient.getItem(
 );
 ```
 
-### Token-aware typed reads (no generics; optional key stripping)
+### Token-aware typed reads (no generics)
 
-Strong inference without casts — pass a literal entity token. You can also request key stripping (removeKeys) to return domain objects.
+Strong inference without casts — pass a literal entity token. Reads always return records (storage-facing shapes). Strip keys in handlers when you want domain objects using EntityManager.
 
 ```ts
 // Token-aware single get (record)
@@ -103,12 +103,9 @@ const recProj = await entityClient.getItem(
   ['a'],
 );
 
-// Token-aware single get (domain object: remove generated/global keys)
-const it = await entityClient.getItem(
-  'user',
-  { hashKey2: 'h1', rangeKey: 'r1' },
-  { removeKeys: true },
-);
+// Produce a domain object by stripping keys in your handler
+const item =
+  rec.Item && entityClient.entityManager.removeKeys('user', rec.Item);
 
 // Token-aware batch get (records)
 const many = await entityClient.getItems('user', [
@@ -116,28 +113,14 @@ const many = await entityClient.getItems('user', [
   { hashKey2: 'h1', rangeKey: 'r2' },
 ]);
 
-// Token-aware batch get (domain objects)
-const manyDomain = await entityClient.getItems(
-  'user',
-  [
-    { hashKey2: 'h1', rangeKey: 'r1' },
-    { hashKey2: 'h1', rangeKey: 'r2' },
-  ],
-  { removeKeys: true },
-);
+// Domain items (strip generated/global keys)
+const domainItems = entityClient.entityManager.removeKeys('user', many.items);
 ```
 
 Note:
 
-- Without a token, removeKeys is ignored (we do not guess the entity).
-- With a token and removeKeys: true, items are stripped to your domain shape.
-
-Typed behavior (removeKeys preview):
-
-```ts
-const r1 = await entityClient.getItems('user', keys, { removeKeys: true });  // items: EntityItemByToken<..., 'user'>[]
-const r2 = await entityClient.getItems('user', keys, ['created'] as const, { removeKeys: false }); // items: Pick<EntityRecordByToken<..., 'user'>, 'created'>[]
-```
+- Token-aware reads infer types from your literal entity token.
+- When you want domain items, strip keys via entityClient.entityManager.removeKeys in your handler.
 
 ---
 
@@ -354,7 +337,7 @@ Note: Runtime re-exports (e.g., EntityManager) are intentionally not provided �
 
 - EntityClient class (and options)
   - Token-aware getItem/getItems overloads
-  - Optional key stripping with GetItemOptions / GetItemsOptions
+  - Tuple-based projection narrowing via const attribute lists (record shapes)
 - QueryBuilder and helpers for conditions and index parameters
   - Factory: createQueryBuilder (cf optional)
 - Tables utilities:
@@ -370,8 +353,8 @@ See [API Docs](https://docs.karmanivero.us/entity-client-dynamodb) for details.
 
 - “Token in → Narrowed type out”
   - Pass a literal entity token to get token-narrowed records.
-- “RemoveKeys when you want domain objects”
-  - In token-aware reads, set `removeKeys: true` to strip generated/global keys.
+- “Strip keys in handlers when you want domain objects”
+  - Call `entityClient.entityManager.removeKeys(entityToken, records)` to return domain shapes.
 - “Config literal (cf) narrows page keys by index”
   - Pass your config literal to createQueryBuilder for index/page-key correctness.
 

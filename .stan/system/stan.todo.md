@@ -48,3 +48,13 @@
   - Updated QueryBuilder.query signature to
     QueryBuilderQueryOptions<C, ET, CF> and forwarded unchanged to super.
   - Fixes TS2344/TS2345 in typecheck/build/docs with no runtime changes.
+- Breaking: remove removeKeys option from token-aware reads
+  - Eliminated GetItemOptions/GetItemsOptions and all removeKeys overloads.
+  - Token-aware getItem/getItems now always return records; strip keys in
+    handlers via entityManager.removeKeys when domain objects are desired.
+  - Kept the token-aware overload that accepts a TableName-bearing
+    GetCommandInput (as requested). No convenience helper added.
+  - Updated README and removed the tsd test covering removeKeys typing.
+
+- Lint: remove unused local in EntityClient.getItem
+  - Deleted the unused `entityToken` variable and assignment in getItem(...args) to satisfy @typescript-eslint/no-unused-vars.
