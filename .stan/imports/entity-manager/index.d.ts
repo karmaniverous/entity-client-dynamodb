@@ -788,10 +788,11 @@ interface BaseQueryBuilderOptions<CC extends BaseConfigMap, EntityClient extends
  * Same as {@link QueryOptions | `QueryOptions`} for {@link EntityManager.query | `EntityManager.query`}, excluding `entityToken`, `pageKeyMap`, and `shardQueryMap`.
  *
  * @typeParam CC - {@link ConfigMap | `ConfigMap`} that defines an {@link Config | `EntityManager configuration`}'s {@link EntityMap | `EntityMap`}, key properties, and {@link TranscodeRegistry | `TranscodeRegistry`}. If omitted, defaults to {@link BaseConfigMap | `BaseConfigMap`}.
+ * @typeParam ET - Entity token narrowing the item types for options.item.
  *
  * @category QueryBuilder
  */
-type QueryBuilderQueryOptions<CC extends BaseConfigMap, CF = unknown> = Omit<QueryOptions<CC, never, string, CF>, 'entityToken' | 'pageKeyMap' | 'shardQueryMap'>;
+type QueryBuilderQueryOptions<CC extends BaseConfigMap, ET extends EntityToken<CC>, CF = unknown> = Omit<QueryOptions<CC, ET, string, CF>, 'entityToken' | 'pageKeyMap' | 'shardQueryMap'>;
 
 /**
  * Abstract base class supporting a fluent API for building a {@link ShardQueryMap | `ShardQueryMap`} using a database client.
@@ -828,7 +829,7 @@ declare abstract class BaseQueryBuilder<CC extends BaseConfigMap, EntityClient e
      * @returns - The {@link ShardQueryMap | `ShardQueryMap`} object.
      */
     build(): ShardQueryMap<CC, ET, ITS, CF, K>;
-    query(options: QueryBuilderQueryOptions<CC, CF>): Promise<QueryResult<CC, ET, ITS, K>>;
+    query(options: QueryBuilderQueryOptions<CC, ET, CF>): Promise<QueryResult<CC, ET, ITS, K>>;
 }
 
 export { BaseEntityClient, BaseQueryBuilder, EntityManager, configSchema, createEntityManager };
