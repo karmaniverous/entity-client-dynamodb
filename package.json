@@ -62,6 +62,16 @@
         "types": "./dist/index.d.ts",
         "default": "./dist/cjs/index.js"
       }
+    },
+    "./get-dotenv": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/mjs/get-dotenv/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/cjs/get-dotenv/index.js"
+      }
     }
   },
   "files": [

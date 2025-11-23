@@ -50,7 +50,7 @@ const YML_YAML = ['.yml', '.yaml'];
 
 /** Zero-pad and validate a version token (e.g., "003"). */
 export function normalizeVersionToken(version: string): string {
-  const trimmed = String(version ?? '').trim();
+  const trimmed = version.trim();
   if (!/^\d+$/.test(trimmed))
     throw new Error(`invalid version token: ${version}`);
   // keep original padding; assume directories are already zero-padded in repo
@@ -116,7 +116,7 @@ async function firstExisting(
   return undefined;
 }
 
-/** Resolve table.yml path for a version (no fallback; must exist for create-table). */
+/** Resolve the table definition path for a version (no fallback; must exist for create-table). */
 export async function resolveTableFile(
   version: string,
   cfg?: VersionedLayoutConfig,
@@ -126,8 +126,8 @@ export async function resolveTableFile(
 }
 
 /**
- * Resolve entityManager module path for a version with fallback (walk backward).
- * Returns the nearest existing {version}/entityManager.(ts|js) path or undefined.
+ * Resolve the entityManager module path for a version with fallback (walk backward).
+ * Returns the nearest existing version directory entityManager.(ts|js) path or undefined.
  */
 export async function resolveEntityManagerFileWithFallback(
   version: string,
@@ -162,8 +162,8 @@ export async function resolveTransformFile(
 }
 
 /**
- * Compute the inclusive ascending list of step versions K where from < k ≤ to.
- * Both versions must exist in the directory listing (we do not create directories).
+ * Compute the inclusive ascending list of step versions where
+ * fromVersion < k <= toVersion. We do not create directories.
  */
 export async function enumerateStepVersions(
   fromVersion: string,

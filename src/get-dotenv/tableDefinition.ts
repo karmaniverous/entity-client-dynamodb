@@ -18,11 +18,11 @@ import type {
   BaseConfigMap,
   EntityManager,
 } from '@karmaniverous/entity-manager';
-import YAML, { Document } from 'yaml';
+import YAML, { type Document, type YAMLMap } from 'yaml';
 
 import { generateTableDefinition } from '../Tables/generateTableDefinition';
 
-type TableDoc = Document<unknown>;
+type TableDoc = Document;
 
 const HEADER_COMMENT = [
   'GENERATED SECTIONS WARNING',
@@ -46,14 +46,18 @@ function ensureTableDoc(): TableDoc {
   return doc;
 }
 
-function getPropsNode(doc: TableDoc) {
-  const props = doc.get('Properties');
-  if (!props || typeof props !== 'object') {
-    // Reset to an empty mapping if missing/unexpected
+function getPropsNode(doc: TableDoc): YAMLMap {
+  let props = doc.get('Properties');
+  // Reset to an empty mapping if missing/unexpected
+  if (
+    !props ||
+    typeof props !== 'object' ||
+    !('set' in (props as Record<string, unknown>))
+  ) {
     doc.set('Properties', {});
-    return doc.get('Properties');
+    props = doc.get('Properties');
   }
-  return props;
+  return props as YAMLMap;
 }
 
 /** Replace a child under Properties (preserving other nodes/comments). */
@@ -61,10 +65,7 @@ function setPropsChild(doc: TableDoc, key: string, value: unknown) {
   const props = getPropsNode(doc);
   // The doc API preserves sibling nodes and their comments automatically.
   // We only replace the specified key.
-  // @ts-expect-error yaml typings are loose
-  props.set
-    ? props.set(key, value)
-    : doc.set('Properties', { ...props, [key]: value });
+  props.set(String(key), value);
 }
 
 export interface GeneratedSections {

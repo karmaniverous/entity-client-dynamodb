@@ -77,4 +77,10 @@
   - Added src/getdotenv with typed TransformMap (async+fan-out+drop), versioned
     layout resolvers (tokenized; fallback EM resolution), and YAML refresh utilities
     using yaml Document API (CST) to preserve comments while overwriting generated
-    sections only. Re-exported from package root and added yaml dependency.
+    sections only. Re-exported from package root and added yaml dependency.
+
+- Rename plugin path and add subpath export
+  - Moved plugin root to src/get-dotenv to reflect package name.
+  - Added dedicated subpath export "./get-dotenv" in package.json pointing to
+    dist/mjs/get-dotenv/index.js (ESM) and dist/cjs/get-dotenv/index.js (CJS),
+    with types resolved via dist/index.d.ts.
