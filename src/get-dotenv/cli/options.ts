@@ -78,7 +78,7 @@ export function dotenvExpandLocal(
       /\$\{([A-Za-z_][A-Za-z0-9_]*)(?::([^}]*))?\}/g,
       (_m, k: string, dflt?: string) => {
         const v = ref[k];
-        return v !== undefined ? v : (dflt ?? '');
+        return v ?? dflt ?? '';
       },
     );
     // $VAR[:default]
@@ -86,7 +86,7 @@ export function dotenvExpandLocal(
       /\$([A-Za-z_][A-Za-z0-9_]*)(?::([^\s$]+))?/g,
       (_m, k: string, dflt?: string) => {
         const v = ref[k];
-        return v !== undefined ? v : (dflt ?? '');
+        return v ?? dflt ?? '';
       },
     );
     if (out === before) break;

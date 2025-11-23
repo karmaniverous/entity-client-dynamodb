@@ -153,4 +153,8 @@
 
 - Lint: fix TSDoc escapes and unnecessary String() in CLI resolvers
   - Escaped ">" and braces in JSDoc to satisfy tsdoc/syntax.
-  - Removed redundant String() conversions in dotenvExpandLocal ternaries.
+  - Removed redundant String() conversions in dotenvExpandLocal ternaries.
+
+- Lint: prefer nullish coalescing in CLI resolvers
+  - Replaced explicit undefined checks with the nullish coalescing operator
+    in dotenvExpandLocal to satisfy @typescript-eslint/prefer-nullish-coalescing.
