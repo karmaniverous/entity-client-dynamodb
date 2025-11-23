@@ -120,4 +120,9 @@
 
 - Service: delete-table & purge-table wrappers + unit tests
   - Added src/get-dotenv/services/delete.ts with thin wrappers over EntityClient.deleteTable
-    and purgeItems; added mocked unit tests in delete.test.ts.
+    and purgeItems; added mocked unit tests in delete.test.ts.
+
+- Fix: type-safe pass-through and lint in delete tests
+  - Replaced non-existent batchProcessOptions.concurrency with a valid
+    ReturnConsumedCapacity pass-through in purge test and added awaited no-ops
+    plus void-usage of params to satisfy ESLint.
