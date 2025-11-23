@@ -166,4 +166,14 @@
     subcommands:
     • generate: resolves layout + overlays; loads EM via fallback; composes or
       refreshes YAML via generateTableDefinitionAtVersion.
-    • validate: resolves layout + version; compares YAML vs EM output.
+    • validate: resolves layout + version; compares YAML vs EM output.
+
+- Package posture: optional peer for get-dotenv; remove root plugin export
+  - Added "@karmaniverous/get-dotenv" as an optional peerDependency and kept it
+    in devDependencies for local builds/tests.
+  - Stopped exporting plugin symbols from the package root (import via the
+    "./get-dotenv" subpath only) to avoid forcing the peer at import time.
+
+- Plugin typing/logging fixes
+  - Narrowed overlay BillingMode type to AWS union for generate-table options.
+  - Replaced cli.logger usage with console logging; removed unnecessary optional chains.

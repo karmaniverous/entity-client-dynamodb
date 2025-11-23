@@ -78,6 +78,14 @@
   "files": [
     "dist"
   ],
+  "peerDependencies": {
+    "@karmaniverous/get-dotenv": "^5.2.6"
+  },
+  "peerDependenciesMeta": {
+    "@karmaniverous/get-dotenv": {
+      "optional": true
+    }
+  },
   "homepage": "https://github.com/karmaniverous/entity-client-dynamodb#readme",
   "keywords": [
     "dynamodb"

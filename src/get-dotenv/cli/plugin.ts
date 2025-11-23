@@ -1,7 +1,7 @@
 /**
  * get-dotenv "dynamodb" plugin (host-aware).
  *
- * Uses the public CLI host seam from @karmaniverous/get-dotenv/cliHost:
+ * Uses the public CLI host seam from \@karmaniverous/get-dotenv/cliHost:
  * - definePlugin: to declare a composable plugin
  * - GetDotenvCliPublic: structural host interface for setup/ctx access
  *
@@ -18,6 +18,7 @@
  * - EM resolution uses fallback via resolveAndLoadEntityManager.
  */
 
+import type { CreateTableCommandInput } from '@aws-sdk/client-dynamodb';
 import {
   definePlugin,
   type GetDotenvCliPublic,
@@ -35,7 +36,7 @@ import {
 
 function getPluginConfig(cli: GetDotenvCliPublic): DynamodbPluginConfig {
   // Best-effort: the host populates ctx.pluginConfigs keyed by plugin.id
-  const cfg = cli.getCtx?.()?.pluginConfigs?.dynamodb;
+  const cfg = cli.getCtx()?.pluginConfigs?.dynamodb;
   return (cfg ?? {}) as DynamodbPluginConfig;
 }
 
@@ -86,7 +87,7 @@ export const dynamodbPlugin = definePlugin({
         false,
       )
       .action(async (flags: Record<string, unknown>) => {
-        const ctx = cli.getCtx?.();
+        const ctx = cli.getCtx();
         const envRef = ctx?.dotenv ?? process.env;
         const pluginCfg = getPluginConfig(cli);
 
@@ -128,15 +129,43 @@ export const dynamodbPlugin = definePlugin({
 
         // Load EM with fallback then generate/refresh YAML.
         const em = await resolveAndLoadEntityManager(gen.version, cfg);
+
+        // Narrow overlay types to CreateTableCommandInput where needed
+        const overlaysSafe: {
+          BillingMode?: CreateTableCommandInput['BillingMode'];
+          ProvisionedThroughput?: {
+            ReadCapacityUnits: number;
+            WriteCapacityUnits: number;
+          };
+          TableName?: string;
+        } = {};
+        if (gen.options.overlays?.BillingMode) {
+          overlaysSafe.BillingMode = gen.options.overlays
+            .BillingMode as CreateTableCommandInput['BillingMode'];
+        }
+        if (gen.options.overlays?.ProvisionedThroughput) {
+          overlaysSafe.ProvisionedThroughput =
+            gen.options.overlays.ProvisionedThroughput;
+        }
+        if (gen.options.overlays?.TableName) {
+          overlaysSafe.TableName = gen.options.overlays.TableName;
+        }
+        const optionsSafe = {
+          ...(gen.options.force ? { force: true } : {}),
+          ...(Object.keys(overlaysSafe).length
+            ? { overlays: overlaysSafe }
+            : {}),
+        };
+
         const out = await generateTableDefinitionAtVersion(
           em,
           gen.version,
           cfg,
-          gen.options,
+          optionsSafe,
         );
 
         const action = out.refreshed ? 'refreshed' : 'created';
-        cli.logger?.info?.(`dynamodb generate: ${action} ${out.path}`);
+        console.info(`dynamodb generate: ${action} ${out.path}`);
         console.log(JSON.stringify({ action, path: out.path }, null, 2));
       });
 
@@ -157,7 +186,7 @@ export const dynamodbPlugin = definePlugin({
         'token (transform) filename without ext',
       )
       .action(async (flags: Record<string, unknown>) => {
-        const ctx = cli.getCtx?.();
+        const ctx = cli.getCtx();
         const envRef = ctx?.dotenv ?? process.env;
         const pluginCfg = getPluginConfig(cli);
 
@@ -188,7 +217,7 @@ export const dynamodbPlugin = definePlugin({
           equal: result.equal,
           diffs: result.diffs,
         };
-        cli.logger?.info?.(
+        console.info(
           result.equal
             ? 'dynamodb validate: OK (no drift)'
             : 'dynamodb validate: drift detected',
@@ -205,5 +234,3 @@ export const dynamodbPlugin = definePlugin({
     // group.command('migrate')...
   },
 });
-
-export default dynamodbPlugin;
