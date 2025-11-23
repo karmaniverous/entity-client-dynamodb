@@ -306,16 +306,12 @@ export const dynamodbPlugin = definePlugin({
           cfg,
           options,
         );
-        console.info(
-          `dynamodb create: ${out.waiterResult?.state ?? 'UNKNOWN'}`,
-        );
-        console.log(
-          JSON.stringify(
-            { waiter: out.waiterResult?.state ?? 'UNKNOWN' },
-            null,
-            2,
-          ),
-        );
+        const waiterStateCreate =
+          out.waiterResult && out.waiterResult.state
+            ? out.waiterResult.state
+            : 'UNKNOWN';
+        console.info('dynamodb create: ' + waiterStateCreate);
+        console.log(JSON.stringify({ waiter: waiterStateCreate }, null, 2));
       });
 
     // delete
@@ -351,16 +347,12 @@ export const dynamodbPlugin = definePlugin({
           'DynamoDBTable';
         const client = buildEntityClient(em, tableName, envRef);
         const out = await deleteTable(client, options);
-        console.info(
-          `dynamodb delete: ${out.waiterResult?.state ?? 'UNKNOWN'}`,
-        );
-        console.log(
-          JSON.stringify(
-            { waiter: out.waiterResult?.state ?? 'UNKNOWN' },
-            null,
-            2,
-          ),
-        );
+        const waiterStateDelete =
+          out.waiterResult && out.waiterResult.state
+            ? out.waiterResult.state
+            : 'UNKNOWN';
+        console.info('dynamodb delete: ' + waiterStateDelete);
+        console.log(JSON.stringify({ waiter: waiterStateDelete }, null, 2));
       });
 
     // purge
@@ -392,7 +384,7 @@ export const dynamodbPlugin = definePlugin({
           'DynamoDBTable';
         const client = buildEntityClient(em, tableName, envRef);
         const count = await purgeTable(client, options);
-        console.info(`dynamodb purge: ${count}`);
+        console.info('dynamodb purge: ' + String(count));
         console.log(JSON.stringify({ purged: count }, null, 2));
       });
 
@@ -492,14 +484,25 @@ export const dynamodbPlugin = definePlugin({
             : {}),
           onProgress: (p) => {
             console.info(
-              `migrate progress: pages=${p.pages} items=${p.items} outputs=${p.outputs} rate=${p.ratePerSec.toFixed(
-                2,
-              )}/s`,
+              'migrate progress: pages=' +
+                String(p.pages) +
+                ' items=' +
+                String(p.items) +
+                ' outputs=' +
+                String(p.outputs) +
+                ' rate=' +
+                p.ratePerSec.toFixed(2) +
+                '/s',
             );
           },
         });
         console.info(
-          `migrate done: pages=${out.pages} items=${out.items} outputs=${out.outputs}`,
+          'migrate done: pages=' +
+            String(out.pages) +
+            ' items=' +
+            String(out.items) +
+            ' outputs=' +
+            String(out.outputs),
         );
         console.log(JSON.stringify(out, null, 2));
       });
