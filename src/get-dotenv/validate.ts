@@ -12,6 +12,7 @@
 
 import { promises as fs } from 'node:fs';
 
+import type { CreateTableCommandInput } from '@aws-sdk/client-dynamodb';
 import type {
   BaseConfigMap,
   EntityManager,
@@ -25,11 +26,20 @@ function pickGeneratedFromDoc(doc: YAML.Document): GeneratedSections {
   const props = doc.get('Properties') as YAML.YAMLMap | undefined;
   if (!props || typeof props !== 'object' || !('get' in props)) return {};
   const getKey = (k: string) => props.get(k);
+
+  const attributeDefinitions = getKey(
+    'AttributeDefinitions',
+  ) as CreateTableCommandInput['AttributeDefinitions'];
+  const keySchema = getKey('KeySchema') as CreateTableCommandInput['KeySchema'];
+  const globalSecondaryIndexes = getKey(
+    'GlobalSecondaryIndexes',
+  ) as CreateTableCommandInput['GlobalSecondaryIndexes'];
+
   return {
-    AttributeDefinitions: getKey('AttributeDefinitions'),
-    KeySchema: getKey('KeySchema'),
-    GlobalSecondaryIndexes: getKey('GlobalSecondaryIndexes'),
-  };
+    AttributeDefinitions: attributeDefinitions,
+    KeySchema: keySchema,
+    GlobalSecondaryIndexes: globalSecondaryIndexes,
+  } as GeneratedSections;
 }
 
 function stableStringify(value: unknown): string {
