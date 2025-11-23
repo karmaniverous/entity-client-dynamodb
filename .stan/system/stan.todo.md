@@ -89,4 +89,14 @@
   - Added src/get-dotenv/validate.ts to compare YAML-generated sections against
     the EntityManager output and return a structured diff. Exported via the
     plugin barrel for use by the upcoming validate-table-definition and
-    create-table (validate) commands.
+    create-table (validate) commands.
+
+- Versioned EM loader and initial services
+  - Added src/get-dotenv/emLoader.ts to resolve+load versioned EntityManagers
+    using the fallback rules (walk backward).
+  - Implemented services:
+    • generateTableDefinitionAtVersion (compose or refresh; comment-preserving).
+    • createTableAtVersion (validate by default; refresh-generated option; waiter;
+      runtime TableName override). Extracts Properties safely from YAML and invokes
+      EntityClient.createTable.
+  - Exported loaders/services from the plugin barrel.

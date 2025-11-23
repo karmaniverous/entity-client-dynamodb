@@ -4,7 +4,9 @@
  * Exposes typed transform authoring and versioned layout/YAML utilities.
  * Host-aware plugin install and commands will build on these helpers.
  */
+export * from './emLoader';
 export * from './layout';
+export * from './services';
 export * from './tableDefinition';
 export * from './types';
 export * from './validate';
