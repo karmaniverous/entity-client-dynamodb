@@ -2,59 +2,73 @@
 
 ## Next up (priority order)
 
-- Release v0.4.0
-  - Run `npm run release` (release-it; CHANGELOG, tag, publish).
-  - Ensure `.env.local` has GITHUB_TOKEN if releasing locally.
+- Introduce versioned layout utilities (no EntityClient changes)
+  - Implement tokenized layout loader (tablesPath; tokens.table/entityManager/transform).
+  - Resolve prev/next EntityManagers per step with fallback (walk backward).
+  - Load transform.ts per version (TS/JS), normalize to TransformMap.
+  - Export defineTransformMap<PrevCM, NextCM>() for typed authoring.
+
+- YAML refresh (comment-preserving) and validation
+  - Use yaml Document API with CST to update only generated nodes:
+    • Properties.AttributeDefinitions
+    • Properties.KeySchema
+    • Properties.GlobalSecondaryIndexes
+  - Preserve all other nodes and comments in tables/NNN/table.yml.
+  - Implement validate-table-definition to compare generated nodes against EM.
+  - Write banner comment to table.yml warning about generated sections.
+
+- CLI plugin (host-aware) “dynamodb” and subcommands
+  - Installable via get-dotenv host (per Guides).
+  - Commands:
+    • generate-table-definition (with root baseline overlay; --force; overlays)
+    • validate-table-definition
+    • create-table (validate by default; --refresh-generated; waiter; TableName override)
+    • delete-table (confirm unless --force; waiter)
+    • purge-table (confirm unless --force)
+    • migrate-data (fromVersion→toVersion; streaming; chain)
+  - Respect get-dotenv config precedence and dotenv expansion for all options.
+
+- Migrate-data streaming & progress
+  - Page-scan source (Limit=pageSize); per-record entity token from hashKey prefix.
+  - Apply mandatory chain:
+    • Missing transform → prev.removeKeys + next.addKeys
+    • TransformMap handlers may be async; returning undefined drops; arrays fan-out
+  - Normalize outputs to next records (addKeys when item returned).
+  - Batch write via EntityClient.putItems with retries.
+  - Emit progress (pages, records, outputs, items/sec) at interval.
+  - Flags: pageSize, limit, concurrency, transformConcurrency (default 1), progress interval.
+
+- Config plumbing & precedence
+  - plugins.dynamodb config surface in getdotenv.config.\* with dotenv expansion.
+  - Effective options: CLI > config > defaults; resolve strings via ctx.dotenv.
+  - Add debug/trace logging that respects host redaction/entropy settings.
+
+- Tests
+  - Unit:
+    • EM resolution fallback (prev/next), transform loader normalize (TS/JS).
+    • YAML comment-preserving refresh + drift detection.
+    • Chain composition and TransformMap returns (undefined, single, array).
+  - Integration (DynamoDB Local):
+    • create-table validate/refresh; purge/delete.
+    • migrate-data (no transforms; with TransformMap; fan-out; drop).
+  - TSD:
+    • defineTransformMap<PrevCM, NextCM> typing for per-entity handlers.
+    • TransformMap returns (undefined/item/record/array) compile as expected.
+
+- Documentation
+  - Add requirements doc (done) and authoring guide:
+    • Versioned layout and tokens
+    • entityManager.ts structure (values-first)
+    • Transform authoring using defineTransformMap<PrevCM, NextCM>
+    • Baseline template and comment-preserving refresh
+    • Serverless.yml import examples
+    • get-dotenv config snippets with env overlays
+  - Update README to reference the new plugin and examples.
+
+- Follow-up on legacy monolith:
+  - Reconcile current .stan/system/stan.requirements.md (legacy, >300 LOC).
+  - Propose decomposition into topical requirements docs (keep monolith read-only) and link from a lightweight index.
 
 ## Completed
 
-- Interop typing (local; no upstream dependency)
-  - addRangeKeyCondition/addFilterCondition accept a generic BaseQueryBuilder
-    plus the minimal structural contract (indexParamsMap + logger).
-  - TSD: added helper-assignability test to assert QueryBuilder<C, …> is
-    assignable to helper params without casts at call sites.
-
-- TSD coverage hardening
-  - Added negative test: invalid index token when CF is present (excess
-    property checks).
-  - Confirmed non-literal removeKeys typing:
-    • getItems('token', …, { removeKeys: boolean }) → union-of-arrays
-    (EntityRecordByToken[] | EntityItemByToken[]).
-    • getItem('token', …, { removeKeys: boolean }) → union (plus undefined).
-  - Tuple projections remain pinned to Pick<…> over correct base for
-    removeKeys true/false.
-
-- Docs polish
-  - README/API includes compact CF + PageKeyByIndex example.
-  - Notes captured for non-literal removeKeys typing and projection policy
-    (auto-include uniqueProperty and explicit sort keys).
-
-- Batch nicety tests
-  - Added “unprocessed requeue” tests for batch put/delete to pin behavior
-    when UnprocessedItems are returned (requeue verified).
-
-- Tests/lint hardening
-  - Refined batch requeue tests to avoid `any` casts and satisfy
-    `@typescript-eslint/require-await`; stubs now omit `UnprocessedItems`
-    when empty so later outputs match the expected undefined property.
-
-- Variance polish (types only)
-  - Relaxed internal addQueryCondition* helpers to accept a MinimalBuilder
-    (indexParamsMap + logger) instead of a concrete QueryBuilder type.
-  - Removed local variance-bridging casts from addRangeKeyCondition and
-    addFilterCondition. No runtime behavior change.
-
-- Interop (entity-manager): make QueryBuilder.query accept ET-aware options
-  - Updated QueryBuilder.query signature to
-    QueryBuilderQueryOptions<C, ET, CF> and forwarded unchanged to super.
-  - Fixes TS2344/TS2345 in typecheck/build/docs with no runtime changes.
-- Breaking: remove removeKeys option from token-aware reads
-  - Eliminated GetItemOptions/GetItemsOptions and all removeKeys overloads.
-  - Token-aware getItem/getItems now always return records; strip keys in
-    handlers via entityManager.removeKeys when domain objects are desired.
-  - Kept the token-aware overload that accepts a TableName-bearing
-    GetCommandInput (as requested). No convenience helper added.
-  - Updated README and removed the tsd test covering removeKeys typing.
-
-- Lint: remove unused local in EntityClient.getItem
-  - Deleted the unused `entityToken` variable and assignment in getItem(...args) to satisfy @typescript-eslint/no-unused-vars.
+**CRITICAL: Append-only list. Add new completed items at the end. Prune old completed entries from the top. Do not edit existing entries.**
