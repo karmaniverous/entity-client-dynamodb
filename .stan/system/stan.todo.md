@@ -135,4 +135,9 @@
   - Added src/get-dotenv/services/migrate.ts with step discovery, EM fallback resolution,
     optional per-step transforms, default chain, streaming scan/write, limit/pageSize, and
     progress callback. Added src/get-dotenv/services/migrate.test.ts covering default chain,
-    drop (undefined), and fan-out (array) transform cases.
+    drop (undefined), and fan-out (array) transform cases.
+
+- Lint: migrate service/test tidy
+  - Removed unused imports/params, reworded TSDoc to avoid “>” escapes,
+    converted trivial async helpers to sync, refined dynamic import typing,
+    and preferred for-of loops to satisfy repo lint rules.

@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 
 import type { BaseConfigMap } from '@karmaniverous/entity-manager';
 import { describe, expect, it, vi } from 'vitest';
@@ -59,6 +59,7 @@ function makeClients(items: Record<string, unknown>[]): {
     doc: {
       scan: vi.fn(async (_input: unknown) => {
         // satisfy require-await
+        void _input;
         await Promise.resolve();
         if (scanned) return { Items: [], LastEvaluatedKey: undefined };
         scanned = true;

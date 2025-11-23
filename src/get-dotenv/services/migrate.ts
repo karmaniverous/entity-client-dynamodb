@@ -1,18 +1,17 @@
 /**
- * Migrate data across versioned steps (prev -> next) with optional per-step transforms.
+ * Migrate data across versioned steps (prev to next) with optional per-step transforms.
  *
  * Requirements addressed:
- * - Step discovery: enumerateStepVersions(from < k <= to) in ascending order.
- * - EM resolution per step with fallback (walk backward) for prev and next.
- * - Transform loading per step (optional). Missing => default chain.
- * - Default chain: prev.removeKeys -> next.addKeys.
- * - Transform semantics: undefined => drop; single => one output; array => fan-out.
+ * - Step discovery: enumerate all versions where fromVersion \< k \<= toVersion in ascending order.
+ * - EM resolution per step with fallback (walk backward) for both prev and next.
+ * - Transform loading per step (optional). Missing transforms use the default chain.
+ * - Default chain: prev.removeKeys followed by next.addKeys.
+ * - Transform semantics: undefined results in drop; single result produces one output; array produces fan-out.
  * - Streaming scan with Limit=pageSize; writes via target.putItems.
  * - Counters and progress callback at interval.
  * - Limit/stop conditions respected; minimal memory footprint (page-bounded).
  */
 
-import { promises as fs } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 import type {
@@ -70,21 +69,17 @@ interface StepContext {
   transformMap: TransformMapLike; // normalized (missing entities => default chain)
 }
 
-/** Default prev.removeKeys -> next.addKeys chain (normalized to array). */
-async function defaultChain(
+/** Default prev.removeKeys followed by next.addKeys (normalized to array). */
+function defaultChain(
   entityToken: string,
   record: Record<string, unknown>,
   prev: EntityManager<BaseConfigMap>,
   next: EntityManager<BaseConfigMap>,
-): Promise<Record<string, unknown>[]> {
-  // remove keys to get domain-ish item
-
+): Record<string, unknown>[] {
   const item = prev.removeKeys(entityToken as never, record as never) as Record<
     string,
     unknown
   >;
-  // add keys to produce storage record for the next EM
-
   const nextRecord = next.addKeys(
     entityToken as never,
     item as never,
@@ -93,9 +88,9 @@ async function defaultChain(
 }
 
 /** Normalize a transform return to an array (drop/one/array). */
-async function normalizeTransformReturn(
+function normalizeTransformReturn(
   value: undefined | Record<string, unknown> | Record<string, unknown>[],
-): Promise<Record<string, unknown>[]> {
+): Record<string, unknown>[] {
   if (value === undefined) return [];
   return Array.isArray(value) ? value : [value];
 }
@@ -107,8 +102,13 @@ async function loadTransformMapForVersion(
 ): Promise<TransformMapLike | undefined> {
   const file = await resolveTransformFile(version, cfg);
   if (!file) return undefined;
-  const mod = await import(pathToFileURL(file).href);
-  const exp = 'default' in mod ? (mod as { default: unknown }).default : mod;
+  const mod: unknown = await import(pathToFileURL(file).href);
+  const exp =
+    mod &&
+    typeof mod === 'object' &&
+    'default' in (mod as Record<string, unknown>)
+      ? (mod as { default: unknown }).default
+      : mod;
   if (exp && typeof exp === 'object') return exp as TransformMapLike;
   return undefined;
 }
@@ -152,15 +152,15 @@ async function applyStepChain(
   stepContexts: StepContext[],
 ): Promise<Record<string, unknown>[]> {
   let acc: Record<string, unknown>[] = [initial];
-  for (let i = 0; i < stepContexts.length; i++) {
-    const { prev, next, transformMap } = stepContexts[i];
+  for (const ctx of stepContexts) {
+    const { prev, next, transformMap } = ctx;
     const nextAcc: Record<string, unknown>[] = [];
     for (const rec of acc) {
       const entityToken = extractEntityTokenFromRecord(rec, prev);
       const handler = transformMap[entityToken];
       if (handler) {
         const val = await handler(rec, { prev, next, entityToken });
-        const outs = await normalizeTransformReturn(val);
+        const outs = normalizeTransformReturn(val);
         // ensure storage records for next by adding keys if necessary
         for (const out of outs) {
           const hk = (next.config as { hashKey?: string }).hashKey ?? 'hashKey';
@@ -177,7 +177,7 @@ async function applyStepChain(
           }
         }
       } else {
-        const outs = await defaultChain(entityToken, rec, prev, next);
+        const outs = defaultChain(entityToken, rec, prev, next);
         nextAcc.push(...outs);
       }
     }
