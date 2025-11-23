@@ -140,4 +140,13 @@
 - Lint: migrate service/test tidy
   - Removed unused imports/params, reworded TSDoc to avoid “>” escapes,
     converted trivial async helpers to sync, refined dynamic import typing,
-    and preferred for-of loops to satisfy repo lint rules.
+    and preferred for-of loops to satisfy repo lint rules.
+
+- CLI option resolvers (dynamodb) with dotenv expansion & precedence
+  - Added src/get-dotenv/cli/options.ts with pure helpers to resolve flags+config
+    into VersionedLayoutConfig and service input shapes.
+  - Precedence enforced: CLI flags > plugins.dynamodb config > defaults.
+  - Dotenv expansion supported for all string options via a local recursive
+    expander (compatible with $VAR and ${VAR:default}).
+  - Added unit tests at src/get-dotenv/cli/options.test.ts covering precedence,
+    expansion, waiter/overlay mapping, and migrate numeric coercions.
