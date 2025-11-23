@@ -97,8 +97,8 @@
   - Implemented services:
     • generateTableDefinitionAtVersion (compose or refresh; comment-preserving).
     • createTableAtVersion (validate by default; refresh-generated option; waiter;
-      runtime TableName override). Extracts Properties safely from YAML and invokes
-      EntityClient.createTable.
+    runtime TableName override). Extracts Properties safely from YAML and invokes
+    EntityClient.createTable.
   - Exported loaders/services from the plugin barrel.
 
 - Fix lint/type-safety in get-dotenv utilities
@@ -165,7 +165,7 @@
   - Added src/get-dotenv/cli/plugin.ts with a namespaced "dynamodb" group and
     subcommands:
     • generate: resolves layout + overlays; loads EM via fallback; composes or
-      refreshes YAML via generateTableDefinitionAtVersion.
+    refreshes YAML via generateTableDefinitionAtVersion.
     • validate: resolves layout + version; compares YAML vs EM output.
 
 - Package posture: optional peer for get-dotenv; remove root plugin export
@@ -176,4 +176,12 @@
 
 - Plugin typing/logging fixes
   - Narrowed overlay BillingMode type to AWS union for generate-table options.
-  - Replaced cli.logger usage with console logging; removed unnecessary optional chains.
+  - Replaced cli.logger usage with console logging; removed unnecessary optional chains.
+
+- CLI plugin: add create/delete/purge/migrate subcommands
+  - create: resolve layout+version; load EM; build EntityClient; call createTableAtVersion;
+    waiter/maxSeconds and optional TableName override supported.
+  - delete/purge: require --force (non-interactive confirm guard); resolve table name;
+    build EntityClient; call deleteTable/purgeTable; report waiter/purged count.
+  - migrate: resolve cfg/from/to; build source/target clients; call migrateData;
+    print progress ticks (pages/items/outputs/rate) and final summary.
