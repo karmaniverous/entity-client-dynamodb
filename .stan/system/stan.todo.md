@@ -104,4 +104,8 @@
 - Fix lint/type-safety in get-dotenv utilities
   - emLoader: removed unsafe any assignments by narrowing dynamic import result
     and checking default export key presence.
-  - generate: removed unnecessary await on sync function to satisfy lint rules.
+  - generate: removed unnecessary await on sync function to satisfy lint rules.
+
+- Lint: remove unnecessary String() conversion in get-dotenv tableDefinition
+  - Replaced props.set(String(key), value) with props.set(key, value) in
+    src/get-dotenv/tableDefinition.ts to satisfy @typescript-eslint/no-unnecessary-type-conversion.
