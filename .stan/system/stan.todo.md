@@ -125,4 +125,8 @@
 - Fix: type-safe pass-through and lint in delete tests
   - Replaced non-existent batchProcessOptions.concurrency with a valid
     ReturnConsumedCapacity pass-through in purge test and added awaited no-ops
-    plus void-usage of params to satisfy ESLint.
+    plus void-usage of params to satisfy ESLint.
+
+- Docs: remove stray @param in validateTable JSDoc
+  - Deleted unused `@param _options` from src/get-dotenv/services/validateTable.ts
+    to silence Typedoc warning.

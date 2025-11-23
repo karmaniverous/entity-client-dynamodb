@@ -23,7 +23,6 @@ import { validateGeneratedSections, type ValidateResult } from '../validate';
  *
  * @param version - Version token (NNN).
  * @param cfg - Versioned layout config/tokens.
- * @param _options - Optional future options (placeholder).
  *
  * @returns ValidateResult plus tablePath for diagnostics.
  */
