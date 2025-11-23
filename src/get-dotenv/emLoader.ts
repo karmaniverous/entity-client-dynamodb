@@ -38,8 +38,17 @@ export async function loadEntityManagerFromFile(
   modulePath: string,
 ): Promise<EntityManager<BaseConfigMap>> {
   const url = pathToFileURL(modulePath).href;
-  const mod = await import(url);
-  const exp = mod?.default ?? mod;
+  const mod: unknown = await import(url);
+  let exp: unknown;
+  if (
+    typeof mod === 'object' &&
+    mod !== null &&
+    'default' in (mod as Record<string, unknown>)
+  ) {
+    exp = (mod as { default: unknown }).default;
+  } else {
+    exp = mod;
+  }
 
   let em: unknown;
   if (typeof exp === 'function') {

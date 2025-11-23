@@ -99,4 +99,9 @@
     • createTableAtVersion (validate by default; refresh-generated option; waiter;
       runtime TableName override). Extracts Properties safely from YAML and invokes
       EntityClient.createTable.
-  - Exported loaders/services from the plugin barrel.
+  - Exported loaders/services from the plugin barrel.
+
+- Fix lint/type-safety in get-dotenv utilities
+  - emLoader: removed unsafe any assignments by narrowing dynamic import result
+    and checking default export key presence.
+  - generate: removed unnecessary await on sync function to satisfy lint rules.

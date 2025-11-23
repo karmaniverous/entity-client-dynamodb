@@ -46,7 +46,7 @@ export async function generateTableDefinitionAtVersion<C extends BaseConfigMap>(
   const vp = getVersionedPaths(version, cfg);
   const tableFile = resolve(
     await ensureDir(vp.versionDir),
-    await resolveTableFilePath(vp),
+    resolveTableFilePath(vp),
   );
   const baselineRoot = join(vp.root, 'table.template.yml');
   const baselineRootYaml = await fileIfExists(baselineRoot);
