@@ -141,4 +141,12 @@
   - Derived the adapter config type (CC) from the EntityClient instance to type
     EntityRecordByToken return for keepKeys=true.
   - For domain reads, used const-tuple projections in token-aware getItems to
-    fetch only domain fields, guaranteeing no keys are present at runtime.
+    fetch only domain fields, guaranteeing no keys are present at runtime.
+
+- Docs/DX: inline comments and README improvements
+  - Added focused inline comments across handlers and entity manager wiring to
+    clarify flow without changing behavior; expanded README with Getting Started, local run, project layout, and DX tips.
+
+- Docs/DX: finish inline docs swing & tidy style
+  - Removed stacked line comments above TypeDoc blocks; merged context into
+    primary TypeDoc; eliminated duplicate mini-docblocks; tidied imports.

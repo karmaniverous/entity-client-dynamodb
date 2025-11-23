@@ -5,21 +5,33 @@ stan-core:
     - docs
     - package-lock.json
   imports:
+    aws-cli:
+      - ../../VeteranCrowd/aws-cli/lib/aws/migrateData.js
+      - ../../VeteranCrowd/aws-cli/lib/aws/purgeTable.js
     entity-manager:
+      - ../entity-manager/.stan/interop/entity-client-dynamodb/**
       - ../entity-manager/.stan/system/stan.requirements.md
       - ../entity-manager/.stan/system/stan.todo.md
       - ../entity-manager/dist/index.d.ts
-      - ../entity-manager/.stan/interop/entity-client-dynamodb/**
+      - ../entity-manager/README.md
     entity-manager-demo:
+      - ../entity-manager-demo/.stan/interop/entity-client-dynamodb/**
       - ../entity-manager-demo/.stan/system/stan.requirements.md
       - ../entity-manager-demo/.stan/system/stan.todo.md
       - ../entity-manager-demo/dist/index.d.ts
-      - ../entity-manager-demo/.stan/interop/entity-client-dynamodb/**
+      - ../entity-manager-demo/README.md
     entity-tools:
+      - ../entity-tools/.stan/interop/entity-client-dynamodb/**
       - ../entity-tools/.stan/system/stan.requirements.md
       - ../entity-tools/.stan/system/stan.todo.md
       - ../entity-tools/dist/index.d.ts
-      - ../entity-tools/.stan/interop/entity-client-dynamodb/**
+      - ../entity-tools/README.md
+    get-dotenv:
+      - ../get-dotenv/.stan/interop/entity-client-dynamodb/**
+      - ../get-dotenv/.stan/system/stan.requirements.md
+      - ../get-dotenv/.stan/system/stan.todo.md
+      - ../get-dotenv/dist/index.d.ts
+      - ../get-dotenv/README.md
   includes: []
 stan-cli:
   cliDefaults:
