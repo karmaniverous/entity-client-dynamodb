@@ -59,9 +59,7 @@ describe('get-dotenv tableDefinition utilities', function () {
     expect(doc.get('Type')).to.equal('AWS::DynamoDB::Table');
     // Baseline non-generated property preserved
     const props = doc.get('Properties') as YAML.YAMLMap;
-    expect((props.get('BillingMode') as string) ?? '').to.equal(
-      'PAY_PER_REQUEST',
-    );
+    expect(props.get('BillingMode')).to.equal('PAY_PER_REQUEST');
     // Generated sections present
     expect(props.get('AttributeDefinitions')).to.exist;
     expect(props.get('KeySchema')).to.exist;

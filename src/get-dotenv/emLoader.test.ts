@@ -21,7 +21,7 @@ describe('get-dotenv EM loader', function () {
     await fs.writeFile(emPath, jsModule(emBody), 'utf8');
 
     const em = await resolveAndLoadEntityManager('001', cfg);
-    expect(!!em && typeof em === 'object' && 'config' in em).to.equal(true);
+    expect((em as unknown as { config?: unknown }).config).to.exist;
   });
 
   it('should fall back to earlier version when current has no EM', async function () {
@@ -35,7 +35,7 @@ describe('get-dotenv EM loader', function () {
     await fs.writeFile(emPath, jsModule(emBody), 'utf8');
 
     const em = await resolveAndLoadEntityManager('005', cfg);
-    expect(!!em && typeof em === 'object' && 'config' in em).to.equal(true);
+    expect((em as unknown as { config?: unknown }).config).to.exist;
   });
 
   it('should error when no EM can be resolved across ancestry', async function () {

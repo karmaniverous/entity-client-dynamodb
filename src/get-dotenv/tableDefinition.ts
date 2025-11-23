@@ -42,7 +42,8 @@ function ensureTableDoc(): TableDoc {
   const doc = new YAML.Document();
   doc.commentBefore = HEADER_COMMENT;
   doc.set('Type', 'AWS::DynamoDB::Table');
-  doc.set('Properties', {});
+  // Ensure Properties is a YAMLMap (not a plain object)
+  doc.set('Properties', doc.createNode({}));
   return doc;
 }
 
@@ -54,7 +55,8 @@ function getPropsNode(doc: TableDoc): YAMLMap {
     typeof props !== 'object' ||
     !('set' in (props as Record<string, unknown>))
   ) {
-    doc.set('Properties', {});
+    // Ensure we create a YAMLMap
+    doc.set('Properties', doc.createNode({}));
     props = doc.get('Properties');
   }
   return props as YAMLMap;
@@ -65,7 +67,7 @@ function setPropsChild(doc: TableDoc, key: string, value: unknown) {
   const props = getPropsNode(doc);
   // The doc API preserves sibling nodes and their comments automatically.
   // We only replace the specified key.
-  props.set(key, value);
+  props.set(String(key), value);
 }
 
 export interface GeneratedSections {
