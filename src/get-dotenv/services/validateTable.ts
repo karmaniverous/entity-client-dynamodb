@@ -10,8 +10,6 @@
 import { promises as fs } from 'node:fs';
 import { resolve } from 'node:path';
 
-import type { BaseConfigMap } from '@karmaniverous/entity-manager';
-
 import { resolveAndLoadEntityManager } from '../emLoader';
 import {
   getVersionedPaths,
@@ -19,11 +17,6 @@ import {
   type VersionedLayoutConfig,
 } from '../layout';
 import { validateGeneratedSections, type ValidateResult } from '../validate';
-
-export interface ValidateTableOptions {
-  /** Reserved for future output shaping (concise/verbose); logic remains pure here. */
-  verbose?: boolean;
-}
 
 /**
  * Validate generated sections in tables/NNN/table.yml against the resolved EntityManager.
@@ -37,7 +30,6 @@ export interface ValidateTableOptions {
 export async function validateTableDefinitionAtVersion(
   version: string,
   cfg?: VersionedLayoutConfig,
-  _options?: ValidateTableOptions,
 ): Promise<ValidateResult & { tablePath: string }> {
   // Resolve table path and ensure it exists.
   const vp = getVersionedPaths(version, cfg);

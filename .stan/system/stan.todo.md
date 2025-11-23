@@ -112,4 +112,8 @@
 
 - Service: validate-table-definition wrapper + tests
   - Added src/get-dotenv/services/validateTable.ts to resolve EM with fallback,
-    ensure table.yml exists, and return structured diffs; added unit tests.
+    ensure table.yml exists, and return structured diffs; added unit tests.
+
+- Fix: lint and cross-platform test for validate service
+  - Removed unused import and parameter in src/get-dotenv/services/validateTable.ts.
+  - Normalized path separators in validateTable.test.ts for Windows compatibility.

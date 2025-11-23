@@ -42,7 +42,8 @@ describe('get-dotenv validateTableDefinitionAtVersion service', function () {
     await composeNewTableYaml(out, undefined, generated);
 
     const result = await validateTableDefinitionAtVersion('001', cfg);
-    expect(result.tablePath.endsWith('/001/table.yml')).to.equal(true);
+    const normalized = result.tablePath.split('\\').join('/');
+    expect(normalized.endsWith('/001/table.yml')).to.equal(true);
     expect(result.equal).to.equal(true);
     expect(result.diffs).to.deep.equal([]);
   });
