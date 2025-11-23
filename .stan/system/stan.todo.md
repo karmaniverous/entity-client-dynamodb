@@ -116,4 +116,8 @@
 
 - Fix: lint and cross-platform test for validate service
   - Removed unused import and parameter in src/get-dotenv/services/validateTable.ts.
-  - Normalized path separators in validateTable.test.ts for Windows compatibility.
+  - Normalized path separators in validateTable.test.ts for Windows compatibility.
+
+- Service: delete-table & purge-table wrappers + unit tests
+  - Added src/get-dotenv/services/delete.ts with thin wrappers over EntityClient.deleteTable
+    and purgeItems; added mocked unit tests in delete.test.ts.
