@@ -157,4 +157,13 @@
 
 - Lint: prefer nullish coalescing in CLI resolvers
   - Replaced explicit undefined checks with the nullish coalescing operator
-    in dotenvExpandLocal to satisfy @typescript-eslint/prefer-nullish-coalescing.
+    in dotenvExpandLocal to satisfy @typescript-eslint/prefer-nullish-coalescing.
+
+- Adopt get-dotenv host types; add "dynamodb" plugin (generate/validate)
+  - Imported public CLI host seam from '@karmaniverous/get-dotenv/cliHost'
+    (definePlugin, GetDotenvCliPublic).
+  - Added src/get-dotenv/cli/plugin.ts with a namespaced "dynamodb" group and
+    subcommands:
+    • generate: resolves layout + overlays; loads EM via fallback; composes or
+      refreshes YAML via generateTableDefinitionAtVersion.
+    • validate: resolves layout + version; compares YAML vs EM output.

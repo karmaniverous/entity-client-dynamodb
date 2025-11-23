@@ -5,6 +5,7 @@
  * Host-aware plugin install and commands will build on these helpers.
  */
 export * from './cli/options';
+export * from './cli/plugin';
 export * from './emLoader';
 export * from './layout';
 export * from './services';
