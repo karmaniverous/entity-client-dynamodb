@@ -129,4 +129,10 @@
 
 - Docs: remove stray @param in validateTable JSDoc
   - Deleted unused `@param _options` from src/get-dotenv/services/validateTable.ts
-    to silence Typedoc warning.
+    to silence Typedoc warning.
+
+- Service: migrate-data implementation + unit tests
+  - Added src/get-dotenv/services/migrate.ts with step discovery, EM fallback resolution,
+    optional per-step transforms, default chain, streaming scan/write, limit/pageSize, and
+    progress callback. Added src/get-dotenv/services/migrate.test.ts covering default chain,
+    drop (undefined), and fan-out (array) transform cases.
