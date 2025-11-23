@@ -1,4 +1,5 @@
 export * from './EntityClient';
+export * from './get-dotenv';
 export * from './QueryBuilder';
 export * from './Tables';
 

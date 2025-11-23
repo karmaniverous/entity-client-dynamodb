@@ -11,7 +11,8 @@
     "@karmaniverous/entity-tools": "^0.7.1",
     "aws-xray-sdk": "^3.11.0",
     "nanoid": "^5.1.6",
-    "radash": "^12.1.1"
+    "radash": "^12.1.1",
+    "yaml": "^2.8.1"
   },
   "description": "Entity Manager integrated into a DynamoDB client wrapper.",
   "devDependencies": {

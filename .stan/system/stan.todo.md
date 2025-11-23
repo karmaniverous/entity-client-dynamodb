@@ -72,3 +72,9 @@
 ## Completed
 
 **CRITICAL: Append-only list. Add new completed items at the end. Prune old completed entries from the top. Do not edit existing entries.**
+
+- Scaffold get-dotenv plugin root and utilities
+  - Added src/getdotenv with typed TransformMap (async+fan-out+drop), versioned
+    layout resolvers (tokenized; fallback EM resolution), and YAML refresh utilities
+    using yaml Document API (CST) to preserve comments while overwriting generated
+    sections only. Re-exported from package root and added yaml dependency.
