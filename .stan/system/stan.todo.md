@@ -108,4 +108,8 @@
 
 - Lint: remove unnecessary String() conversion in get-dotenv tableDefinition
   - Replaced props.set(String(key), value) with props.set(key, value) in
-    src/get-dotenv/tableDefinition.ts to satisfy @typescript-eslint/no-unnecessary-type-conversion.
+    src/get-dotenv/tableDefinition.ts to satisfy @typescript-eslint/no-unnecessary-type-conversion.
+
+- Service: validate-table-definition wrapper + tests
+  - Added src/get-dotenv/services/validateTable.ts to resolve EM with fallback,
+    ensure table.yml exists, and return structured diffs; added unit tests.
