@@ -65,7 +65,7 @@ function setPropsChild(doc: TableDoc, key: string, value: unknown) {
   const props = getPropsNode(doc);
   // The doc API preserves sibling nodes and their comments automatically.
   // We only replace the specified key.
-  props.set(String(key), value);
+  props.set(key, value);
 }
 
 export interface GeneratedSections {

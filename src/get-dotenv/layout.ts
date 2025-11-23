@@ -163,7 +163,7 @@ export async function resolveTransformFile(
 
 /**
  * Compute the inclusive ascending list of step versions where
- * fromVersion < k <= toVersion. We do not create directories.
+ * fromVersion \< k \<= toVersion. We do not create directories.
  */
 export async function enumerateStepVersions(
   fromVersion: string,

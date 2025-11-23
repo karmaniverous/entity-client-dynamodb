@@ -83,4 +83,10 @@
   - Moved plugin root to src/get-dotenv to reflect package name.
   - Added dedicated subpath export "./get-dotenv" in package.json pointing to
     dist/mjs/get-dotenv/index.js (ESM) and dist/cjs/get-dotenv/index.js (CJS),
-    with types resolved via dist/index.d.ts.
+    with types resolved via dist/index.d.ts.
+
+- Validation helper for generated sections
+  - Added src/get-dotenv/validate.ts to compare YAML-generated sections against
+    the EntityManager output and return a structured diff. Exported via the
+    plugin barrel for use by the upcoming validate-table-definition and
+    create-table (validate) commands.

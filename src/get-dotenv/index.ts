@@ -7,3 +7,4 @@
 export * from './layout';
 export * from './tableDefinition';
 export * from './types';
+export * from './validate';
