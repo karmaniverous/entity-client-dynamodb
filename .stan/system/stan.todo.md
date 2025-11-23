@@ -149,4 +149,8 @@
   - Dotenv expansion supported for all string options via a local recursive
     expander (compatible with $VAR and ${VAR:default}).
   - Added unit tests at src/get-dotenv/cli/options.test.ts covering precedence,
-    expansion, waiter/overlay mapping, and migrate numeric coercions.
+    expansion, waiter/overlay mapping, and migrate numeric coercions.
+
+- Lint: fix TSDoc escapes and unnecessary String() in CLI resolvers
+  - Escaped ">" and braces in JSDoc to satisfy tsdoc/syntax.
+  - Removed redundant String() conversions in dotenvExpandLocal ternaries.

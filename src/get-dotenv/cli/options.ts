@@ -2,7 +2,7 @@
  * CLI option resolvers for the "dynamodb" get-dotenv plugin.
  *
  * Responsibilities:
- * - Precedence: CLI flags > plugins.dynamodb config > defaults.
+ * - Precedence: CLI flags \> plugins.dynamodb config \> defaults.
  * - Dotenv expansion for all string options using a provided env ref.
  * - Stable mapping to VersionedLayoutConfig and service input shapes.
  *
@@ -63,7 +63,7 @@ export interface DynamodbPluginConfig {
   };
 }
 
-/** Expand $VAR[:default] and ${VAR[:default]} recursively against ref. */
+/** Expand $VAR[:default] and $\{VAR[:default]\} recursively against ref. */
 export function dotenvExpandLocal(
   value: string | undefined,
   ref: EnvRef = process.env,
@@ -78,7 +78,7 @@ export function dotenvExpandLocal(
       /\$\{([A-Za-z_][A-Za-z0-9_]*)(?::([^}]*))?\}/g,
       (_m, k: string, dflt?: string) => {
         const v = ref[k];
-        return v !== undefined ? String(v) : (dflt ?? '');
+        return v !== undefined ? v : (dflt ?? '');
       },
     );
     // $VAR[:default]
@@ -86,7 +86,7 @@ export function dotenvExpandLocal(
       /\$([A-Za-z_][A-Za-z0-9_]*)(?::([^\s$]+))?/g,
       (_m, k: string, dflt?: string) => {
         const v = ref[k];
-        return v !== undefined ? String(v) : (dflt ?? '');
+        return v !== undefined ? v : (dflt ?? '');
       },
     );
     if (out === before) break;
