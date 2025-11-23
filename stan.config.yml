@@ -30,7 +30,9 @@ stan-core:
       - ../get-dotenv/.stan/interop/entity-client-dynamodb/**
       - ../get-dotenv/.stan/system/stan.requirements.md
       - ../get-dotenv/.stan/system/stan.todo.md
+      - ../get-dotenv/package.json
       - ../get-dotenv/dist/index.d.ts
+      - ../get-dotenv/dist/cliHost.d.ts
       - ../get-dotenv/README.md
   includes: []
 stan-cli:
