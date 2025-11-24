@@ -425,7 +425,73 @@ mycli dynamodb generate --version 001
 
 # validate generated YAML sections vs EM
 mycli dynamodb validate --version 001
+
+# create a table (validate by default; waiter with 60s max)
+mycli dynamodb create --version 001 --max-seconds 60
+
+# create with refresh of generated sections and a one-off TableName override
+mycli dynamodb create --version 001 \
+  --refresh-generated \
+  --table-name-override MyTable \
+  --max-seconds 120
+
+# delete a table (confirmation required; use --force in CI)
+mycli dynamodb delete --table-name MyTable --version 001 --max-seconds 30 --force
+
+# purge all items from a table (confirmation required; use --force in CI)
+mycli dynamodb purge --table-name MyTable --version 001 --force
+
+# migrate data across versions with optional concurrency and progress
+mycli dynamodb migrate \
+  --source-table Source \
+  --target-table Target \
+  --from-version 001 \
+  --to-version 002 \
+  --page-size 100 \
+  --limit 10000 \
+  --transform-concurrency 4 \
+  --progress-interval-ms 2000 \
+  --force
 ```
+
+### Authoring transforms
+
+When migrating between versions, you can add an optional per-step transform module to control how records move from the previous version to the next. Author transforms in `tables/NNN/transform.ts` using the `defineTransformMap` helper for strong typing. Omitted entities fall back to the default chain: `prev.removeKeys → next.addKeys`.
+
+Example (`tables/002/transform.ts`):
+
+```ts
+import { defineTransformMap } from '@karmaniverous/entity-client-dynamodb/get-dotenv';
+
+// Import types from your local EntityManager modules for this step.
+// These are the value-first Config types you export in your versioned files.
+import type { ConfigMap as PrevCM } from '../001/entityManager';
+import type { ConfigMap as NextCM } from './entityManager';
+
+export default defineTransformMap<PrevCM, NextCM>({
+  // Per-entity handler; may be async.
+  // Return:
+  // - undefined → drop the record
+  // - one item/record → migrate one
+  // - array of items/records → fan-out
+  user: async (record, { prev, next }) => {
+    // Convert storage record → domain item using the previous EM
+    const item = prev.removeKeys('user', record);
+
+    // Optional domain mutations between versions...
+    // e.g., normalize or backfill a property
+    // item.foo = item.foo ?? 'default';
+
+    // Convert domain item → storage record for the next EM
+    return next.addKeys('user', item);
+  },
+});
+```
+
+Notes:
+- Handlers are per-entity. Entities you don’t list use the default chain.
+- You can also return an array to fan-out or return `undefined` to drop a record.
+- Cross-entity fan-out is not supported in v1; outputs are interpreted for the same entity token.
 
 ---
 

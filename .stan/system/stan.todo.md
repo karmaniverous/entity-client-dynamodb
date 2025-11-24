@@ -236,4 +236,7 @@
     • src/get-dotenv/cli/plugin/commands/delete.wiring.test.ts
     • src/get-dotenv/cli/plugin/commands/purge.wiring.test.ts
     • src/get-dotenv/cli/plugin/commands/migrate.wiring.test.ts
-  - Ensure ES2020 compatibility and lint-safe typing.
+  - Ensure ES2020 compatibility and lint-safe typing.
+
+- Docs: README — add "Authoring transforms" section and expand CLI usage
+  examples for create/delete/purge/migrate under the get-dotenv plugin.
