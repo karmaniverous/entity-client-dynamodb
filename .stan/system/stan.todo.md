@@ -226,4 +226,14 @@
 
 - Tests: remove Array.prototype.at usage for ES2020 target
   - Replaced .at(...) with indexed access guarded by length checks.
-  - Strongly typed mock.calls to readonly unknown tuple arrays to avoid any-typed values.
+  - Strongly typed mock.calls to readonly unknown tuple arrays to avoid any-typed values.
+
+- Docs: add short README section for get-dotenv plugin
+  - Documented plugin layout, subpath export, config surface, and CLI subcommands with brief examples.
+
+- Tests: plugin command wiring (delete, purge, migrate)
+  - Added unit tests mirroring create/validate wiring:
+    • src/get-dotenv/cli/plugin/commands/delete.wiring.test.ts
+    • src/get-dotenv/cli/plugin/commands/purge.wiring.test.ts
+    • src/get-dotenv/cli/plugin/commands/migrate.wiring.test.ts
+  - Ensure ES2020 compatibility and lint-safe typing.

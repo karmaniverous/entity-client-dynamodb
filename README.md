@@ -360,6 +360,75 @@ See [API Docs](https://docs.karmanivero.us/entity-client-dynamodb) for details.
 
 ---
 
+## Get-dotenv plugin (dynamodb)
+
+This package ships an optional get-dotenv plugin that provides a host-aware CLI for versioned DynamoDB table lifecycle and data migration.
+
+- Subpath export: import the plugin from the dedicated subpath (no impact on application imports).
+  - ESM: `@karmaniverous/entity-client-dynamodb/get-dotenv`
+  - CJS paths mirror dist outputs; types are provided via the package root.
+- Plugin layout:
+  - Source: `src/get-dotenv/**`
+  - Commands: `dynamodb generate|validate|create|delete|purge|migrate`
+  - Services: versioned layout helpers, EM loader (fallback), YAML composition/validation, migration chaining
+
+Install the host (optional peer):
+
+```bash
+npm i -D @karmaniverous/get-dotenv
+```
+
+Use from a get-dotenv host (plugin-first)
+
+```ts
+// mycli.ts
+import { createCli } from '@karmaniverous/get-dotenv';
+import { dynamodbPlugin } from '@karmaniverous/entity-client-dynamodb/get-dotenv';
+
+await createCli({ alias: 'mycli' })
+  // install the plugin under the "dynamodb" namespace
+  .use(dynamodbPlugin)
+  .run(process.argv.slice(2));
+```
+
+Minimal config (getdotenv.config.json)
+
+```json
+{
+  "plugins": {
+    "dynamodb": {
+      "tablesPath": "./tables",
+      "tokens": {
+        "table": "table",
+        "entityManager": "entityManager",
+        "transform": "transform"
+      }
+    }
+  }
+}
+```
+
+Subcommands (namespaced under “dynamodb”)
+
+- generate: compose or refresh `tables/NNN/table.yml` (comment‑preserving)
+- validate: compare generated sections against the resolved EM
+- create: create table from YAML (validate or refresh generated sections)
+- delete: delete table (waiter)
+- purge: scan and delete all items
+- migrate: stream data across version steps with optional transforms
+
+Examples
+
+```bash
+# compose YAML for version 001 (from tables/table.template.yml if present)
+mycli dynamodb generate --version 001
+
+# validate generated YAML sections vs EM
+mycli dynamodb validate --version 001
+```
+
+---
+
 ## License
 
 BSD-3-Clause
