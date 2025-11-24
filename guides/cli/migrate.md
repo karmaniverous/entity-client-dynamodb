@@ -35,7 +35,7 @@ prev.removeKeys(entityToken, record) -> next.addKeys(entityToken, item)
 Notes
 
 - Limit is enforced across outputs; fan-out counts toward the limit.
-- `sourceTable` and `targetTable` can be provided via flags, config, or env (dotenv expansion supported). See [Config overlays](./config-overlays.md) for precedence.
+- `sourceTable` and `targetTable` can be provided via flags, config, or env (dotenv expansion supported).
 
 Related
 

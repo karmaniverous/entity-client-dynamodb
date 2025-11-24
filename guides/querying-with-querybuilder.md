@@ -30,32 +30,6 @@ qb.addRangeKeyCondition('created', {
 });
 ```
 
-Filter conditions
-
-```ts
-// Comparison and other filter operators over the item surface
-qb.addFilterCondition('created', {
-  property: 'updated',
-  operator: '>=',
-  value: 1700000000000,
-});
-
-// Nested boolean groups are supported
-qb.addFilterCondition('created', {
-  operator: 'and',
-  conditions: [
-    { property: 'status', operator: '=', value: 'active' },
-    { operator: 'not', condition: { property: 'archived', operator: 'attribute_exists' } },
-  ],
-});
-```
-
-Notes
-
-- Supported operators include: `<`, `<=`, `=`, `>`, `>=`, `<>`, `between`, `begins_with`, `contains`,
-  `attribute_exists`, `attribute_not_exists`, `in`, and boolean groups `and`, `or`, `not`.
-- Range-key constraints should use `addRangeKeyCondition`; use `addFilterCondition` for non-key filters.
-
 Run the query
 
 ```ts

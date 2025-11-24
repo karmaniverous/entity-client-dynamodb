@@ -52,8 +52,6 @@ Purge (scan + batched deletes)
 const purged = await client.purgeItems();
 ```
 
-Returns the number of items purged.
-
 Transactions
 
 ```ts
