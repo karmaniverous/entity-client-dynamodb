@@ -210,3 +210,11 @@
   - Wired imports in src/get-dotenv/services/migrate/index.ts for BaseConfigMap, EntityClient,
     VersionedLayoutConfig, StepContext, enumerateStepVersions, loadStepContext, applyStepChain, runLimited.
   - Removed unnecessary async from per-record task closure to satisfy require-await and clear knip unused flags.
+
+- Tests: plugin command wiring (validate, create)
+  - Added unit tests that stub a minimal CLI/Command builder, mock services, and
+    assert proper service invocation and outputs:
+    • src/get-dotenv/cli/plugin/commands/validate.wiring.test.ts
+    • src/get-dotenv/cli/plugin/commands/create.wiring.test.ts
+
+- Knip: silence optional peer note by ignoring @karmaniverous/get-dotenv in knip.json

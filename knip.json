@@ -1,7 +1,7 @@
 {
   "entry": ["src/**/index.ts"],
   "ignore": ["test/types/**", "test-d/**", ".stan/imports/**"],
-  "ignoreDependencies": ["cross-env"],
+  "ignoreDependencies": ["cross-env", "@karmaniverous/get-dotenv"],
   "project": ["*/**", "!docs/**"],
   "rules": {
     "exports": "off",
