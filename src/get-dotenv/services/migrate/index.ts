@@ -1,3 +1,15 @@
+import type { BaseConfigMap } from '@karmaniverous/entity-manager';
+
+import type { EntityClient } from '../../../EntityClient/EntityClient';
+import {
+  enumerateStepVersions,
+  type VersionedLayoutConfig,
+} from '../../layout';
+import { applyStepChain } from './chain';
+import { loadStepContext } from './load';
+import { runLimited } from './pool';
+import type { StepContext } from './types';
+
 export async function migrateData<C extends BaseConfigMap>(
   source: EntityClient<C>,
   target: EntityClient<C>,
@@ -76,7 +88,7 @@ export async function migrateData<C extends BaseConfigMap>(
 
     // Transform with optional concurrency
     const tasks = pageItems.map(
-      (rec) => async () => applyStepChain(rec, stepContexts),
+      (rec) => () => applyStepChain(rec, stepContexts),
     );
     const transformed = await runLimited(
       tasks,

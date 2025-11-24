@@ -205,3 +205,8 @@
 - Lint: TSDoc escapes and Knip duplicate export
   - Escaped braces/angle in cli/options/expand.ts and services/migrate/chain.ts.
   - Dropped default export from plugin/index.ts to resolve duplicate export warning.
+
+- Fix: migrate index imports and task closure
+  - Wired imports in src/get-dotenv/services/migrate/index.ts for BaseConfigMap, EntityClient,
+    VersionedLayoutConfig, StepContext, enumerateStepVersions, loadStepContext, applyStepChain, runLimited.
+  - Removed unnecessary async from per-record task closure to satisfy require-await and clear knip unused flags.
