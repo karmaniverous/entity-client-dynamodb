@@ -92,7 +92,16 @@
   },
   "out": "./docs/",
   "plugin": ["typedoc-plugin-mdn-links", "typedoc-plugin-replace-text"],
-  "projectDocuments": ["./CHANGELOG.md"],
+  "projectDocuments": [
+    "./CHANGELOG.md",
+    "./docs/guides/getting-started.md",
+    "./docs/guides/entityclient-and-crud.md",
+    "./docs/guides/querying-with-querybuilder.md",
+    "./docs/guides/tables-and-definition.md",
+    "./docs/guides/type-inference-model.md",
+    "./docs/guides/aws-xray.md",
+    "./docs/guides/cli/index.md"
+  ],
   "replaceText": {
     "replacements": [
       {
