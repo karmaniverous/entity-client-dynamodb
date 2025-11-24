@@ -222,4 +222,8 @@
 - Tests: fix hoist/typing/lint for wiring tests
   - Use vi.hoisted spies and synchronous vi.mock factories.
   - Guard mock.calls via .at(0) to avoid tuple assertions.
-  - Replace async/empty lambdas; mark unused args to satisfy ESLint.
+  - Replace async/empty lambdas; mark unused args to satisfy ESLint.
+
+- Tests: remove Array.prototype.at usage for ES2020 target
+  - Replaced .at(...) with indexed access guarded by length checks.
+  - Strongly typed mock.calls to readonly unknown tuple arrays to avoid any-typed values.

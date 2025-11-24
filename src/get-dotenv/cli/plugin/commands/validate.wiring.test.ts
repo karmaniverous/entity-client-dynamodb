@@ -76,9 +76,10 @@ describe('dynamodb plugin: validate wiring', () => {
 
     // Service called with version and a config object
     expect(h.validateSpy).toHaveBeenCalledTimes(1);
-    const callArgs = h.validateSpy.mock.calls.at(0) ?? [];
+    const calls = h.validateSpy.mock.calls as readonly (readonly unknown[])[];
+    const callArgs = calls.length > 0 ? calls[0] : ([] as const);
     const versionArg = callArgs[0];
-    const cfgArg = callArgs[1];
+    const cfgArg = callArgs[1] as Record<string, unknown> | undefined;
     expect(versionArg).toBe('001');
     expect(cfgArg).toMatchObject({ tablesPath: './tables' });
 

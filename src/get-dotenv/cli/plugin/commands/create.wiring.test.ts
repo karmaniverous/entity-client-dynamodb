@@ -84,23 +84,32 @@ describe('dynamodb plugin: create wiring', () => {
 
     // resolveAndLoadEntityManager called for version
     expect(h.emSpy).toHaveBeenCalledTimes(1);
-    const emCall = h.emSpy.mock.calls.at(0) ?? [];
+    const emCalls = h.emSpy.mock.calls as readonly (readonly unknown[])[];
+    const emCall = emCalls.length > 0 ? emCalls[0] : ([] as const);
     expect(emCall[0]).toBe('001');
 
     // buildEntityClient constructed client for the override table
     expect(h.buildSpy).toHaveBeenCalled();
-    const buildArgs = h.buildSpy.mock.calls.at(0) ?? [];
-    const emArg = buildArgs[0];
-    const tblArg = buildArgs[1] as string;
+    const buildCalls = h.buildSpy.mock.calls as readonly (readonly [
+      unknown,
+      string,
+    ])[];
+    const buildSelected: readonly [unknown, string] =
+      buildCalls.length > 0 ? buildCalls[0] : [undefined, '' as string];
+    const emArg = buildSelected[0];
+    const tblArg = buildSelected[1];
     expect(typeof emArg).toBe('object');
     expect(tblArg).toBe('MyTbl');
 
     // createTableAtVersion called with resolved waiter and options
     expect(h.createSpy).toHaveBeenCalledTimes(1);
-    const createArgs = h.createSpy.mock.calls.at(0) ?? [];
+    const createCalls = h.createSpy.mock
+      .calls as readonly (readonly unknown[])[];
+    const createArgs = createCalls.length > 0 ? createCalls[0] : ([] as const);
     // args: client, em, version, cfg, options
     expect(createArgs[2]).toBe('001');
-    expect(createArgs[4]).toMatchObject({
+    const optionsArg = createArgs[4] as Record<string, unknown> | undefined;
+    expect(optionsArg).toMatchObject({
       tableNameOverride: 'MyTbl',
       waiter: { maxWaitTime: 5 },
     });
