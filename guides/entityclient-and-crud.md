@@ -1,4 +1,8 @@
-# EntityClient: CRUD and batches
+---
+title: 'EntityClient: CRUD and Batches'
+---
+
+# EntityClient: CRUD and Batches
 
 Token-aware reads and convenient batches with strong types.
 
@@ -10,7 +14,9 @@ const rec = await client.getItem('user', { hashKey2: 'h', rangeKey: 'r' });
 const item = rec.Item && client.entityManager.removeKeys('user', rec.Item);
 
 // Project selected attributes (tuple preserves types)
-const recProj = await client.getItem('user', { hashKey2: 'h', rangeKey: 'r' }, ['a'] as const);
+const recProj = await client.getItem('user', { hashKey2: 'h', rangeKey: 'r' }, [
+  'a',
+] as const);
 
 // Batch get
 const many = await client.getItems('user', [

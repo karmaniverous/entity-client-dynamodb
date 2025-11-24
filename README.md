@@ -41,11 +41,11 @@ const item = out.Item && client.entityManager.removeKeys('user', out.Item);
 
 Documentation (guides)
 
-- [Getting started](https://docs.karmanivero.us/entity-client-dynamodb/guides/getting-started) - Install, wire, and make your first calls.
-- [EntityClient: CRUD and batches](https://docs.karmanivero.us/entity-client-dynamodb/guides/entityclient-and-crud) - Record/recordset operations with strong types.
+- [Getting Started](https://docs.karmanivero.us/entity-client-dynamodb/guides/getting-started) - Install, wire, and make your first calls.
+- [EntityClient: CRUD and Batches](https://docs.karmanivero.us/entity-client-dynamodb/guides/entityclient-and-crud) - Record/recordset operations with strong types.
 - [Querying with QueryBuilder](https://docs.karmanivero.us/entity-client-dynamodb/guides/querying-with-querybuilder) - Cross-shard, multi-index querying and projections.
-- [Tables and table definition](https://docs.karmanivero.us/entity-client-dynamodb/guides/tables-and-definition) - Generate AttributeDefinitions/GSIs/KeySchema.
-- [Type inference mental model](https://docs.karmanivero.us/entity-client-dynamodb/guides/type-inference-model) - Tokens, projection K, and config‑literal cf.
+- [Tables & Table Definition](https://docs.karmanivero.us/entity-client-dynamodb/guides/tables-and-definition) - Generate AttributeDefinitions/GSIs/KeySchema.
+- [Type Inference Mental Model](https://docs.karmanivero.us/entity-client-dynamodb/guides/type-inference-model) - Tokens, projection K, and config‑literal cf.
 - [AWS X-Ray](https://docs.karmanivero.us/entity-client-dynamodb/guides/aws-xray) - Enable tracing for the DynamoDB SDK client.
 
 CLI Plugin

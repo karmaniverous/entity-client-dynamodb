@@ -1,4 +1,8 @@
-# Install and host integration
+---
+title: Install & Host Integration
+---
+
+# Install & Host Integration
 
 Install the get-dotenv host (optional peer) and wire the DynamoDB plugin.
 

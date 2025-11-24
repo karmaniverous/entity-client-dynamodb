@@ -1,3 +1,7 @@
+---
+title: AWS X-Ray
+---
+
 # AWS X-Ray
 
 Enable AWS X-Ray capture for the internal DynamoDB client when an X-Ray daemon is available.

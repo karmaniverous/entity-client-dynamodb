@@ -1,4 +1,8 @@
-# Serverless integration
+---
+title: Serverless Integration
+---
+
+# Serverless Integration
 
 Import the generated table resource into Serverless Framework (YAML).
 

@@ -1,3 +1,7 @@
+---
+title: Querying with QueryBuilder
+---
+
 # Querying with QueryBuilder
 
 Compose cross-shard, multi-index queries with strong typing and optional projections.
@@ -36,7 +40,7 @@ Run the query
 const shardQueryMap = qb.build();
 const { items, pageKeyMap } = await client.entityManager.query({
   entityToken: 'user',
-  item: {},      // minimal fields to derive alternate keys when needed
+  item: {}, // minimal fields to derive alternate keys when needed
   shardQueryMap, // built from the adapter
   pageSize: 25,
 });

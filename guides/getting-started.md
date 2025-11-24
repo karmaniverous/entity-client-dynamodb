@@ -1,4 +1,8 @@
-# Getting started
+---
+title: Getting Started
+---
+
+# Getting Started
 
 This guide shows a minimal workflow to initialize an EntityClient, create a table, and perform simple CRUD.
 
@@ -11,7 +15,10 @@ npm i @karmaniverous/entity-client-dynamodb
 Wire an EntityClient
 
 ```ts
-import { EntityClient, generateTableDefinition } from '@karmaniverous/entity-client-dynamodb';
+import {
+  EntityClient,
+  generateTableDefinition,
+} from '@karmaniverous/entity-client-dynamodb';
 import { EntityManager } from '@karmaniverous/entity-manager';
 
 // Assume you have a value-first EntityManager; see "Type inference mental model"

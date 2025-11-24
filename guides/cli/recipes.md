@@ -1,4 +1,8 @@
-# CLI usage recipes
+---
+title: CLI Usage Recipes
+---
+
+# CLI Usage Recipes
 
 Compose YAML for a new version
 

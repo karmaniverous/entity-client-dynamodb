@@ -1,4 +1,8 @@
-# Versioned layout and tokens
+---
+title: Versioned Layout & Tokens
+---
+
+# Versioned Layout & Tokens
 
 Opinionated structure under a configurable root (default: `tables`):
 

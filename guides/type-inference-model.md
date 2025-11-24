@@ -1,4 +1,8 @@
-# Type inference mental model
+---
+title: Type Inference Mental Model
+---
+
+# Type Inference Mental Model
 
 DX rules of thumb:
 
@@ -15,10 +19,17 @@ Patterns
 
 ```ts
 // Token-aware get with projection tuple (const narrows the shape)
-const out = await client.getItem('user', { hashKey2: 'h', rangeKey: 'r' }, ['a'] as const);
+const out = await client.getItem('user', { hashKey2: 'h', rangeKey: 'r' }, [
+  'a',
+] as const);
 
 // QueryBuilder narrows per-index page keys when cf (config literal) is supplied
-const qb = createQueryBuilder({ entityClient: client, entityToken: 'user', hashKeyToken: 'hashKey2', cf: myConfigLiteral });
+const qb = createQueryBuilder({
+  entityClient: client,
+  entityToken: 'user',
+  hashKeyToken: 'hashKey2',
+  cf: myConfigLiteral,
+});
 ```
 
 Related

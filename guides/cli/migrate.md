@@ -1,4 +1,8 @@
-# Data migration
+---
+title: Data Migration
+---
+
+# Data Migration
 
 Stream data across version steps with optional per-step transforms.
 

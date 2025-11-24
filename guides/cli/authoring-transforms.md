@@ -1,4 +1,8 @@
-# Authoring transforms
+---
+title: Authoring Transforms
+---
+
+# Authoring Transforms
 
 Write per-step transforms in `tables/NNN/transform.ts` using `defineTransformMap<PrevCM, NextCM>`. Omitted entities use the default chain: `prev.removeKeys → next.addKeys`.
 
@@ -13,7 +17,7 @@ export default defineTransformMap<PrevCM, NextCM>({
   user: async (record, { prev, next }) => {
     const item = prev.removeKeys('user', record); // storage -> domain
     // Optional domain changes here...
-    return next.addKeys('user', item);            // domain -> storage
+    return next.addKeys('user', item); // domain -> storage
   },
 });
 ```

@@ -1,4 +1,8 @@
-# Table lifecycle
+---
+title: Table Lifecycle
+---
+
+# Table Lifecycle
 
 Commands (namespaced under `dynamodb`)
 
