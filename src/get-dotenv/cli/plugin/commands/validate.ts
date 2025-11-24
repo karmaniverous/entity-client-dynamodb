@@ -1,7 +1,7 @@
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
 import type { Command } from 'commander';
 
-import { validateTableDefinitionAtVersion } from '../../../get-dotenv/services/validateTable';
+import { validateTableDefinitionAtVersion } from '../../../services/validateTable';
 import { resolveLayoutConfig, resolveValidateAtVersion } from '../../options';
 import { getPluginConfig } from '../helpers';
 

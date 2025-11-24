@@ -72,7 +72,7 @@ export function registerCreate(cli: GetDotenvCliPublic, group: Command) {
         'DynamoDBTable';
       const client = buildEntityClient(em, clientTable, envRef);
       const out = await createTableAtVersion(client, em, version, cfg, options);
-      const waiterStateCreate = out.waiterResult?.state ?? 'UNKNOWN';
+      const waiterStateCreate = out.waiterResult.state;
       console.info('dynamodb create: ' + waiterStateCreate);
       console.log(JSON.stringify({ waiter: waiterStateCreate }, null, 2));
     });

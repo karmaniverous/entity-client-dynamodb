@@ -39,7 +39,7 @@ export function registerDelete(cli: GetDotenvCliPublic, group: Command) {
         'DynamoDBTable';
       const client = buildEntityClient(em, tableName, envRef);
       const out = await deleteTable(client, options);
-      const waiterStateDelete = out.waiterResult?.state ?? 'UNKNOWN';
+      const waiterStateDelete = out.waiterResult.state;
       console.info('dynamodb delete: ' + waiterStateDelete);
       console.log(JSON.stringify({ waiter: waiterStateDelete }, null, 2));
     });

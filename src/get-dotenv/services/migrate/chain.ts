@@ -5,7 +5,7 @@ import type {
 
 import type { StepContext } from './types';
 
-/** Default prev.removeKeys -> next.addKeys chain (normalized to array). */
+/** Default prev.removeKeys -\> next.addKeys chain (normalized to array). */
 export function defaultChain(
   entityToken: string,
   record: Record<string, unknown>,

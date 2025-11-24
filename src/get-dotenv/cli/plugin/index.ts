@@ -9,7 +9,7 @@ import { registerValidate } from './commands/validate';
 
 export const dynamodbPlugin = definePlugin({
   id: 'dynamodb',
-  setup: async (cli) => {
+  setup: (cli) => {
     const group = cli
       .ns('dynamodb')
       .description(
@@ -24,5 +24,3 @@ export const dynamodbPlugin = definePlugin({
     registerMigrate(cli, group);
   },
 });
-
-export default dynamodbPlugin;

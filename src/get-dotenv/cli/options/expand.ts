@@ -1,6 +1,6 @@
 import type { EnvRef } from './types';
 
-/** Expand $VAR[:default] and ${VAR[:default]} recursively against ref. */
+/** Expand $VAR[:default] and \$\{VAR[:default]\} recursively against ref. */
 export function dotenvExpandLocal(
   value: string | undefined,
   ref: EnvRef = process.env,

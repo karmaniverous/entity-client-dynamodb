@@ -191,3 +191,17 @@
     - Split src/get-dotenv/cli/options.ts into src/get-dotenv/cli/options/\* and export via options/index.ts; preserve import path by re-exporting from the original location.
     - Split src/get-dotenv/services/migrate.ts into src/get-dotenv/services/migrate/\* (types, chain, load, pool, index) and re-export from services/migrate.ts.
     - Fixed relative imports in new plugin command modules and helpers and replaced optional-chain lint violations.
+
+- Fix: validate command import path (tsc/rollup/docs)
+  - Corrected path in src/get-dotenv/cli/plugin/commands/validate.ts to '../../../services/validateTable'.
+
+- Fix: deduplicate migrate service index
+  - Removed duplicated import block and function implementation in src/get-dotenv/services/migrate/index.ts that caused TS2300/TS2393 and build/doc failures.
+
+- Lint: waiter state and require-await
+  - Replaced optional chaining/nullish coalescing on waiterResult state in create/delete commands with direct access.
+  - Removed unnecessary async from plugin setup to satisfy @typescript-eslint/require-await.
+
+- Lint: TSDoc escapes and Knip duplicate export
+  - Escaped braces/angle in cli/options/expand.ts and services/migrate/chain.ts.
+  - Dropped default export from plugin/index.ts to resolve duplicate export warning.
