@@ -185,3 +185,9 @@
     build EntityClient; call deleteTable/purgeTable; report waiter/purged count.
   - migrate: resolve cfg/from/to; build source/target clients; call migrateData;
     print progress ticks (pages/items/outputs/rate) and final summary.
+
+  - Decompose large get-dotenv modules and fix lint
+    - Split src/get-dotenv/cli/plugin.ts into src/get-dotenv/cli/plugin/\* with per-command modules and helpers; keep src/get-dotenv/cli/plugin.ts as a tiny re-export for stable imports.
+    - Split src/get-dotenv/cli/options.ts into src/get-dotenv/cli/options/\* and export via options/index.ts; preserve import path by re-exporting from the original location.
+    - Split src/get-dotenv/services/migrate.ts into src/get-dotenv/services/migrate/\* (types, chain, load, pool, index) and re-export from services/migrate.ts.
+    - Fixed relative imports in new plugin command modules and helpers and replaced optional-chain lint violations.

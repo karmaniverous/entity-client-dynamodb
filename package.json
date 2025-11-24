@@ -31,6 +31,7 @@
     "@vitest/coverage-v8": "^4.0.12",
     "@vitest/eslint-plugin": "^1.4.3",
     "auto-changelog": "^2.5.0",
+    "commander": "^14.0.2",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
