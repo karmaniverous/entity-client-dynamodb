@@ -1,13 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock the validate service used by the command module.
-const validateSpy = vi.fn(async () => ({
-  tablePath: '/tables/001/table.yml',
-  equal: true,
-  diffs: [],
+// Hoisted spies to satisfy Vitest's hoisting of vi.mock
+const h = vi.hoisted(() => ({
+  validateSpy: vi.fn(() =>
+    Promise.resolve({
+      tablePath: '/tables/001/table.yml',
+      equal: true,
+      diffs: [],
+    }),
+  ),
 }));
+// Mock the validate service used by the command module.
 vi.mock('../../../services/validateTable', () => ({
-  validateTableDefinitionAtVersion: validateSpy,
+  validateTableDefinitionAtVersion: h.validateSpy,
 }));
 
 // Minimal command-builder stub that captures the registered action.
@@ -16,7 +21,9 @@ class FakeGroup {
   command() {
     return this;
   }
-  description(_: string) {
+  description(desc: string) {
+    // mark used to satisfy lint
+    void desc;
     return this;
   }
   option(): this {
@@ -33,8 +40,8 @@ import { registerValidate } from './validate';
 
 describe('dynamodb plugin: validate wiring', () => {
   let group: FakeGroup;
-  const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-  const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+  const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+  const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
   const fakeCli = {
     // Only ns and getCtx are used by registerValidate
@@ -57,7 +64,7 @@ describe('dynamodb plugin: validate wiring', () => {
 
   beforeEach(() => {
     group = new FakeGroup();
-    validateSpy.mockClear();
+    h.validateSpy.mockClear();
     infoSpy.mockClear();
     logSpy.mockClear();
   });
@@ -68,11 +75,10 @@ describe('dynamodb plugin: validate wiring', () => {
     await group.actionFn?.({ version: '001' });
 
     // Service called with version and a config object
-    expect(validateSpy).toHaveBeenCalledTimes(1);
-    const [versionArg, cfgArg] = validateSpy.mock.calls[0] as [
-      unknown,
-      unknown,
-    ];
+    expect(h.validateSpy).toHaveBeenCalledTimes(1);
+    const callArgs = h.validateSpy.mock.calls.at(0) ?? [];
+    const versionArg = callArgs[0];
+    const cfgArg = callArgs[1];
     expect(versionArg).toBe('001');
     expect(cfgArg).toMatchObject({ tablesPath: './tables' });
 

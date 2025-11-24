@@ -217,4 +217,9 @@
     • src/get-dotenv/cli/plugin/commands/validate.wiring.test.ts
     • src/get-dotenv/cli/plugin/commands/create.wiring.test.ts
 
-- Knip: silence optional peer note by ignoring @karmaniverous/get-dotenv in knip.json
+- Knip: silence optional peer note by ignoring @karmaniverous/get-dotenv in knip.json
+
+- Tests: fix hoist/typing/lint for wiring tests
+  - Use vi.hoisted spies and synchronous vi.mock factories.
+  - Guard mock.calls via .at(0) to avoid tuple assertions.
+  - Replace async/empty lambdas; mark unused args to satisfy ESLint.

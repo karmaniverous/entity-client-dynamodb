@@ -1,29 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mocks for dependencies used by the command module.
-const emSpy = vi.fn(async () => ({}));
-vi.mock('../../../emLoader', () => ({
-  resolveAndLoadEntityManager: emSpy,
+// Hoisted spies to satisfy vi.mock hoisting
+const h = vi.hoisted(() => ({
+  emSpy: vi.fn(() => Promise.resolve({})),
+  createSpy: vi.fn(() =>
+    Promise.resolve({ waiterResult: { state: 'SUCCESS' as const } }),
+  ),
+  buildSpy: vi.fn((_em: unknown, tableName: string) => ({ tableName })),
+  pluginCfgSpy: vi.fn(() => ({})),
 }));
-
-const createSpy = vi.fn(async () => ({
-  waiterResult: { state: 'SUCCESS' as const },
+// Mocks for dependencies used by the command module.
+vi.mock('../../../emLoader', () => ({
+  resolveAndLoadEntityManager: h.emSpy,
 }));
 vi.mock('../../../services/create', () => ({
-  createTableAtVersion: createSpy,
+  createTableAtVersion: h.createSpy,
 }));
-
 // Mock helpers to avoid constructing a real AWS client.
-const buildSpy = vi.fn((_em: unknown, tableName: string) => ({ tableName }));
-const pluginCfgSpy = vi.fn(() => ({}));
-vi.mock('../helpers', async (orig) => {
-  const mod = await orig();
-  return {
-    ...(mod as object),
-    buildEntityClient: buildSpy,
-    getPluginConfig: pluginCfgSpy,
-  };
-});
+vi.mock('../helpers', () => ({
+  buildEntityClient: h.buildSpy,
+  getPluginConfig: h.pluginCfgSpy,
+}));
 
 // Minimal command-builder stub that captures the registered action.
 class FakeGroup {
@@ -31,7 +28,8 @@ class FakeGroup {
   command() {
     return this;
   }
-  description(_: string) {
+  description(desc: string) {
+    void desc;
     return this;
   }
   option(): this {
@@ -48,8 +46,8 @@ import { registerCreate } from './create';
 
 describe('dynamodb plugin: create wiring', () => {
   let group: FakeGroup;
-  const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-  const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+  const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+  const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
   const fakeCli = {
     ns: () => group as unknown as Record<string, unknown>,
@@ -66,10 +64,10 @@ describe('dynamodb plugin: create wiring', () => {
 
   beforeEach(() => {
     group = new FakeGroup();
-    emSpy.mockClear();
-    createSpy.mockClear();
-    buildSpy.mockClear();
-    pluginCfgSpy.mockClear();
+    h.emSpy.mockClear();
+    h.createSpy.mockClear();
+    h.buildSpy.mockClear();
+    h.pluginCfgSpy.mockClear();
     infoSpy.mockClear();
     logSpy.mockClear();
   });
@@ -85,19 +83,21 @@ describe('dynamodb plugin: create wiring', () => {
     });
 
     // resolveAndLoadEntityManager called for version
-    expect(emSpy).toHaveBeenCalledTimes(1);
-    const [ver] = emSpy.mock.calls[0] as [unknown];
-    expect(ver).toBe('001');
+    expect(h.emSpy).toHaveBeenCalledTimes(1);
+    const emCall = h.emSpy.mock.calls.at(0) ?? [];
+    expect(emCall[0]).toBe('001');
 
     // buildEntityClient constructed client for the override table
-    expect(buildSpy).toHaveBeenCalled();
-    const [emArg, tblArg] = buildSpy.mock.calls[0] as [unknown, string];
+    expect(h.buildSpy).toHaveBeenCalled();
+    const buildArgs = h.buildSpy.mock.calls.at(0) ?? [];
+    const emArg = buildArgs[0];
+    const tblArg = buildArgs[1] as string;
     expect(typeof emArg).toBe('object');
     expect(tblArg).toBe('MyTbl');
 
     // createTableAtVersion called with resolved waiter and options
-    expect(createSpy).toHaveBeenCalledTimes(1);
-    const createArgs = createSpy.mock.calls[0] as unknown[];
+    expect(h.createSpy).toHaveBeenCalledTimes(1);
+    const createArgs = h.createSpy.mock.calls.at(0) ?? [];
     // args: client, em, version, cfg, options
     expect(createArgs[2]).toBe('001');
     expect(createArgs[4]).toMatchObject({
