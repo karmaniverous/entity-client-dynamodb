@@ -45,6 +45,8 @@
       "BaseEntityClientOptions": "https://docs.karmanivero.us/entity-manager/interfaces/index.BaseEntityClientOptions.html",
       "BaseQueryBuilder": "https://docs.karmanivero.us/entity-manager/classes/index.BaseQueryBuilder.html",
       "BaseQueryBuilderOptions": "https://docs.karmanivero.us/entity-manager/interfaces/index.BaseQueryBuilderOptions.html",
+      "Config": "https://docs.karmanivero.us/entity-manager/types/index.Config.html",
+      "ConfigMap": "https://docs.karmanivero.us/entity-manager/types/index.ConfigMap.html",
       "EntityKey": "https://docs.karmanivero.us/entity-manager/types/index.EntityKey.html",
       "EntityManager": "https://docs.karmanivero.us/entity-manager/classes/index.EntityManager.html",
       "EntityRecord": "https://docs.karmanivero.us/entity-manager/types/index.EntityRecord.html",
@@ -52,25 +54,23 @@
       "QueryBuilderQueryOptions": "https://docs.karmanivero.us/entity-manager/types/index.QueryBuilderQueryOptions.html",
       "QueryResult": "https://docs.karmanivero.us/entity-manager/interfaces/index.QueryResult.html",
       "ShardQueryFunction": "https://docs.karmanivero.us/entity-manager/types/index.ShardQueryFunction.html",
-      "ShardQueryMap": "https://docs.karmanivero.us/entity-manager/types/index.ShardQueryMap.html",
-      "Config": "https://docs.karmanivero.us/entity-manager/types/index.Config.html",
-      "ConfigMap": "https://docs.karmanivero.us/entity-manager/types/index.ConfigMap.html"
+      "ShardQueryMap": "https://docs.karmanivero.us/entity-manager/types/index.ShardQueryMap.html"
     },
     "@karmaniverous/entity-tools": {
-      "Exactify": "https://docs.karmanivero.us/entity-tools/types/entity_tools.Exactify.html",
       "DefaultTranscodeRegistry": "https://docs.karmanivero.us/entity-tools/interfaces/entity_tools.DefaultTranscodeRegistry.html",
+      "EntityMap": "https://docs.karmanivero.us/entity-tools/types/entity_tools.EntityMap.html",
+      "Exactify": "https://docs.karmanivero.us/entity-tools/types/entity_tools.Exactify.html",
       "MakeOptional": "https://docs.karmanivero.us/entity-tools/types/entity_tools.MakeOptional.html",
       "ReplaceKey": "https://docs.karmanivero.us/entity-tools/types/entity_tools.ReplaceKey.html",
       "TranscodeRegistry": "https://docs.karmanivero.us/entity-tools/types/entity_tools.TranscodeRegistry.html",
-      "EntityMap": "https://docs.karmanivero.us/entity-tools/types/entity_tools.EntityMap.html",
       "WithRequiredAndNonNullable": "https://docs.karmanivero.us/entity-tools/types/entity_tools.WithRequiredAndNonNullable.html"
-    },
-    "@smithy/types": {
-      "WaiterConfiguration": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-smithy-types/Interface/WaiterConfiguration/",
-      "ChecksumConstructor": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-smithy-types/TypeAlias/ChecksumConstructor/"
     },
     "@smithy/smithy-client": {
       "DefaultsMode": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-smithy-smithy-client/TypeAlias/DefaultsMode/"
+    },
+    "@smithy/types": {
+      "ChecksumConstructor": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-smithy-types/TypeAlias/ChecksumConstructor/",
+      "WaiterConfiguration": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-smithy-types/Interface/WaiterConfiguration/"
     }
   },
   "highlightLanguages": [
@@ -84,46 +84,49 @@
     "json5",
     "md",
     "tsx",
-    "typescript"
+    "typescript",
+    "yaml"
   ],
   "hostedBaseUrl": "https://docs.karmanivero.us/entity-client-dynamodb",
   "navigation": {
     "includeCategories": true
   },
+  "navigationLinks": {
+    "GitHub": "https://github.com/karmaniverous/entity-client-dynamodb"
+  },
   "out": "./docs/",
   "plugin": ["typedoc-plugin-mdn-links", "typedoc-plugin-replace-text"],
   "projectDocuments": [
-    "./CHANGELOG.md",
     "./guides/getting-started.md",
     "./guides/entityclient-and-crud.md",
     "./guides/querying-with-querybuilder.md",
     "./guides/tables-and-definition.md",
     "./guides/type-inference-model.md",
     "./guides/aws-xray.md",
-    "./guides/cli/index.md"
+    "./guides/cli/index.md",
+    "./CHANGELOG.md"
   ],
   "replaceText": {
     "replacements": [
       {
-        "pattern": "<!-- TYPEDOC_EXCLUDE -->.*?<!-- /TYPEDOC_EXCLUDE -->",
         "flags": "gis",
+        "pattern": "<!-- TYPEDOC_EXCLUDE -->.*?<!-- /TYPEDOC_EXCLUDE -->",
         "replace": ""
       },
       {
-        "pattern": "@smithy\\/types#ChecksumConstructor",
         "flags": "g",
+        "pattern": "@smithy\\/types#ChecksumConstructor",
         "replace": "@smithy/types!ChecksumConstructor"
       },
       {
-        "pattern": "@smithy\\/smithy-client#DefaultsMode",
         "flags": "g",
+        "pattern": "@smithy\\/smithy-client#DefaultsMode",
         "replace": "@smithy/smithy-client!DefaultsMode"
       }
     ]
   },
   "searchInComments": true,
   "searchInDocuments": true,
-  "titleLink": "https://github.com/karmaniverous/entity-client-dynamodb",
   "visibilityFilters": {
     "protected": false
   }
