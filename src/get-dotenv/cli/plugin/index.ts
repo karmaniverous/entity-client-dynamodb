@@ -3,6 +3,7 @@ import { definePlugin } from '@karmaniverous/get-dotenv/cliHost';
 import { registerCreate } from './commands/create';
 import { registerDelete } from './commands/delete';
 import { registerGenerate } from './commands/generate';
+import { registerLocal } from './commands/local';
 import { registerMigrate } from './commands/migrate';
 import { registerPurge } from './commands/purge';
 import { registerValidate } from './commands/validate';
@@ -22,5 +23,6 @@ export const dynamodbPlugin = definePlugin({
     registerDelete(cli, group);
     registerPurge(cli, group);
     registerMigrate(cli, group);
+    registerLocal(cli, group);
   },
 });

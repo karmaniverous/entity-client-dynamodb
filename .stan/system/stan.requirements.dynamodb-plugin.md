@@ -180,3 +180,112 @@ Acceptance criteria
   - Progress printed at interval; performance flags respected.
 - EntityClient usage remains pure and type-safe in application code; dynamic versioned resolution is provided via plugin/utilities only.
 - All flags/options can be supplied via getdotenv.config.* and/or CLI with dotenv expansion and precedence rules documented.
+
+---
+
+## Local DynamoDB orchestration (config-first with embedded fallback)
+
+Goal
+- Provide simple, deterministic “Local DynamoDB” lifecycle under the plugin without forcing a single tool. Favor config‑driven commands first; use an embedded fallback when the optional library is available.
+
+Commands (subtree: dynamodb local)
+- dynamodb local start [--port <n>]
+- dynamodb local stop
+- dynamodb local status
+
+Behavior and precedence (per command)
+1) Config‑driven path (preferred when configured)
+   - Execute verbatim command strings from `plugins.dynamodb.local.*` in get‑dotenv’s composed environment.
+   - For start: after the configured start command returns, perform a readiness check before returning success (see Readiness below).
+   - For status: when a status command is configured, return its exit code verbatim (0 = running/healthy).
+   - For stop: execute and return non‑zero on operational failure.
+
+2) Embedded fallback (only when no config command is set)
+   - If `@karmaniverous/dynamodb-local` is installed (optional peer):
+     - start: `await setupDynamoDbLocal(port)` then `await dynamoDbLocalReady(client)`
+     - stop: `await teardownDynamoDbLocal()`
+     - status: SDK health probe (see below)
+   - Otherwise, emit concise guidance and return non‑zero:
+     - “Configure plugins.dynamodb.local.{start|stop|status} in getdotenv config, or install @karmaniverous/dynamodb-local for built‑in orchestration.”
+
+No separate “ready” command (integrated readiness)
+- The “ready” check is integrated into “start” (blocking semantics):
+  - Embedded path: begin with `setupDynamoDbLocal(port)` and then await `dynamoDbLocalReady(client)` (match existing test usage).
+  - Config path: after running the configured start command, perform a readiness probe before returning 0.
+- Status remains distinct (0 = running/healthy), suitable for CI conditions.
+
+Readiness probe (library first, else SDK)
+- When the optional library is present: prefer `dynamoDbLocalReady(client)` regardless of whether Local was started by the library or by a config command.
+- When the library is not present: perform an AWS SDK v3 health probe against the derived endpoint (e.g., ListTables with short retry/backoff).
+- “status” uses the same healthy/not-healthy determination as the readiness probe.
+
+Endpoint & environment
+- Endpoint derivation (first match wins):
+  1) `plugins.dynamodb.local.endpoint`
+  2) `plugins.dynamodb.local.port` → `http://localhost:{port}`
+  3) `process.env.DYNAMODB_LOCAL_ENDPOINT`
+  4) Fallback: `http://localhost:${process.env.DYNAMODB_LOCAL_PORT ?? '8000'}`
+- On successful start, print:
+  - `local dynamodb: endpoint <url>`
+  - `Hint: export DYNAMODB_LOCAL_ENDPOINT=<url> so app code targets Local.`
+- Standardize env:
+  - `DYNAMODB_LOCAL_ENDPOINT` — canonical endpoint variable used by app code
+  - `DYNAMODB_LOCAL_PORT` — helper for deriving the endpoint
+
+Config shape (plugin, no “ready” key)
+```json
+{
+  "plugins": {
+    "dynamodb": {
+      "local": {
+        "port": 8000,
+        "endpoint": "http://localhost:8000",
+        "start": "docker compose up -d dynamodb",
+        "stop": "docker compose stop dynamodb",
+        "status": "docker ps --format '{{.Names}}' | grep -q dynamodb"
+      }
+    }
+  }
+}
+```
+Notes
+- Strings are interpolated by the host once before plugin execution.
+- If you want a normalized resolver, a small optional `resolveLocal(flags, cfg, envRef)` may coerce numerics and defaults; not strictly required because the host already expands config strings.
+
+Exit codes
+- start: 0 on healthy after readiness; non‑zero on operational or readiness failure.
+- status: 0 when healthy/running; non‑zero otherwise (CI‑friendly).
+- stop: non‑zero on operational failure.
+
+### Shell/exec behavior for plugin commands
+
+Requirements (align with “Executing Shell Commands” guidance)
+- Expansion boundary:
+  - Config strings (plugin config) are already dotenv‑expanded by the host. Do not re‑expand in the plugin.
+  - Runtime flags you accept are your choice; if expanded, expand once and document the behavior.
+- Shell selection:
+  - Use the merged root bag’s shell setting (default normalized by the host: `/bin/bash` on POSIX, `powershell.exe` on Windows).
+  - For config command strings: run using a shell (execaCommand) respecting the root shell choice.
+  - For programmatic/library flows: prefer argv arrays with `shell: false`.
+- Child environment:
+  - Compose env via `buildSpawnEnv(process.env, ctx.dotenv)` and pass it to child processes.
+- Capture / CI diagnostics:
+  - Honor `GETDOTENV_STDIO=pipe` or the root `capture: true` option. Use `stdio: 'pipe'` when capturing; otherwise inherit.
+  - It is optional (but recommended) to mirror a concise trace line per key when debugging; redaction is a presentation‑time concern and must not alter runtime values.
+- Quoting:
+  - With shell‑on commands (config strings), the selected shell governs quoting rules. Recommend single quotes for literal strings in docs/examples.
+
+Implementation notes (small services)
+- Services should remain pure and thin (ports/adapters):
+  - deriveEndpoint({ cfg, envRef, overridePort? })
+  - runConfigCommand(cmd: string, env, shell, capture) → exit code
+  - startLocal/stopLocal/statusLocal: branch config vs library fallback; share health probe utilities (library or SDK).
+- Command wiring should read the merged root options bag for shell/capture, compose env via buildSpawnEnv, and defer to services.
+
+Acceptance updates (local orchestration)
+- Provide the three commands under the plugin namespace (`dynamodb local start|stop|status`).
+- No separate “ready” command; start waits until Local is healthy (library first, else SDK probe).
+- Config‑first behavior with embedded fallback using `@karmaniverous/dynamodb-local` when available.
+- Respect endpoint derivation and print endpoint + export hint on successful start.
+- Use get‑dotenv’s composed env via `buildSpawnEnv` and shell/capture precedence from the merged root options bag.
+- Remove `local.ready` from the config shape; do not introduce a separate “ready” command or config hook.

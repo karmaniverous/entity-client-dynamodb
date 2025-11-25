@@ -28,6 +28,7 @@ stan-core:
       # - ../entity-tools/README.md
     get-dotenv:
       - ../get-dotenv/.stan/interop/entity-client-dynamodb/**
+      - ../get-dotenv/guides/authoring/exec.md
       # - ../get-dotenv/.stan/system/stan.requirements.md
       # - ../get-dotenv/.stan/system/stan.todo.md
       - ../get-dotenv/package.json

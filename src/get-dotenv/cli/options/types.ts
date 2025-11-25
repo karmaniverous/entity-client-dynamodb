@@ -8,6 +8,13 @@ export interface DynamodbPluginConfig {
     entityManager?: string;
     transform?: string;
   };
+  local?: {
+    port?: number;
+    endpoint?: string;
+    start?: string;
+    stop?: string;
+    status?: string;
+  };
   generate?: {
     version?: string;
     overlays?: {
