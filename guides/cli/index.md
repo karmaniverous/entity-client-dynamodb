@@ -7,6 +7,7 @@ children:
   - ./authoring-transforms.md
   - ./migrate.md
   - ./config-overlays.md
+  - ./local-dynamodb.md
   - ./serverless.md
   - ./recipes.md
 ---
