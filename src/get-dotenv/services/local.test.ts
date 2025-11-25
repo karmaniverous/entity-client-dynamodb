@@ -2,15 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock execaCommand used by services/local
 const h = vi.hoisted(() => ({
-  execaOk: vi.fn(async () => {
-    return {};
-  }),
-  execaFail: vi.fn(async () => {
-    throw new Error('fail');
-  }),
+  execaOk: vi.fn(() => Promise.resolve({})),
+  execaFail: vi.fn(() => Promise.reject(new Error('fail'))),
 }));
 vi.mock('execa', () => ({
-  execaCommand: (...args: unknown[]) => h.execaOk(...args),
+  // Keep the mock signature simple to avoid TS2556; we just signal success/failure.
+  execaCommand: (cmd: string, opts?: unknown) => h.execaOk(cmd, opts),
 }));
 
 import { deriveEndpoint, statusLocal } from './local';
@@ -35,6 +32,7 @@ describe('local services', () => {
       const out1 = deriveEndpoint({ port: 1234 }, {});
       expect(out1.endpoint).toEqual('http://localhost:1234');
       expect(out1.port).toEqual(1234);
+
       const out2 = deriveEndpoint(undefined, { DYNAMODB_LOCAL_PORT: '9999' });
       expect(out2.endpoint).toEqual('http://localhost:9999');
       expect(out2.port).toEqual(9999);
@@ -53,9 +51,8 @@ describe('local services', () => {
       expect(h.execaOk).toHaveBeenCalledTimes(1);
     });
     it('returns false when execaCommand fails', async () => {
-      // Rewire execaCommand mock to fail for this test
-      const mod = await vi.importMock<typeof import('execa')>('execa');
-      (mod as unknown as { execaCommand: unknown }).execaCommand = h.execaFail;
+      // Rewire execa mock to fail for this test
+      h.execaOk.mockImplementationOnce(() => Promise.reject(new Error('fail')));
       const ok = await statusLocal({
         cfg: { status: 'exit 1' },
         envRef: {},
