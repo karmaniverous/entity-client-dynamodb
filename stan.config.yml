@@ -34,6 +34,8 @@ stan-core:
       - ../get-dotenv/dist/index.d.ts
       - ../get-dotenv/dist/cliHost.d.ts
       - ../get-dotenv/README.md
+    smoz:
+      - ../smoz/.stan/interop/entity-client-dynamodb/**
   includes: []
 stan-cli:
   cliDefaults:

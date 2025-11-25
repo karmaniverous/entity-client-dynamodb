@@ -17,7 +17,9 @@ provider:
   region: us-east-1
 
 resources:
-  Resources: ${file(./tables/001/table.yml)}
+  Resources:
+    Table001: ${file(./tables/001/table.yml)}
+    Table000: ${file(./tables/000/table.yml)}
 ```
 
 Notes
