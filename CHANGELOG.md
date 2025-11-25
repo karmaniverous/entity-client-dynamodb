@@ -2,12 +2,20 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [Unreleased](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.6.0...HEAD)
+#### [0.7.0](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.6.0...0.7.0)
 
+- feat(plugin): local dynamodb orchestration (start/stop/status), start awaits readiness [`5cc2ba8`](https://github.com/karmaniverous/entity-client-dynamodb/commit/5cc2ba8c4de135decfdaeb01ea47b5b76b8df682)
 - updated docs [`2251b5f`](https://github.com/karmaniverous/entity-client-dynamodb/commit/2251b5f84b25ed42750cdc276445235e723aaf67)
 - updated docs [`c0726ef`](https://github.com/karmaniverous/entity-client-dynamodb/commit/c0726ef13daf83b6367c6d561e50973554532b53)
 - updated docs [`54b54b6`](https://github.com/karmaniverous/entity-client-dynamodb/commit/54b54b6bb8a762bed0fcb1514a46ca187b0be7df)
 - updted docs [`55ecc53`](https://github.com/karmaniverous/entity-client-dynamodb/commit/55ecc539fdd07d8a134725f09fb70e885c77c3e1)
+- test(dynamodb-local): add wiring and service tests; docs for local CLI [`c9dbd0a`](https://github.com/karmaniverous/entity-client-dynamodb/commit/c9dbd0a30251deb5bf7dd063baba2e1955385fcf)
+- interop [`eeee496`](https://github.com/karmaniverous/entity-client-dynamodb/commit/eeee496353005c64c8b2c02cbf4729113ae7d0b5)
+- test/docs(local): fix mocks and lint; add passing wiring + service tests; document local CLI [`b311546`](https://github.com/karmaniverous/entity-client-dynamodb/commit/b3115460401aa8b16f8a242b111a78b345bb8e44)
+- docs(recipes): add Local DynamoDB quick recipes (config-first + embedded) [`6f73137`](https://github.com/karmaniverous/entity-client-dynamodb/commit/6f73137d32dcc28b38199ec4404b1e28859a24e6)
+- fix(local): address lint issues and remove unused import [`3cf2912`](https://github.com/karmaniverous/entity-client-dynamodb/commit/3cf29120109ad5445dcd9226d2afbbb024dfca1b)
+- test(local): fix mocks and lints; stabilize wiring tests side‑effects [`cffcab8`](https://github.com/karmaniverous/entity-client-dynamodb/commit/cffcab85ef3015810d0ffb3376ef4546a7df1f97)
+- docs: add Local DynamoDB link to CLI Plugin index [`7953d92`](https://github.com/karmaniverous/entity-client-dynamodb/commit/7953d925ecc9338ed3e6ea770bbd94c444de4dd1)
 
 #### [0.6.0](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.5.0...0.6.0)
 
