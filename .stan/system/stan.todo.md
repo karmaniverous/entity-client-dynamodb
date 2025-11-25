@@ -23,3 +23,5 @@ None.
 - Local DynamoDB orchestration — docs
   - Added guides/cli/local-dynamodb.md and linked from CLI Plugin index.
   - Documented config-first + embedded fallback, endpoint derivation, and start waiting for readiness.
+
+- Docs: linked Local DynamoDB guide from CLI Plugin section (guides/cli/index.md).
