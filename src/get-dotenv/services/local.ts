@@ -11,19 +11,26 @@ export function deriveEndpoint(
   envRef: Record<string, string | undefined> = process.env,
   overridePort?: number,
 ): { endpoint: string; port: number } {
-  const envPort =
+  // Prefer override, then configured numeric port, then env var (string -> number)
+  const envPort: number | undefined =
     overridePort ??
-    (cfg?.port !== undefined ? Number(cfg.port) : undefined) ??
-    (envRef.DYNAMODB_LOCAL_PORT
+    (cfg?.port !== undefined ? cfg.port : undefined) ??
+    (envRef.DYNAMODB_LOCAL_PORT !== undefined
       ? Number(envRef.DYNAMODB_LOCAL_PORT)
       : undefined);
-  const port = Number.isFinite(envPort) && envPort! > 0 ? envPort! : 8000;
+
+  const port =
+    typeof envPort === 'number' && Number.isFinite(envPort) && envPort > 0
+      ? envPort
+      : 8000;
 
   const endpoint =
-    cfg?.endpoint ||
-    (cfg?.port ? `http://localhost:${cfg.port}` : undefined) ||
-    envRef.DYNAMODB_LOCAL_ENDPOINT ||
-    `http://localhost:${port}`;
+    cfg?.endpoint ??
+    (cfg?.port !== undefined
+      ? `http://localhost:${String(cfg.port)}`
+      : undefined) ??
+    envRef.DYNAMODB_LOCAL_ENDPOINT ??
+    `http://localhost:${String(port)}`;
 
   return { endpoint, port };
 }

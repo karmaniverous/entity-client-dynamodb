@@ -2,12 +2,7 @@ import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
 import { readMergedOptions } from '@karmaniverous/get-dotenv/cliHost';
 import type { Command } from 'commander';
 
-import {
-  deriveEndpoint,
-  startLocal,
-  statusLocal,
-  stopLocal,
-} from '../../../services/local';
+import { startLocal, statusLocal, stopLocal } from '../../../services/local';
 import { getPluginConfig } from '../helpers';
 
 export function registerLocal(cli: GetDotenvCliPublic, group: Command) {
