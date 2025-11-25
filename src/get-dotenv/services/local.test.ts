@@ -6,8 +6,8 @@ const h = vi.hoisted(() => ({
   execaFail: vi.fn(() => Promise.reject(new Error('fail'))),
 }));
 vi.mock('execa', () => ({
-  // Keep the mock signature simple to avoid TS2556; we just signal success/failure.
-  execaCommand: (cmd: string, opts?: unknown) => h.execaOk(cmd, opts),
+  // Keep the mock signature simple to avoid TS2554/TS2556; just signal success/failure.
+  execaCommand: () => h.execaOk(),
 }));
 
 import { deriveEndpoint, statusLocal } from './local';

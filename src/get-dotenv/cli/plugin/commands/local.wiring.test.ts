@@ -2,12 +2,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Hoisted spies to satisfy vi.mock hoisting
 const h = vi.hoisted(() => ({
-  startSpy: vi.fn((_opts?: unknown) =>
-    Promise.resolve({ endpoint: 'http://localhost:9001' }),
-  ),
-  statusSpy: vi.fn((_opts?: unknown) => Promise.resolve(true)),
-  stopSpy: vi.fn((_opts?: unknown) => Promise.resolve()),
+  startSpy: vi.fn(() => Promise.resolve({ endpoint: 'http://localhost:9001' })),
+  statusSpy: vi.fn(() => Promise.resolve(true)),
+  stopSpy: vi.fn(() => Promise.resolve()),
   pluginCfgSpy: vi.fn(() => ({ local: {} })),
+}));
+
+// Mock readMergedOptions to return an empty options bag
+vi.mock('@karmaniverous/get-dotenv/cliHost', () => ({
+  readMergedOptions: () => ({}),
 }));
 
 // Mock services/local used by the command module.
@@ -79,12 +82,12 @@ describe('dynamodb plugin: local wiring', () => {
     errorSpy.mockClear();
     // Build the command tree and capture actions
     registerLocal(fakeCli as never, group as never);
+    process.exitCode = undefined;
   });
 
   it('start wires to services.startLocal and prints endpoint', async () => {
     const start = group.actionFns.start;
     expect(typeof start).toBe('function');
-    if (!start) throw new Error('start action missing');
     await start({ port: '9001' });
     // Side effects: endpoint info + JSON payload printed
     expect(infoSpy).toHaveBeenCalled();
@@ -95,7 +98,6 @@ describe('dynamodb plugin: local wiring', () => {
     // Healthy branch (default spy result)
     const status = group.actionFns.status;
     expect(typeof status).toBe('function');
-    if (!status) throw new Error('status action missing');
     await status({ port: '9002' });
     expect(process.exitCode).toBeUndefined();
     // Now simulate unhealthy branch
@@ -109,7 +111,6 @@ describe('dynamodb plugin: local wiring', () => {
   it('stop wires to services.stopLocal', async () => {
     const stop = group.actionFns.stop;
     expect(typeof stop).toBe('function');
-    if (!stop) throw new Error('stop action missing');
     await stop({});
     // Nothing thrown → wiring OK; we asserted prints above on start
   });
