@@ -41,16 +41,16 @@ const item = out.Item && client.entityManager.removeKeys('user', out.Item);
 
 Documentation (guides)
 
-- [Getting Started](https://docs.karmanivero.us/entity-client-dynamodb/guides/getting-started) - Install, wire, and make your first calls.
-- [EntityClient: CRUD and Batches](https://docs.karmanivero.us/entity-client-dynamodb/guides/entityclient-and-crud) - Record/recordset operations with strong types.
-- [Querying with QueryBuilder](https://docs.karmanivero.us/entity-client-dynamodb/guides/querying-with-querybuilder) - Cross-shard, multi-index querying and projections.
-- [Tables & Table Definition](https://docs.karmanivero.us/entity-client-dynamodb/guides/tables-and-definition) - Generate AttributeDefinitions/GSIs/KeySchema.
-- [Type Inference Mental Model](https://docs.karmanivero.us/entity-client-dynamodb/guides/type-inference-model) - Tokens, projection K, and config‑literal cf.
-- [AWS X-Ray](https://docs.karmanivero.us/entity-client-dynamodb/guides/aws-xray) - Enable tracing for the DynamoDB SDK client.
+- [Getting Started](./guides/getting-started.md) - Install, wire, and make your first calls.
+- [EntityClient: CRUD and Batches](./guides/entityclient-and-crud.md) - Record/recordset operations with strong types.
+- [Querying with QueryBuilder](./guides/querying-with-querybuilder.md) - Cross-shard, multi-index querying and projections.
+- [Tables & Table Definition](./guides/tables-and-definition.md) - Generate AttributeDefinitions/GSIs/KeySchema.
+- [Type Inference Mental Model](./guides/type-inference-model.md) - Tokens, projection K, and config‑literal cf.
+- [AWS X-Ray](./guides/aws-xray.md) - Enable tracing for the DynamoDB SDK client.
 
 CLI Plugin
 
-- [CLI Plugin](https://docs.karmanivero.us/entity-client-dynamodb/guides/cli/) - Index for install, versioned layout, table lifecycle, transforms, migration, config overlays, Serverless, and recipes.
+- [CLI Plugin](./guides/cli/index.md) - Index for install, versioned layout, table lifecycle, transforms, migration, config overlays, Serverless, and recipes.
 
 API Reference
 
