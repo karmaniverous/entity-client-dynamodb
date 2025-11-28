@@ -69,7 +69,7 @@ qb.setScanIndexForward('created', false); // reverse chronological
 Notes
 
 - When any projection is present, the adapter auto-includes the entity uniqueProperty and any explicit sort keys at runtime to preserve dedupe/sort invariants.
-- With a `cf` (config literal) provided to the factory, index tokens (ITS) and page keys are narrowed per-index.
+- When your EntityClient is constructed from `createEntityManager(config as const)`, index tokens (ITS) and per-index page keys are inferred automatically.
 
 Related
 

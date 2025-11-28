@@ -12,6 +12,7 @@ import {
   type ShardQueryMap, // imported to support API docs
   type ShardQueryResult,
 } from '@karmaniverous/entity-manager';
+import type { ReplaceKey } from '@karmaniverous/entity-tools';
 
 import { EntityClient } from '../EntityClient';
 import { getDocumentQueryArgs } from '../EntityClient/getDocumentQueryArgs';
@@ -91,15 +92,16 @@ export class QueryBuilder<
    */
   addRangeKeyCondition<IT extends ITS>(
     indexToken: IT,
-    condition: RangeKeyCondition & {
+    condition: ReplaceKey<
+      RangeKeyCondition,
+      'property',
       // CF-aware narrowing: when CF carries indexes and ITS is constrained to those keys,
       // property narrows to that index's rangeKey token; otherwise falls back to string.
-      // Use an IfNever-style non-distributive conditional so that `never`
-      // falls back to `string` when CF is absent.
-      property: [IndexRangeKeyOf<CF, IT>] extends [never]
+      // Use a non-distributive conditional so that `never` falls back to `string` when CF is absent.
+      [IndexRangeKeyOf<CF, IT>] extends [never]
         ? string
-        : IndexRangeKeyOf<CF, IT>;
-    },
+        : IndexRangeKeyOf<CF, IT>
+    >,
   ): this {
     // Delegate to helper (variance-friendly signature).
     addRangeKeyConditionHelper(

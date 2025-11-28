@@ -122,12 +122,11 @@ describe('dynamodb plugin: migrate wiring', () => {
       transformConcurrency: 2,
       progressIntervalMs: 5000,
     });
-    // progress callback should be a function if present
-    if (optionsArg && 'onProgress' in optionsArg) {
-      expect(typeof (optionsArg as { onProgress?: unknown }).onProgress).toBe(
-        'function',
-      );
-    }
+    // progress callback should be wired
+    const hasProgress =
+      !!optionsArg &&
+      typeof (optionsArg as { onProgress?: unknown }).onProgress === 'function';
+    expect(hasProgress).toBe(true);
 
     // Outputs were printed
     expect(infoSpy).toHaveBeenCalled();
