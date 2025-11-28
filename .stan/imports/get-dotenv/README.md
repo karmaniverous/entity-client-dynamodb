@@ -48,7 +48,7 @@ Load environment variables with a cascade of environment-aware dotenv files. You
 
 ✅ Cross-platform shells and normalized child environments: defaults to `/bin/bash` on POSIX and `powershell.exe` on Windows; subprocess env is composed once via a unified helper that drops undefineds and normalizes temp/home variables. See [Shell execution behavior](./guides/shell.md).
 
-✅ [Generate an extensible `getdotenv`-based CLI](https://github.com/karmaniverous/get-dotenv-child) for use in your own projects.
+✅ Embed the plugin‑first get‑dotenv host and wire shipped or custom plugins to build your own CLI. See [Authoring Plugins](./guides/authoring/index.md).
 
 `getdotenv` relies on the excellent [`dotenv`](https://www.npmjs.com/package/dotenv) parser and somewhat improves on [`dotenv-expand`](https://www.npmjs.com/package/dotenv-expand) for recursive variable expansion.
 
@@ -59,6 +59,13 @@ When you plug your own [`commander`](https://www.npmjs.com/package/commander) CL
 ## Requirements
 
 - Node.js >= 20 (this repository pins 22.19.0 for CI/reproducibility)
+
+## Getting Started
+
+- One‑off CLI with your env: `getdotenv -c 'node -e "console.log(process.env.APP_SETTING ?? \"\")"'` — see [Shell execution behavior](./guides/shell.md) and [cmd plugin](./guides/shipped/cmd.md).
+- Programmatic load: `const vars = await getDotenv({ env: 'dev', paths: ['./'] });` — see [Config files and overlays](./guides/config.md).
+- Embed a CLI quickly: use [createCli](#cli-embedding-createcli), or wire a [custom host](#custom-host-wire-plugins) to choose plugins.
+- Scaffold config and a CLI skeleton: `npx getdotenv init . --config-format json --with-local --cli-name acme` — see [init plugin](./guides/shipped/init.md).
 
 ## API Reference
 
@@ -130,7 +137,7 @@ const dotenv = await getDotenv(options);
 
 Options can be passed programmatically or set in a `getdotenv.config.json` file in your project root directory. The same file also sets default options for the `getdotenv` CLI or any child CLI you spawn from it.
 
-See the [child CLI example repo](https://github.com/karmaniverous/get-dotenv-child#configuration) for an extensive discussion of the various config options and how & where to set them.
+See [Config files and overlays](./guides/config.md) for how to author defaults, overlays, validation, and diagnostics in JSON/YAML/JS/TS.
 
 ## CLI embedding (createCli)
 
@@ -167,6 +174,42 @@ Notes:
     const { createCli } = require('@karmaniverous/get-dotenv/dist/index.cjs');
     createCli({ alias: 'mycli' }).run(['-h']);
     ```
+
+### Custom host (wire plugins)
+
+When you want full control over the command surface, construct a host directly and choose which plugins to install. This example omits the demo plugin by default and shows where to add your own:
+
+```ts
+#!/usr/bin/env node
+import type { Command } from 'commander';
+import { GetDotenvCli } from '@karmaniverous/get-dotenv/cliHost';
+import { cmdPlugin, batchPlugin, awsPlugin, initPlugin } from '@karmaniverous/get-dotenv/plugins';
+// import { demoPlugin } from '@karmaniverous/get-dotenv/plugins/demo'; // optional
+// import { helloPlugin } from './plugins/hello'; // your plugin
+
+const program: Command = new GetDotenvCli('mycli');
+await (program as unknown as GetDotenvCli).brand({
+  importMetaUrl: import.meta.url,
+  description: 'mycli',
+});
+
+program
+  .attachRootOptions({ loadProcess: false })
+  .use(cmdPlugin({ asDefault: true, optionAlias: '-c, --cmd <command...>' }))
+  .use(batchPlugin())
+  .use(awsPlugin())
+  .use(initPlugin())
+  // .use(demoPlugin())        // omit demo by default
+  // .use(helloPlugin())       // add your own plugin(s)
+  .passOptions({ loadProcess: false });
+
+await program.parseAsync();
+```
+
+Notes:
+
+- Root flags come from `attachRootOptions()`. `passOptions()` merges flags (parent < current), resolves dotenv context once, validates, and persists the merged options bag for nested flows.
+- See [Authoring Plugins → Lifecycle & Wiring](./guides/authoring/lifecycle.md) for a deeper walk‑through and best practices.
 
 ## Dynamic Processing
 
@@ -230,57 +273,7 @@ Notes:
 
 ## Command Line Interface
 
-You can also use `getdotenv` from the command line:
-
-```bash
-> npx getdotenv -h
-
-# Usage: getdotenv [options] [command]
-#
-# Base CLI.
-#
-# Options:
-#   -e, --env <string>                  target environment (dotenv-expanded)
-#   -v, --vars <string>                 extra variables expressed as delimited key-value pairs (dotenv-expanded): KEY1=VAL1 KEY2=VAL2
-#   -o, --output-path <string>          consolidated output file  (dotenv-expanded)
-#   -s, --shell [string]                command execution shell, no argument for default OS shell or provide shell string (default OS shell)
-#   -S, --shell-off                     command execution shell OFF
-#   -p, --load-process                  load variables to process.env ON (default)
-#   -P, --load-process-off              load variables to process.env OFF
-#   -a, --exclude-all                   exclude all dotenv variables from loading ON
-#   -A, --exclude-all-off               exclude all dotenv variables from loading OFF (default)
-#   -z, --exclude-dynamic               exclude dynamic dotenv variables from loading ON
-#   -Z, --exclude-dynamic-off           exclude dynamic dotenv variables from loading OFF (default)
-#   -n, --exclude-env                   exclude environment-specific dotenv variables from loading
-#   -N, --exclude-env-off               exclude environment-specific dotenv variables from loading OFF (default)
-#   -g, --exclude-global                exclude global dotenv variables from loading ON
-#   -G, --exclude-global-off            exclude global dotenv variables from loading OFF (default)
-#   -r, --exclude-private               exclude private dotenv variables from loading ON
-#   -R, --exclude-private-off           exclude private dotenv variables from loading OFF (default)
-#   -u, --exclude-public                exclude public dotenv variables from loading ON
-#   -U, --exclude-public-off            exclude public dotenv variables from loading OFF (default)
-#   -l, --log                           console log loaded variables ON
-#   -L, --log-off                       console log loaded variables OFF (default)
-#   -d, --debug                         debug mode ON
-#   -D, --debug-off                     debug mode OFF (default)
-#   --default-env <string>              default target environment
-#   --dotenv-token <string>             dotenv-expanded token indicating a dotenv file (default: ".env")
-#   --dynamic-path <string>             dynamic variables path (.js or .ts; .ts is auto-compiled when esbuild is available, otherwise precompile)
-#   --paths <string>                    dotenv-expanded delimited list of paths to dotenv directory (default: "./")
-#   --paths-delimiter <string>          paths delimiter string (default: " ")
-#   --paths-delimiter-pattern <string>  paths delimiter regex pattern
-#   --private-token <string>            dotenv-expanded token indicating private variables (default: "local")
-#   --vars-delimiter <string>           vars delimiter string (default: " ")
-#   --vars-delimiter-pattern <string>   vars delimiter regex pattern
-#   --vars-assignor <string>            vars assignment operator string (default: "=")
-#   --vars-assignor-pattern <string>    vars assignment operator regex pattern
-#   -h, --help                          display help for command
-#
-# Commands:
-#   batch [options]                     Batch shell commands across multiple working directories.
-#   cmd                                 Execute command according to the --shell option, conflicts with --command option (default command)
-#   help [command]                      display help for command
-```
+You can also use `getdotenv` from the command line. For a concise overview run `getdotenv -h`, and see the shipped plugin pages for details: [cmd](./guides/shipped/cmd.md), [batch](./guides/shipped/batch.md), [aws](./guides/shipped/aws.md), and [init](./guides/shipped/init.md). For quoting and default shell behavior, see [Shell execution behavior](./guides/shell.md).
 
 ### Default shell behavior
 
@@ -395,11 +388,11 @@ Diagnostics and CI capture:
   apply privacy/source overlays (always‑on).
 - [Authoring Plugins](./guides/authoring/index.md) - Compose CLIs with once‑per‑invoke dotenv context and plugin lifecycles.
 - [Shipped Plugins](./guides/shipped/index.md) - The get‑dotenv host ships a small set of plugins that cover needs.
-- [Generated CLI](./guides/generated-cli.md) - Deprecated in favor of plugin-first host. A thin, fixed command surface powered by get‑dotenv; when and how to use it.
+- [Generated CLI](./guides/generated-cli.md) - Deprecated in favor of the plugin‑first host. Migration guidance included.
 
 The guides are also included in the [hosted API docs](https://docs.karmanivero.us/get-dotenv).
 
-## Generated CLI
+## Generated CLI (Deprecated)
 
 This package still supports generating a standalone CLI for your projects. For most use cases we recommend the new plugin-first host because it resolves dotenv context once per invocation, supports composable plugins, and provides better subprocess control and diagnostics. If you prefer a thin, fixed command surface with defaults baked into config, the generated CLI can be a good fit.
 

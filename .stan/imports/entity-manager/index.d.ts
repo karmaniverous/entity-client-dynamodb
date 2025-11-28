@@ -495,7 +495,7 @@ interface QueryResult<CC extends BaseConfigMap, ET extends EntityToken<CC>, ITS 
  *
  * @category EntityManager
  */
-declare class EntityManager<CC extends BaseConfigMap> {
+declare class EntityManager<CC extends BaseConfigMap, CF = unknown> {
     #private;
     /** Logger object (defaults to `console`, must support `debug` & `error` methods). */
     readonly logger: Pick<Console, 'debug' | 'error'>;
@@ -713,7 +713,7 @@ type CapturedConfigMapFrom<CC, EM extends EntityMap> = {
  * @typeParam EM - EntityMap for the manager. Defaults to a minimal derived map
  *                 from `CC.entitiesSchema` when present; otherwise falls back to EntityMap.
  */
-declare function createEntityManager<const CC extends ConfigInput, EM extends EntityMap = EntitiesFromSchema<CC>>(config: CC, logger?: Pick<Console, 'debug' | 'error'>): EntityManager<CapturedConfigMapFrom<CC, EM>>;
+declare function createEntityManager<const CC extends ConfigInput, EM extends EntityMap = EntitiesFromSchema<CC>>(config: CC, logger?: Pick<Console, 'debug' | 'error'>): EntityManager<CapturedConfigMapFrom<CC, EM>, CC>;
 
 /**
  * Database-facing record type from a {@link BaseConfigMap | `ConfigMap`} with required hash & range keys.
