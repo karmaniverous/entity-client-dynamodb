@@ -48,7 +48,7 @@ export interface QueryConditionBetween<
 > extends QueryCondition {
   property: string;
   operator: 'between';
-  value: { from?: V; to?: V };
+  value: { from?: V | undefined; to?: V | undefined };
 }
 
 /**
@@ -62,7 +62,7 @@ export interface QueryConditionComparison<
 > extends QueryCondition {
   property: string;
   operator: '<' | '<=' | '<>' | '=' | '>' | '>=';
-  value?: V;
+  value?: V | undefined;
 }
 
 /**
@@ -76,7 +76,7 @@ export interface QueryConditionContains<
 > extends QueryCondition {
   property: string;
   operator: 'contains';
-  value?: V;
+  value?: V | undefined;
 }
 
 /**
