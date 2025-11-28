@@ -148,54 +148,6 @@ type EntityKey<CC extends BaseConfigMap> = Record<CC['HashKey'] | CC['RangeKey']
  */
 type EntityToken<CC extends BaseConfigMap> = keyof Exactify<CC['EntityMap']> & string;
 
-declare const configSchema: z$1.ZodObject<{
-    entities: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodObject<{
-        defaultLimit: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodNumber>>;
-        defaultPageSize: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodNumber>>;
-        shardBumps: z$1.ZodPipe<z$1.ZodDefault<z$1.ZodOptional<z$1.ZodArray<z$1.ZodObject<{
-            timestamp: z$1.ZodNumber;
-            charBits: z$1.ZodNumber;
-            chars: z$1.ZodNumber;
-        }, z$1.core.$strict>>>>, z$1.ZodTransform<{
-            timestamp: number;
-            charBits: number;
-            chars: number;
-        }[], {
-            timestamp: number;
-            charBits: number;
-            chars: number;
-        }[]>>;
-        timestampProperty: z$1.ZodString;
-        uniqueProperty: z$1.ZodString;
-    }, z$1.core.$strict>>>>;
-    generatedProperties: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodObject<{
-        sharded: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodArray<z$1.ZodString>>>>;
-        unsharded: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodArray<z$1.ZodString>>>>;
-    }, z$1.core.$strip>>>;
-    hashKey: z$1.ZodString;
-    indexes: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodObject<{
-        hashKey: z$1.ZodString;
-        rangeKey: z$1.ZodString;
-        projections: z$1.ZodOptional<z$1.ZodArray<z$1.ZodString>>;
-    }, z$1.core.$strip>>>>;
-    generatedKeyDelimiter: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodString>>;
-    generatedValueDelimiter: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodString>>;
-    propertyTranscodes: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodString>>>;
-    rangeKey: z$1.ZodString;
-    shardKeyDelimiter: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodString>>;
-    throttle: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodNumber>>;
-    transcodes: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodObject<{
-        encode: z$1.ZodCustom<unknown, unknown>;
-        decode: z$1.ZodCustom<unknown, unknown>;
-    }, z$1.core.$strict>>>>;
-}, z$1.core.$strict>;
-/**
- * Simplified type taken on by a {@link Config | `Config`} object after parsing in the {@link EntityManager | `EntityManager`} constructor.
- *
- * @category EntityManager
- */
-type ParsedConfig = z$1.infer<typeof configSchema>;
-
 /**
  * A partial {@link EntityItem | `EntityItem`} restricted to keys defined in `C`.
  *
@@ -243,6 +195,54 @@ type IndexComponentTokens<CC extends BaseConfigMap, CF, IT extends string> = Has
  * - Without CF, falls back to the broad PageKey<CC> shape.
  */
 type PageKeyByIndex<CC extends BaseConfigMap, ET extends EntityToken<CC>, IT extends string = string, CF = unknown> = Pick<EntityItem<CC>, IndexComponentTokens<CC, CF, IT>>;
+
+declare const configSchema: z$1.ZodObject<{
+    entities: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodObject<{
+        defaultLimit: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodNumber>>;
+        defaultPageSize: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodNumber>>;
+        shardBumps: z$1.ZodPipe<z$1.ZodDefault<z$1.ZodOptional<z$1.ZodArray<z$1.ZodObject<{
+            timestamp: z$1.ZodNumber;
+            charBits: z$1.ZodNumber;
+            chars: z$1.ZodNumber;
+        }, z$1.core.$strict>>>>, z$1.ZodTransform<{
+            timestamp: number;
+            charBits: number;
+            chars: number;
+        }[], {
+            timestamp: number;
+            charBits: number;
+            chars: number;
+        }[]>>;
+        timestampProperty: z$1.ZodString;
+        uniqueProperty: z$1.ZodString;
+    }, z$1.core.$strict>>>>;
+    generatedProperties: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodObject<{
+        sharded: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodArray<z$1.ZodString>>>>;
+        unsharded: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodArray<z$1.ZodString>>>>;
+    }, z$1.core.$strip>>>;
+    hashKey: z$1.ZodString;
+    indexes: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodObject<{
+        hashKey: z$1.ZodString;
+        rangeKey: z$1.ZodString;
+        projections: z$1.ZodOptional<z$1.ZodArray<z$1.ZodString>>;
+    }, z$1.core.$strip>>>>;
+    generatedKeyDelimiter: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodString>>;
+    generatedValueDelimiter: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodString>>;
+    propertyTranscodes: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodString>>>;
+    rangeKey: z$1.ZodString;
+    shardKeyDelimiter: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodString>>;
+    throttle: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodNumber>>;
+    transcodes: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodObject<{
+        encode: z$1.ZodCustom<unknown, unknown>;
+        decode: z$1.ZodCustom<unknown, unknown>;
+    }, z$1.core.$strict>>>>;
+}, z$1.core.$strict>;
+/**
+ * Simplified type taken on by a {@link Config | `Config`} object after parsing in the {@link EntityManager | `EntityManager`} constructor.
+ *
+ * @category EntityManager
+ */
+type ParsedConfig = z$1.infer<typeof configSchema>;
 
 /** EntityOfToken — resolves the concrete entity shape for a specific entity token. */
 type EntityOfToken<CC extends BaseConfigMap, ET extends EntityToken<CC>> = Exactify<CC['EntityMap']>[ET];
@@ -489,6 +489,10 @@ interface QueryResult<CC extends BaseConfigMap, ET extends EntityToken<CC>, ITS 
  * query strategy to NoSql data.
  *
  * @typeParam CC - {@link ConfigMap | `ConfigMap`} that defines the configuration's {@link EntityMap | `EntityMap`}, key properties, and {@link TranscodeRegistry | `TranscodeRegistry`}. If omitted, defaults to {@link BaseConfigMap | `BaseConfigMap`}.
+ * @typeParam CF - Values-first config literal type captured at construction
+ *                 time (phantom generic; type-only). This is used by downstream
+ *                 adapters to infer index-token unions (ITS) and per-index page
+ *                 key shapes.
  *
  * @remarks
  * While the {@link EntityManager.query | `query`} method is `public`, normally it should not be called directly. The `query` method is used by a platform-specific {@link BaseQueryBuilder.query | `QueryBuilder.query`} method to provide a fluent query API.
@@ -582,17 +586,18 @@ declare class EntityManager<CC extends BaseConfigMap, CF = unknown> {
      */
     removeKeys<ET extends EntityToken<CC>>(entityToken: ET, items: EntityRecordByToken<CC, ET>[]): EntityItemByToken<CC, ET>[];
     /**
-     * Find an index token in a {@link Config | `Config`} object based on the index `hashKey` and `rangeKey`.
+     * Find an index token based on the configured hash and range key tokens.
      *
-     * @param hashKeyToken - Index hash key.
-     * @param rangeKeyToken - Index range key.
-     * @param suppressError - Suppress error if no match found.
+     * @param hashKeyToken - Index hash key token (global hashKey or a sharded generated key).
+     * @param rangeKeyToken - Index range key token (global rangeKey, unsharded generated key, or a transcodable scalar).
+     * @param suppressError - When false (default), throws if no match; when true, returns undefined instead.
      *
-     * @returns  Index token if found.
+     * @returns A configured index token (narrowed to the CF.indexes key union) or undefined when allowed.
      *
-     * @throws `Error` if no match found and `suppressError` is not `true`.
+     * @throws `Error` if no match is found and `suppressError` is not `true`.
      */
-    findIndexToken(hashKeyToken: string, rangeKeyToken: string, suppressError?: boolean): string | undefined;
+    findIndexToken(hashKeyToken: CC['HashKey'] | CC['ShardedKeys'], rangeKeyToken: CC['RangeKey'] | CC['UnshardedKeys'] | CC['TranscodedProperties'], suppressError?: false): IndexTokensOf<CF>;
+    findIndexToken(hashKeyToken: CC['HashKey'] | CC['ShardedKeys'], rangeKeyToken: CC['RangeKey'] | CC['UnshardedKeys'] | CC['TranscodedProperties'], suppressError: true): IndexTokensOf<CF> | undefined;
     /**
      * Query a database entity across shards in a provider-generic fashion.
      *
@@ -712,6 +717,10 @@ type CapturedConfigMapFrom<CC, EM extends EntityMap> = {
  *                 `satisfies` at call sites to preserve literal keys.
  * @typeParam EM - EntityMap for the manager. Defaults to a minimal derived map
  *                 from `CC.entitiesSchema` when present; otherwise falls back to EntityMap.
+ *
+ * @returns An {@link EntityManager | `EntityManager`} instance whose type
+ *          captures CF from the single values-first config literal ({@link ConfigInput | `ConfigInput`})
+ *          as the second generic parameter (phantom; type-only).
  */
 declare function createEntityManager<const CC extends ConfigInput, EM extends EntityMap = EntitiesFromSchema<CC>>(config: CC, logger?: Pick<Console, 'debug' | 'error'>): EntityManager<CapturedConfigMapFrom<CC, EM>, CC>;
 
@@ -732,11 +741,11 @@ type EntityRecord<CC extends BaseConfigMap> = EntityItem<CC> & EntityKey<CC>;
  *
  * @category EntityClient
  */
-interface BaseEntityClientOptions<CC extends BaseConfigMap> {
+interface BaseEntityClientOptions<CC extends BaseConfigMap, CF = unknown> {
     /** Default batch process options. */
     batchProcessOptions?: Omit<BatchProcessOptions<unknown, unknown>, 'batchHandler' | 'unprocessedItemExtractor'>;
     /** {@link EntityManager | `EntityManager`} instance. */
-    entityManager: EntityManager<CC>;
+    entityManager: EntityManager<CC, CF>;
     /** Injected logger object. Must support `debug` and `error` methods. Default: `console` */
     logger?: Pick<Console, 'debug' | 'error'>;
 }
@@ -744,23 +753,27 @@ interface BaseEntityClientOptions<CC extends BaseConfigMap> {
 /**
  * Base EntityClient class. Integrates {@link EntityManager | `EntityManager`} with injected logging & enhanced batch processing.
  *
- * @typeParam CC - {@link ConfigMap | `ConfigMap`} that defines an {@link Config | `EntityManager configuration`}'s {@link EntityMap | `EntityMap`}, key properties, and {@link TranscodeRegistry | `TranscodeRegistry`}. If omitted, defaults to {@link BaseConfigMap | `BaseConfigMap`}.
+ * @typeParam CC - {@link ConfigMap | `ConfigMap`} that defines an {@link Config | `EntityManager configuration`}'s
+ *                 {@link EntityMap | `EntityMap`}, key properties, and {@link TranscodeRegistry | `TranscodeRegistry`}.
+ *                 If omitted, defaults to {@link BaseConfigMap | `BaseConfigMap`}.
+ * @typeParam CF - Values-first config literal type captured by the manager (phantom; type-only). Propagated so
+ *                 client-facing calls that return `IndexTokensOf<CF>` retain the narrowed union.
  *
  * @category EntityClient
  */
-declare abstract class BaseEntityClient<CC extends BaseConfigMap> {
+declare abstract class BaseEntityClient<CC extends BaseConfigMap, CF = unknown> {
     /** Default batch process options. */
-    readonly batchProcessOptions: NonNullable<BaseEntityClientOptions<CC>['batchProcessOptions']>;
+    readonly batchProcessOptions: NonNullable<BaseEntityClientOptions<CC, CF>['batchProcessOptions']>;
     /** {@link EntityManager | `EntityManager`} instance. */
-    readonly entityManager: EntityManager<CC>;
+    readonly entityManager: EntityManager<CC, CF>;
     /** Injected logger object. Must support `debug` and `error` methods. Default: `console` */
-    readonly logger: NonNullable<BaseEntityClientOptions<CC>['logger']>;
+    readonly logger: NonNullable<BaseEntityClientOptions<CC, CF>['logger']>;
     /**
-     * DynamoDB EntityClient constructor.
+     * Base EntityClient constructor.
      *
      * @param options - {@link BaseEntityClientOptions | `BaseEntityClientOptions`} object.
      */
-    constructor(options: BaseEntityClientOptions<CC>);
+    constructor(options: BaseEntityClientOptions<CC, CF>);
 }
 
 type ConfigOfClient<EC> = EC extends BaseEntityClient<infer CC> ? CC : never;
