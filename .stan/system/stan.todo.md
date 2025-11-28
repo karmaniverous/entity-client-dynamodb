@@ -29,4 +29,8 @@ None.
 - Interop: removed QueryBuilder cf parameter; derive ITS/CF automatically from EntityClient via upstream CF preservation.
   Updated createQueryBuilder, tsd tests (range-key), and docs (querying guide, type inference model).
 
-- Follow-through: fix typecheck to build dist before tsd; resolve ESLint issues by refining QueryBuilder signature and removing conditional expect in migrate wiring test; update Querying guide note to reflect automatic index inference.
+- Follow-through: fix typecheck to build dist before tsd; resolve ESLint issues by refining QueryBuilder signature and removing conditional expect in migrate wiring test; update Querying guide note to reflect automatic index inference.
+
+- Docs pass: update README guide index to replace “config‑literal cf” with
+  “values‑first config (automatic index inference)” to match the new API and
+  updated guides.
