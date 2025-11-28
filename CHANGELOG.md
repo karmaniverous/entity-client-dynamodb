@@ -2,8 +2,15 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.8.5](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.8.4...0.8.5)
+
+- support exactOptionalPropertyTypes [`a2b364e`](https://github.com/karmaniverous/entity-client-dynamodb/commit/a2b364e732dc44d4ddac0a193c0dfe68038b34b3)
+
 #### [0.8.4](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.8.3...0.8.4)
 
+> 29 November 2025
+
+- chore: release v0.8.4 [`7e10db7`](https://github.com/karmaniverous/entity-client-dynamodb/commit/7e10db7e611f6e9e3eee305abcf38b8deb15bd7a)
 - exactOptionalPropertyTypes [`15bb430`](https://github.com/karmaniverous/entity-client-dynamodb/commit/15bb430691551e61609c56251d9397b0ea9b113d)
 
 #### [0.8.3](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.8.2...0.8.3)
