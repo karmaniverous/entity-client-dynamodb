@@ -43,8 +43,9 @@ export interface QueryConditionBeginsWith extends QueryCondition {
  * @category QueryBuilder
  * @protected
  */
-export interface QueryConditionBetween<V extends ActuallyScalarAttributeValue>
-  extends QueryCondition {
+export interface QueryConditionBetween<
+  V extends ActuallyScalarAttributeValue,
+> extends QueryCondition {
   property: string;
   operator: 'between';
   value: { from?: V; to?: V };
@@ -96,8 +97,9 @@ export interface QueryConditionExists extends QueryCondition {
  * @category QueryBuilder
  * @protected
  */
-export interface QueryConditionIn<V extends NativeScalarAttributeValue>
-  extends QueryCondition {
+export interface QueryConditionIn<
+  V extends NativeScalarAttributeValue,
+> extends QueryCondition {
   property: string;
   operator: 'in';
   value?: V[] | Set<V>;

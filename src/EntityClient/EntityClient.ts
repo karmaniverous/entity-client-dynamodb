@@ -19,6 +19,7 @@ import {
   type BaseConfigMap,
   BaseEntityClient,
   type EntityKey,
+  type EntityManager,
   type EntityRecord,
   type EntityRecordByToken,
   type EntityToken,
@@ -60,7 +61,10 @@ export type Projected<T, A extends readonly string[]> = Pick<
  *
  * @category EntityClient
  */
-export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
+export class EntityClient<
+  C extends BaseConfigMap,
+  CF = unknown,
+> extends BaseEntityClient<C> {
   /** AWS SDK DynamoDBClient instance. */
   readonly client: DynamoDBClient;
 
@@ -75,7 +79,11 @@ export class EntityClient<C extends BaseConfigMap> extends BaseEntityClient<C> {
    *
    * @param options - {@link EntityClientOptions | EntityClientOptions} object.
    */
-  constructor(options: EntityClientOptions<C>) {
+  constructor(
+    options: EntityClientOptions<C> & {
+      entityManager: EntityManager<C, CF>;
+    },
+  ) {
     const {
       batchProcessOptions,
       enableXray = false,

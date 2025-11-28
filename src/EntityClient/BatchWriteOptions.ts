@@ -7,8 +7,10 @@ import { BatchProcessOptions } from '@karmaniverous/batch-process';
  * @category EntityClient
  * @protected
  */
-export interface BatchWriteOptions
-  extends Omit<BatchWriteCommandInput, 'RequestItems'> {
+export interface BatchWriteOptions extends Omit<
+  BatchWriteCommandInput,
+  'RequestItems'
+> {
   batchProcessOptions?: Omit<
     BatchProcessOptions<unknown, unknown>,
     'batchHandler' | 'unprocessedItemExtractor'

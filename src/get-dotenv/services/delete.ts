@@ -33,8 +33,10 @@ export async function deleteTable<C extends BaseConfigMap>(
   return client.deleteTable(tableInput as never, options?.waiter);
 }
 
-export interface PurgeTableOptions
-  extends Omit<BatchWriteOptions, 'tableName'> {
+export interface PurgeTableOptions extends Omit<
+  BatchWriteOptions,
+  'tableName'
+> {
   /**
    * One-off TableName override for purging; supersedes options.tableName.
    * Provided as a distinct option to keep call sites explicit.

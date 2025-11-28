@@ -18,13 +18,9 @@ const qb = createQueryBuilder({
   hashKeyToken: 'hashKey2',
 });
 
-// Optional cf: derive ITS from cf.indexes and narrow per-index page keys
-const qb2 = createQueryBuilder({
-  entityClient: client,
-  entityToken: 'user',
-  hashKeyToken: 'hashKey2',
-  cf: myConfigLiteral, // preserve keys with `as const`
-});
+// Automatic index inference:
+// If your EntityClient was built from createEntityManager(config as const),
+// index tokens (ITS) and per-index page keys are inferred automatically (no cf needed).
 
 // Add a range key condition
 qb.addRangeKeyCondition('created', {

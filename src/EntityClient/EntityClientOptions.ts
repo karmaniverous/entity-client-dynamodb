@@ -15,8 +15,7 @@ import {
  * @category EntityClient
  */
 export interface EntityClientOptions<C extends BaseConfigMap>
-  extends BaseEntityClientOptions<C>,
-    Omit<DynamoDBClientConfig, 'logger'> {
+  extends BaseEntityClientOptions<C>, Omit<DynamoDBClientConfig, 'logger'> {
   /** Activates AWS Xray for internal DynamoDb client when `true` and running in a Lambda environment. */
   enableXray?: boolean;
 

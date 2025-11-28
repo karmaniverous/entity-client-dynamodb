@@ -1,4 +1,5 @@
 import { createQueryBuilder } from '@karmaniverous/entity-client-dynamodb';
+import type { EntityClient } from '@karmaniverous/entity-client-dynamodb';
 
 // Minimal CF with literal index keys preserved via as const
 const cf = {
@@ -8,15 +9,15 @@ const cf = {
   },
 } as const;
 
-// Fake client; types only
-declare const entityClient: unknown;
+// Fake clients; types only
+declare const entityClient: EntityClient<any, typeof cf>;
+declare const entityClient2: EntityClient<any>;
 
 // CF-aware: property must match the specific index rangeKey token
 const qb = createQueryBuilder({
   entityClient: entityClient as never,
   entityToken: 'user' as never,
   hashKeyToken: 'hashKey2' as never,
-  cf,
 });
 
 qb.addRangeKeyCondition('created', {
@@ -38,13 +39,17 @@ qb.addRangeKeyCondition('created', {
   value: 'x',
 });
 
-// Fallback (no CF): property defaults to string
+// Fallback (no CF on client): property defaults to string
 const qb2 = createQueryBuilder({
-  entityClient: entityClient as never,
+  entityClient: entityClient2 as never,
   entityToken: 'user' as never,
   hashKeyToken: 'hashKey2' as never,
 });
-qb2.addRangeKeyCondition('anything', { property: 'whatever', operator: '=', value: 1 });
+qb2.addRangeKeyCondition('anything', {
+  property: 'whatever',
+  operator: '=',
+  value: 1,
+});
 
 // Invalid index token when CF is present should be rejected (excess property checks)
 // cf.indexes only includes 'created' and 'firstName'
@@ -53,4 +58,4 @@ qb.addRangeKeyCondition('missing', {
   property: 'created',
   operator: '=',
   value: 1,
-});
+});

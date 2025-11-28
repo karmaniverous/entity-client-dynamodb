@@ -25,3 +25,6 @@ None.
   - Documented config-first + embedded fallback, endpoint derivation, and start waiting for readiness.
 
 - Docs: linked Local DynamoDB guide from CLI Plugin section (guides/cli/index.md).
+
+- Interop: removed QueryBuilder cf parameter; derive ITS/CF automatically from EntityClient via upstream CF preservation.
+  Updated createQueryBuilder, tsd tests (range-key), and docs (querying guide, type inference model).
