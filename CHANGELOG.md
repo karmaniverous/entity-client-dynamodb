@@ -2,10 +2,17 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.8.1](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.8.0...0.8.1)
+
+- updated entity manager [`4785088`](https://github.com/karmaniverous/entity-client-dynamodb/commit/4785088af7b27e6a0e3f954e2046f98ee5154e26)
+
 #### [0.8.0](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.7.0...0.8.0)
+
+> 28 November 2025
 
 - refactor: remove cf arg; infer ITS/CF from client [`246eecc`](https://github.com/karmaniverous/entity-client-dynamodb/commit/246eeccf3c65fea0a76e91e49ea6ca3881fcc1bb)
 - interop [`cc982d3`](https://github.com/karmaniverous/entity-client-dynamodb/commit/cc982d3467727b862c50c52a38bdc5a20fa4640a)
+- chore: release v0.8.0 [`fa232e8`](https://github.com/karmaniverous/entity-client-dynamodb/commit/fa232e8630946a6f9d4956fa8a2daf89d0ef9f1a)
 - removed interop messages [`3152d9d`](https://github.com/karmaniverous/entity-client-dynamodb/commit/3152d9d6d80fd34e7f327a0232dabe01460c7b9a)
 - updated docs [`c224615`](https://github.com/karmaniverous/entity-client-dynamodb/commit/c22461513ad81756ebee90869921ebfe868117a1)
 - fix: finalize CF inference — typecheck and lint clean [`bf6e8c1`](https://github.com/karmaniverous/entity-client-dynamodb/commit/bf6e8c109ae4289b4d19eda26272b8f510fd02e1)
