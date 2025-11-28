@@ -2,10 +2,24 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.8.0](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.7.0...0.8.0)
+
+- refactor: remove cf arg; infer ITS/CF from client [`246eecc`](https://github.com/karmaniverous/entity-client-dynamodb/commit/246eeccf3c65fea0a76e91e49ea6ca3881fcc1bb)
+- interop [`cc982d3`](https://github.com/karmaniverous/entity-client-dynamodb/commit/cc982d3467727b862c50c52a38bdc5a20fa4640a)
+- removed interop messages [`3152d9d`](https://github.com/karmaniverous/entity-client-dynamodb/commit/3152d9d6d80fd34e7f327a0232dabe01460c7b9a)
+- updated docs [`c224615`](https://github.com/karmaniverous/entity-client-dynamodb/commit/c22461513ad81756ebee90869921ebfe868117a1)
+- fix: finalize CF inference — typecheck and lint clean [`bf6e8c1`](https://github.com/karmaniverous/entity-client-dynamodb/commit/bf6e8c109ae4289b4d19eda26272b8f510fd02e1)
+- docs: update README to reflect automatic index inference [`8f0fa60`](https://github.com/karmaniverous/entity-client-dynamodb/commit/8f0fa602a49afa2f429b6d5bb4a274c26e72a6ee)
+- chore: remove unused @ts-expect-error in tsd to fix typecheck [`0526736`](https://github.com/karmaniverous/entity-client-dynamodb/commit/0526736c7729eb4d9a5d9feefb98a158fa25713c)
+- updated stan config [`9dad3bc`](https://github.com/karmaniverous/entity-client-dynamodb/commit/9dad3bc0ac1cc2f40346082ff8426abe884b01ce)
+
 #### [0.7.0](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.6.0...0.7.0)
+
+> 25 November 2025
 
 - feat(plugin): local dynamodb orchestration (start/stop/status), start awaits readiness [`5cc2ba8`](https://github.com/karmaniverous/entity-client-dynamodb/commit/5cc2ba8c4de135decfdaeb01ea47b5b76b8df682)
 - updated docs [`2251b5f`](https://github.com/karmaniverous/entity-client-dynamodb/commit/2251b5f84b25ed42750cdc276445235e723aaf67)
+- chore: release v0.7.0 [`86cf793`](https://github.com/karmaniverous/entity-client-dynamodb/commit/86cf793bf8fba7a989887d4325abad70d671beb8)
 - updated docs [`c0726ef`](https://github.com/karmaniverous/entity-client-dynamodb/commit/c0726ef13daf83b6367c6d561e50973554532b53)
 - updated docs [`54b54b6`](https://github.com/karmaniverous/entity-client-dynamodb/commit/54b54b6bb8a762bed0fcb1514a46ca187b0be7df)
 - updted docs [`55ecc53`](https://github.com/karmaniverous/entity-client-dynamodb/commit/55ecc539fdd07d8a134725f09fb70e885c77c3e1)
