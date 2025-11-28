@@ -33,7 +33,7 @@ export interface QueryCondition {
 export interface QueryConditionBeginsWith extends QueryCondition {
   property: string;
   operator: 'begins_with';
-  value?: string;
+  value?: string | undefined;
 }
 
 /**
@@ -102,7 +102,7 @@ export interface QueryConditionIn<
 > extends QueryCondition {
   property: string;
   operator: 'in';
-  value?: V[] | Set<V>;
+  value?: V[] | Set<V> | undefined;
 }
 
 /**

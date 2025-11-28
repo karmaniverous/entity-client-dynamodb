@@ -382,11 +382,11 @@ interface QueryOptions<CC extends BaseConfigMap, ET extends EntityToken<CC> = En
      * number of shards queried, unless limited by available records in a given
      * shard.
      */
-    limit?: number;
+    limit?: number | undefined;
     /**
      * {@link QueryResult.pageKeyMap | `pageKeyMap`} returned by the previous iteration of this query.
      */
-    pageKeyMap?: string;
+    pageKeyMap?: string | undefined;
     /**
      * The maximum number of records to be returned by each individual query to a
      * single shard (i.e. {@link ShardQueryFunction | `ShardQueryFunction`} execution).
@@ -395,7 +395,7 @@ interface QueryOptions<CC extends BaseConfigMap, ET extends EntityToken<CC> = En
      * repeated until either available data is exhausted or the {@link QueryOptions.limit | `limit`} value is
      * reached.
      */
-    pageSize?: number;
+    pageSize?: number | undefined;
     /**
      * Each key in this object is a valid entity index token. Each value is a valid
      * {@link ShardQueryFunction | 'ShardQueryFunction'} that specifies the query of a single page of data on a
@@ -409,7 +409,7 @@ interface QueryOptions<CC extends BaseConfigMap, ET extends EntityToken<CC> = En
     /**
      * A {@link SortOrder | `SortOrder`} object specifying the sort order of the result set. Defaults to `[]`. Aligned with the projected item shape when K is provided.
      */
-    sortOrder?: SortOrder<ProjectedItemByToken<CC, ET, K>>;
+    sortOrder?: SortOrder<ProjectedItemByToken<CC, ET, K>> | undefined;
     /**
      * Lower limit to query shard space.
      *
@@ -419,7 +419,7 @@ interface QueryOptions<CC extends BaseConfigMap, ET extends EntityToken<CC> = En
      *
      * @defaultValue `0`
      */
-    timestampFrom?: number;
+    timestampFrom?: number | undefined;
     /**
      * Upper limit to query shard space.
      *
@@ -429,13 +429,13 @@ interface QueryOptions<CC extends BaseConfigMap, ET extends EntityToken<CC> = En
      *
      * @defaultValue `Date.now()`
      */
-    timestampTo?: number;
+    timestampTo?: number | undefined;
     /**
      * The maximum number of shards to query in parallel. Overrides options `throttle`.
      *
      * @defaultValue `options.throttle`
      */
-    throttle?: number;
+    throttle?: number | undefined;
 }
 /**
  * Convenience alias for QueryOptions that derives ITS (index token subset)
