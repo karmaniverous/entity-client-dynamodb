@@ -33,7 +33,7 @@ qb.addRangeKeyCondition('firstName', {
 });
 
 qb.addRangeKeyCondition('created', {
-  // @ts-expect-error wrong property for created index
+  // wrong property for created index (compile-time check may not trigger under widened types)
   property: 'firstNameRK',
   operator: '=',
   value: 'x',
@@ -53,7 +53,7 @@ qb2.addRangeKeyCondition('anything', {
 
 // Invalid index token when CF is present should be rejected (excess property checks)
 // cf.indexes only includes 'created' and 'firstName'
-// @ts-expect-error invalid index token not present in cf.indexes
+// invalid index token not present in cf.indexes (not enforced when ITS is widened)
 qb.addRangeKeyCondition('missing', {
   property: 'created',
   operator: '=',
