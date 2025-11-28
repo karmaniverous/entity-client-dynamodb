@@ -18,8 +18,8 @@ export interface GetDocumentQueryArgsParams<
   indexToken: IT;
   hashKeyToken: C['HashKey'] | C['ShardedKeys'];
   hashKey: string;
-  pageKey?: PageKeyByIndex<C, ET, IT, CF>;
-  pageSize?: number;
+  pageKey?: PageKeyByIndex<C, ET, IT, CF> | undefined;
+  pageSize?: number | undefined;
   tableName: string;
 }
 

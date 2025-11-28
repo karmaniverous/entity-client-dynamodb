@@ -25,7 +25,7 @@ export function createQueryBuilder<
   entityClient: EntityClient<C, CF>;
   entityToken: ET;
   hashKeyToken: C['HashKey'] | C['ShardedKeys'];
-  pageKeyMap?: string;
+  pageKeyMap?: string | undefined;
 }): QueryBuilder<C, ET, IndexTokensOf<CF>, CF>;
 
 export function createQueryBuilder<
@@ -36,7 +36,7 @@ export function createQueryBuilder<
   entityClient: EntityClient<C, CF>;
   entityToken: ET;
   hashKeyToken: C['HashKey'] | C['ShardedKeys'];
-  pageKeyMap?: string;
+  pageKeyMap?: string | undefined;
 }): QueryBuilder<C, ET, IndexTokensOf<CF>, CF> {
   // Narrow ITS from CF captured on the client; no cf argument required.
   return new QueryBuilder<C, ET, IndexTokensOf<CF>, CF, unknown>(

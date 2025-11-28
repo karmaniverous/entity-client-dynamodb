@@ -14,7 +14,7 @@ export interface IndexParams {
   >;
   filterConditions: (string | undefined)[];
   /** Optional list of attributes to project for this index. */
-  projectionAttributes?: string[];
-  rangeKeyCondition?: string;
-  scanIndexForward?: boolean;
+  projectionAttributes?: string[] | undefined;
+  rangeKeyCondition?: string | undefined;
+  scanIndexForward?: boolean | undefined;
 }

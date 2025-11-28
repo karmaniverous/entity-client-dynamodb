@@ -15,5 +15,5 @@ export interface BatchGetOptions extends Omit<
     BatchProcessOptions<unknown, unknown>,
     'batchHandler' | 'unprocessedItemExtractor'
   >;
-  tableName?: string;
+  tableName?: string | undefined;
 }

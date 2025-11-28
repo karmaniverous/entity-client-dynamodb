@@ -747,7 +747,7 @@ interface BaseEntityClientOptions<CC extends BaseConfigMap, CF = unknown> {
     /** {@link EntityManager | `EntityManager`} instance. */
     entityManager: EntityManager<CC, CF>;
     /** Injected logger object. Must support `debug` and `error` methods. Default: `console` */
-    logger?: Pick<Console, 'debug' | 'error'>;
+    logger?: Pick<Console, 'debug' | 'error'> | undefined;
 }
 
 /**
@@ -796,7 +796,7 @@ interface BaseQueryBuilderOptions<CC extends BaseConfigMap, EntityClient extends
     /** Hash key token. */
     hashKeyToken: CC['HashKey'] | CC['ShardedKeys'];
     /** Dehydrated page key map. */
-    pageKeyMap?: string;
+    pageKeyMap?: string | undefined;
 }
 
 /**
@@ -830,7 +830,7 @@ declare abstract class BaseQueryBuilder<CC extends BaseConfigMap, EntityClient e
     /** Hash key token. */
     readonly hashKeyToken: CC['HashKey'] | CC['ShardedKeys'];
     /** Dehydrated page key map. */
-    readonly pageKeyMap?: string;
+    readonly pageKeyMap?: string | undefined;
     /**
      * Maps `indexToken` values to database platform-specific query parameters.
      *
