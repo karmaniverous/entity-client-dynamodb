@@ -43,12 +43,12 @@ stan-cli:
       sequential: true
   patchOpenCommand: code -g {file}
   scripts:
+    build: cross-env NO_COLOR=1 npm run build
     typecheck: npm run typecheck
     lint:
       script: npm run lint:fix
       warnPattern: \\d+:\\d+\\s+warning
     test: npm run test -- --no-color
-    build: cross-env NO_COLOR=1 npm run build
     docs:
       script: npm run docs -- --emit none
       warnPattern: ^(?!.*@smithy\\/types#ChecksumConstructor)(?!.*@smithy\\/smithy-client#DefaultsMode).*\\[warning\\]

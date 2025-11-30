@@ -58,8 +58,8 @@ type Config<C extends BaseConfigMap = BaseConfigMap> = ConditionalProperty<'enti
         defaultLimit?: number;
         defaultPageSize?: number;
         shardBumps?: ShardBump[];
-        timestampProperty: C['TranscodedProperties'] & PropertiesOfType<C['EntityMap'][E], number> & TranscodableProperties<C['EntityMap'], C['TranscodeRegistry']>;
-        uniqueProperty: C['TranscodedProperties'] & keyof C['EntityMap'][E] & TranscodableProperties<C['EntityMap'], C['TranscodeRegistry']>;
+        timestampProperty: Extract<Extract<C['TranscodedProperties'], PropertiesOfType<C['EntityMap'][E], number>>, TranscodableProperties<C['EntityMap'], C['TranscodeRegistry']>>;
+        uniqueProperty: Extract<Extract<C['TranscodedProperties'], keyof C['EntityMap'][E]>, TranscodableProperties<C['EntityMap'], C['TranscodeRegistry']>>;
     };
 }> & ConditionalProperty<'generatedProperties', C['ShardedKeys'] | C['UnshardedKeys'], ConditionalProperty<'sharded', C['ShardedKeys'], Record<C['ShardedKeys'], (C['TranscodedProperties'] & TranscodableProperties<C['EntityMap'], C['TranscodeRegistry']>)[]>> & ConditionalProperty<'unsharded', C['UnshardedKeys'], Record<C['UnshardedKeys'], (C['TranscodedProperties'] & TranscodableProperties<C['EntityMap'], C['TranscodeRegistry']>)[]>>> & ConditionalProperty<'propertyTranscodes', C['TranscodedProperties'] & TranscodableProperties<C['EntityMap'], C['TranscodeRegistry']>, {
     [P in C['TranscodedProperties'] & TranscodableProperties<C['EntityMap'], C['TranscodeRegistry']>]: PropertiesOfType<C['TranscodeRegistry'], FlattenEntityMap<C['EntityMap']>[P]>;
@@ -119,16 +119,6 @@ type ConfigMap<M extends Partial<BaseConfigMap> = Partial<BaseConfigMap>> = Vali
 }>;
 
 /**
- * Extracts a database-facing partial item type from a {@link BaseConfigMap | `ConfigMap`}.
- *
- * @typeParam CC - {@link ConfigMap | `ConfigMap`} that defines an {@link Config | `EntityManager configuration`}'s {@link EntityMap | `EntityMap`}, key properties, and {@link TranscodeRegistry | `TranscodeRegistry`}. If omitted, defaults to {@link BaseConfigMap | `BaseConfigMap`}.
- *
- * @category EntityManager
- * @protected
- */
-type EntityItem<CC extends BaseConfigMap> = Partial<FlattenEntityMap<CC['EntityMap']> & Record<CC['HashKey'] | CC['RangeKey'] | CC['ShardedKeys'] | CC['UnshardedKeys'], string>> & Record<string, unknown>;
-
-/**
  * Database-facing record key type from a {@link BaseConfigMap | `ConfigMap`} with required hash & range keys.
  *
  * @typeParam CC - {@link ConfigMap | `ConfigMap`} that defines an {@link Config | `EntityManager configuration`}'s {@link EntityMap | `EntityMap`}, key properties, and {@link TranscodeRegistry | `TranscodeRegistry`}. If omitted, defaults to {@link BaseConfigMap | `BaseConfigMap`}.
@@ -146,17 +136,29 @@ type EntityKey<CC extends BaseConfigMap> = Record<CC['HashKey'] | CC['RangeKey']
  * @category EntityManager
  * @protected
  */
-type EntityToken<CC extends BaseConfigMap> = keyof Exactify<CC['EntityMap']> & string;
+type EntityToken<CC extends BaseConfigMap> = Extract<keyof Exactify<CC['EntityMap']>, string>;
 
 /**
- * A partial {@link EntityItem | `EntityItem`} restricted to keys defined in `C`.
+ * Storage-facing partial item type from a {@link BaseConfigMap | `ConfigMap`}.
+ *
+ * Token-agnostic shape used by encoding/decoding, key updates, and
+ * (de)hydration services.
+ *
+ * @typeParam CC - {@link ConfigMap | `ConfigMap`} that defines an {@link Config | `EntityManager configuration`}'s {@link EntityMap | `EntityMap`}, key properties, and {@link TranscodeRegistry | `TranscodeRegistry`}. If omitted, defaults to {@link BaseConfigMap | `BaseConfigMap`}.
+ *
+ * @category EntityManager
+ */
+type StorageItem<CC extends BaseConfigMap> = Partial<FlattenEntityMap<CC['EntityMap']> & Record<CC['HashKey'] | CC['RangeKey'] | CC['ShardedKeys'] | CC['UnshardedKeys'], string>> & Record<string, unknown>;
+
+/**
+ * A partial {@link StorageItem | `StorageItem`} restricted to keys defined in `C`.
  *
  * @typeParam CC - {@link ConfigMap | `ConfigMap`} that defines an {@link Config | `EntityManager configuration`}'s {@link EntityMap | `EntityMap`}, key properties, and {@link TranscodeRegistry | `TranscodeRegistry`}. If omitted, defaults to {@link BaseConfigMap | `BaseConfigMap`}.
  *
  * @category QueryBuilder
  * @protected
  */
-type PageKey<CC extends BaseConfigMap> = Pick<EntityItem<CC>, CC['HashKey'] | CC['RangeKey'] | CC['ShardedKeys'] | CC['UnshardedKeys'] | CC['TranscodedProperties']>;
+type PageKey<CC extends BaseConfigMap> = Pick<StorageItem<CC>, CC['HashKey'] | CC['RangeKey'] | CC['ShardedKeys'] | CC['UnshardedKeys'] | CC['TranscodedProperties']>;
 /**
  * Internal helpers to safely derive index component tokens for an index IT.
  *
@@ -182,11 +184,39 @@ type IndexRangeKeyOf<CF, IT extends string> = CF extends {
  */
 type IndexTokensOf<CF> = CF extends {
     indexes?: infer I;
-} ? I extends Record<string, unknown> ? keyof I & string : string : string;
+} ? I extends Record<string, unknown> ? Extract<keyof I, string> : string : string;
 type HasIndexFor<CF, IT extends string> = CF extends {
     indexes?: infer I;
 } ? I extends Record<string, unknown> ? IT extends keyof I ? true : false : false : false;
-type IndexComponentTokens<CC extends BaseConfigMap, CF, IT extends string> = HasIndexFor<CF, IT> extends true ? CC['HashKey'] | CC['RangeKey'] | IndexHashKeyOf<CF, IT> | IndexRangeKeyOf<CF, IT> : CC['HashKey'] | CC['RangeKey'] | CC['ShardedKeys'] | CC['UnshardedKeys'] | CC['TranscodedProperties'];
+/**
+ * Base index component tokens shared by all indexes
+ * (the global hashKey and rangeKey defined in the Config).
+ *
+ * @category QueryBuilder
+ */
+type BaseKeyTokens<CC extends BaseConfigMap> = CC['HashKey'] | CC['RangeKey'];
+/**
+ * Key set for index component tokens when CF/IT identify a concrete index.
+ * - Always includes base key tokens (global hash/range).
+ * - Conditionally includes index hashKey/rangeKey when they do not collapse
+ *   to the base key union.
+ *
+ * @category QueryBuilder
+ */
+type PresentIndexTokenSet<CC extends BaseConfigMap, CF, IT extends string> = Record<BaseKeyTokens<CC>, true> & {
+    [K in IndexHashKeyOf<CF, IT> as K extends BaseKeyTokens<CC> ? never : K]: true;
+} & {
+    [K in IndexRangeKeyOf<CF, IT> as K extends BaseKeyTokens<CC> ? never : K]: true;
+};
+/**
+ * Key set for index component tokens when CF does not carry an `indexes` map
+ * or IT is unknown. Includes global keys, generated keys, and transcodable
+ * properties.
+ *
+ * @category QueryBuilder
+ */
+type FallbackIndexTokenSet<CC extends BaseConfigMap> = Record<CC['HashKey'] | CC['RangeKey'] | CC['ShardedKeys'] | CC['UnshardedKeys'] | CC['TranscodedProperties'], true>;
+type IndexComponentTokens<CC extends BaseConfigMap, CF, IT extends string> = HasIndexFor<CF, IT> extends true ? keyof PresentIndexTokenSet<CC, CF, IT> : keyof FallbackIndexTokenSet<CC>;
 /**
  * Page key typed for a specific index token.
  *
@@ -194,7 +224,7 @@ type IndexComponentTokens<CC extends BaseConfigMap, CF, IT extends string> = Has
  *   shape narrows to exactly the component tokens of IT.
  * - Without CF, falls back to the broad PageKey<CC> shape.
  */
-type PageKeyByIndex<CC extends BaseConfigMap, ET extends EntityToken<CC>, IT extends string = string, CF = unknown> = Pick<EntityItem<CC>, IndexComponentTokens<CC, CF, IT>>;
+type PageKeyByIndex<CC extends BaseConfigMap, ET extends EntityToken<CC>, IT extends string = string, CF = unknown> = Pick<StorageItem<CC>, IndexComponentTokens<CC, CF, IT>>;
 
 declare const configSchema: z$1.ZodObject<{
     entities: z$1.ZodDefault<z$1.ZodOptional<z$1.ZodRecord<z$1.ZodString, z$1.ZodObject<{
@@ -247,15 +277,11 @@ type ParsedConfig = z$1.infer<typeof configSchema>;
 /** EntityOfToken — resolves the concrete entity shape for a specific entity token. */
 type EntityOfToken<CC extends BaseConfigMap, ET extends EntityToken<CC>> = Exactify<CC['EntityMap']>[ET];
 /**
- * EntityItemByToken — database-facing partial item narrowed to a specific entity token.
- * Mirrors `EntityItem<CC>` with the entity surface restricted to `EntityOfToken<CC, ET>`.
- *
- * Note: If using createEntityManager with entitiesSchema, the schema must declare
- * only base (non-generated) properties. Generated keys/tokens are layered by EntityManager.
+ * EntityItem — domain-facing item narrowed to a specific entity token, plus
+ * optional key/token properties. Required fields per captured entitiesSchema
+ * (when present); no string index signature.
  */
-type EntityItemByToken<CC extends BaseConfigMap, ET extends EntityToken<CC>> = Partial<EntityOfToken<CC, ET> & Record<CC['HashKey'] | CC['RangeKey'] | CC['ShardedKeys'] | CC['UnshardedKeys'], string>> & Record<string, unknown>;
-/** EntityRecordByToken — database-facing record (keys required) narrowed to a specific entity token. */
-type EntityRecordByToken<CC extends BaseConfigMap, ET extends EntityToken<CC>> = EntityItemByToken<CC, ET> & EntityKey<CC>;
+type EntityItem<CC extends BaseConfigMap, ET extends EntityToken<CC>> = EntityOfToken<CC, ET> & Partial<Record<CC['HashKey'] | CC['RangeKey'] | CC['ShardedKeys'] | CC['UnshardedKeys'], string>>;
 /**
  * Normalize literals: string | readonly string[] -\> union of strings.
  */
@@ -264,10 +290,15 @@ type KeysFrom<K> = K extends readonly (infer E)[] ? Extract<E, string> : K exten
  * Project item shape by keys; if K is never/unknown, fall back to T.
  */
 type Projected<T, K> = [KeysFrom<K>] extends [never] ? T : T extends object ? Pick<T, Extract<KeysFrom<K>, keyof Exactify<T>>> : T;
-/**
- * Projected item by token — narrows EntityItemByToken by K when provided.
+/** EntityRecord — DB-facing record (keys required), narrowed to a specific entity token. */
+type EntityRecord<CC extends BaseConfigMap, ET extends EntityToken<CC>> = Partial<EntityItem<CC, ET>> & EntityKey<CC>;
+/** EntityItemPartial — projected/seed domain shape by token.
+ * - If K provided: required projected keys (`Projected<EntityItem<CC, ET>, K>`).
+ * - If K omitted: permissive seed (`Partial<EntityItem<CC, ET>>`).
  */
-type ProjectedItemByToken<CC extends BaseConfigMap, ET extends EntityToken<CC>, K = unknown> = Projected<EntityItemByToken<CC, ET>, K>;
+type EntityItemPartial<CC extends BaseConfigMap, ET extends EntityToken<CC>, K = unknown> = [KeysFrom<K>] extends [never] ? Partial<EntityItem<CC, ET>> : Projected<EntityItem<CC, ET>, K>;
+/** EntityRecordPartial — projected DB record shape by token. */
+type EntityRecordPartial<CC extends BaseConfigMap, ET extends EntityToken<CC>, K = unknown> = Projected<EntityRecord<CC, ET>, K>;
 
 /**
  * A result returned by a {@link ShardQueryFunction | `ShardQueryFunction`} querying an individual shard.
@@ -285,7 +316,7 @@ interface ShardQueryResult<CC extends BaseConfigMap, ET extends EntityToken<CC>,
     /** The number of records returned. */
     count: number;
     /** The returned records. */
-    items: ProjectedItemByToken<CC, ET, K>[];
+    items: EntityItemPartial<CC, ET, K>[];
     /** The page key for the next query on this shard. */
     pageKey?: PageKeyByIndex<CC, ET, IT, CF>;
 }
@@ -310,7 +341,7 @@ interface ShardQueryResult<CC extends BaseConfigMap, ET extends EntityToken<CC>,
  */
 type ShardQueryFunction<CC extends BaseConfigMap, ET extends EntityToken<CC>, IT extends string, CF = unknown, K = unknown> = CF extends {
     indexes?: infer I;
-} ? I extends Record<string, unknown> ? IT extends keyof I & string ? (hashKey: string, pageKey?: PageKeyByIndex<CC, ET, IT, CF>, pageSize?: number) => Promise<ShardQueryResult<CC, ET, IT, CF, K>> : never : (hashKey: string, pageKey?: PageKeyByIndex<CC, ET, IT, CF>, pageSize?: number) => Promise<ShardQueryResult<CC, ET, IT, CF, K>> : (hashKey: string, pageKey?: PageKeyByIndex<CC, ET, IT, CF>, pageSize?: number) => Promise<ShardQueryResult<CC, ET, IT, CF, K>>;
+} ? I extends Record<string, unknown> ? IT extends Extract<keyof I, string> ? (hashKey: string, pageKey?: PageKeyByIndex<CC, ET, IT, CF>, pageSize?: number) => Promise<ShardQueryResult<CC, ET, IT, CF, K>> : never : (hashKey: string, pageKey?: PageKeyByIndex<CC, ET, IT, CF>, pageSize?: number) => Promise<ShardQueryResult<CC, ET, IT, CF, K>> : (hashKey: string, pageKey?: PageKeyByIndex<CC, ET, IT, CF>, pageSize?: number) => Promise<ShardQueryResult<CC, ET, IT, CF, K>>;
 
 /**
  * Relates a specific index token to a {@link ShardQueryFunction | `ShardQueryFunction`} to be performed on that index.
@@ -330,7 +361,7 @@ type ShardQueryFunction<CC extends BaseConfigMap, ET extends EntityToken<CC>, IT
  */
 type ShardQueryMap<CC extends BaseConfigMap, ET extends EntityToken<CC>, ITS extends string, CF = unknown, K = unknown> = CF extends {
     indexes?: infer I;
-} ? I extends Record<string, unknown> ? Record<ITS & (keyof I & string), ShardQueryFunction<CC, ET, ITS & (keyof I & string), CF, K>> : Record<ITS, ShardQueryFunction<CC, ET, ITS, CF, K>> : Record<ITS, ShardQueryFunction<CC, ET, ITS, CF, K>>;
+} ? I extends Record<string, unknown> ? Record<Extract<ITS, Extract<keyof I, string>>, ShardQueryFunction<CC, ET, Extract<ITS, Extract<keyof I, string>>, CF, K>> : Record<ITS, ShardQueryFunction<CC, ET, ITS, CF, K>> : Record<ITS, ShardQueryFunction<CC, ET, ITS, CF, K>>;
 /**
  * Convenience alias for ShardQueryMap that derives ITS (index token subset)
  * from a values-first captured config CC (e.g., your config literal type).
@@ -373,7 +404,7 @@ interface QueryOptions<CC extends BaseConfigMap, ET extends EntityToken<CC> = En
     /**
      * Partial item object sufficiently populated to generate index hash keys.
      */
-    item: EntityItemByToken<CC, ET>;
+    item: EntityItemPartial<CC, ET>;
     /**
      * The target maximum number of records to be returned by the query across
      * all shards.
@@ -409,7 +440,7 @@ interface QueryOptions<CC extends BaseConfigMap, ET extends EntityToken<CC> = En
     /**
      * A {@link SortOrder | `SortOrder`} object specifying the sort order of the result set. Defaults to `[]`. Aligned with the projected item shape when K is provided.
      */
-    sortOrder?: SortOrder<ProjectedItemByToken<CC, ET, K>> | undefined;
+    sortOrder?: SortOrder<EntityItemPartial<CC, ET, K>> | undefined;
     /**
      * Lower limit to query shard space.
      *
@@ -476,7 +507,7 @@ interface QueryResult<CC extends BaseConfigMap, ET extends EntityToken<CC>, ITS 
     /** Total number of records returned across all shards. */
     count: number;
     /** The returned records. */
-    items: ProjectedItemByToken<CC, ET, K>[];
+    items: EntityItemPartial<CC, ET, K>[];
     /**
      * A compressed, two-layer map of page keys, used to query the next page of
      * data for a given sort key on each shard of a given hash key.
@@ -526,13 +557,13 @@ declare class EntityManager<CC extends BaseConfigMap, CF = unknown> {
      * Encode a generated property value. Returns a string or undefined if atomicity requirement of sharded properties not met.
      *
      * @param property - {@link Config | Config} `generatedProperties` key.
-     * @param item - {@link EntityItem | `EntityItem`} object.
+     * @param item - {@link StorageItem | `StorageItem`} object.
      *
      * @returns Encoded generated property value.
      *
      * @throws `Error` if `property` is not a {@link Config | Config} `generatedProperties` key.
      */
-    encodeGeneratedProperty(property: CC['ShardedKeys'] | CC['UnshardedKeys'], item: EntityItem<CC>): string | undefined;
+    encodeGeneratedProperty(property: CC['ShardedKeys'] | CC['UnshardedKeys'], item: StorageItem<CC>): string | undefined;
     /**
      * Update generated properties, hash key, and range key on an {@link EntityItem | `EntityItem`} object.
      *
@@ -546,28 +577,27 @@ declare class EntityManager<CC extends BaseConfigMap, CF = unknown> {
      *
      * @overload
      */
-    addKeys<ET extends EntityToken<CC>>(entityToken: ET, item: EntityItemByToken<CC, ET>, overwrite?: boolean): EntityRecordByToken<CC, ET>;
+    addKeys<ET extends EntityToken<CC>>(entityToken: ET, item: EntityItemPartial<CC, ET>, overwrite?: boolean): EntityRecordPartial<CC, ET>;
     /**
      * @overload
      */
-    addKeys<ET extends EntityToken<CC>>(entityToken: ET, item: EntityItemByToken<CC, ET>[], overwrite?: boolean): EntityRecordByToken<CC, ET>[];
+    addKeys<ET extends EntityToken<CC>>(entityToken: ET, item: EntityItemPartial<CC, ET>[], overwrite?: boolean): EntityRecordPartial<CC, ET>[];
     /**
      * Convert one or more {@link EntityItem | `EntityItem`} objects into an array of {@link EntityKey | `EntityKey`} values.
      *
      * @param entityToken - {@link Config | `Config`} `entities` key.
-     * @param item - {@link EntityItem | `EntityItem`} object, or array of them.
+     * @param item - {@link EntityItem | `EntityItem`} object.
      * @param overwrite - Overwrite existing properties (default `false`).
      *
-     * @returns An array of {@link EntityKey | `EntityKey`} values. For a single input item, returns 0..N keys (usually 1).
-     *          For an array input, returns a single flattened array of keys across all inputs.
+     * @returns Array of {@link EntityKey | `EntityKey`} values derived from `item`.
      *
      * @throws `Error` if `entityToken` is invalid.
      */
-    getPrimaryKey<ET extends EntityToken<CC>>(entityToken: ET, item: EntityItemByToken<CC, ET>, overwrite?: boolean): EntityKey<CC>[];
+    getPrimaryKey<ET extends EntityToken<CC>>(entityToken: ET, item: EntityItemPartial<CC, ET>, overwrite?: boolean): EntityKey<CC>[];
     /**
      * @overload
      */
-    getPrimaryKey<ET extends EntityToken<CC>>(entityToken: ET, items: EntityItemByToken<CC, ET>[], overwrite?: boolean): EntityKey<CC>[];
+    getPrimaryKey<ET extends EntityToken<CC>>(entityToken: ET, items: EntityItemPartial<CC, ET>[], overwrite?: boolean): EntityKey<CC>[];
     /**
      * Strips generated properties, hash key, and range key from an {@link EntityRecord | `EntityRecord`} object.
      *
@@ -578,13 +608,12 @@ declare class EntityManager<CC extends BaseConfigMap, CF = unknown> {
      *
      * @throws `Error` if `entityToken` is invalid.
      *
-     * @overload
+     * Overloads:
      */
-    removeKeys<ET extends EntityToken<CC>>(entityToken: ET, item: EntityRecordByToken<CC, ET>): EntityItemByToken<CC, ET>;
-    /**
-     * @overload
-     */
-    removeKeys<ET extends EntityToken<CC>>(entityToken: ET, items: EntityRecordByToken<CC, ET>[]): EntityItemByToken<CC, ET>[];
+    removeKeys<ET extends EntityToken<CC>>(entityToken: ET, item: EntityRecord<CC, ET>): EntityItem<CC, ET>;
+    removeKeys<ET extends EntityToken<CC>, K = unknown>(entityToken: ET, item: EntityRecordPartial<CC, ET, K>): EntityItemPartial<CC, ET, K>;
+    removeKeys<ET extends EntityToken<CC>>(entityToken: ET, items: EntityRecord<CC, ET>[]): EntityItem<CC, ET>[];
+    removeKeys<ET extends EntityToken<CC>, K = unknown>(entityToken: ET, items: EntityRecordPartial<CC, ET, K>[]): EntityItemPartial<CC, ET, K>[];
     /**
      * Find an index token based on the configured hash and range key tokens.
      *
@@ -683,7 +712,7 @@ type TranscodedPropertiesFrom<CC> = CC extends {
 type EntitiesFromSchema<CC> = CC extends {
     entitiesSchema?: infer S;
 } ? S extends Record<string, ZodType> ? {
-    [K in keyof S & string]: z.infer<S[K]>;
+    [K in Extract<keyof S, string>]: z.infer<S[K]>;
 } & EntityMap : EntityMap : EntityMap;
 /**
  * Derive the union of index token names from a values-first config input.
@@ -699,7 +728,7 @@ type IndexTokensFrom<CC> = CC extends {
  * Captures a BaseConfigMap-compatible type from a literal ConfigInput value
  * and an EntityMap (defaults to MinimalEntityMapFrom<CC>).
  */
-type CapturedConfigMapFrom<CC, EM extends EntityMap> = {
+interface CapturedConfigMapFrom<CC, EM extends EntityMap> extends BaseConfigMap {
     EntityMap: EM;
     HashKey: HashKeyFrom<CC>;
     RangeKey: RangeKeyFrom<CC>;
@@ -707,7 +736,7 @@ type CapturedConfigMapFrom<CC, EM extends EntityMap> = {
     UnshardedKeys: UnshardedKeysFrom<CC>;
     TranscodedProperties: TranscodedPropertiesFrom<CC>;
     TranscodeRegistry: DefaultTranscodeRegistry;
-} & BaseConfigMap;
+}
 /**
  * Values-first factory that captures literal tokens and index names directly
  * from the provided config value. Runtime config parsing/validation is
@@ -725,14 +754,13 @@ type CapturedConfigMapFrom<CC, EM extends EntityMap> = {
 declare function createEntityManager<const CC extends ConfigInput, EM extends EntityMap = EntitiesFromSchema<CC>>(config: CC, logger?: Pick<Console, 'debug' | 'error'>): EntityManager<CapturedConfigMapFrom<CC, EM>, CC>;
 
 /**
- * Database-facing record type from a {@link BaseConfigMap | `ConfigMap`} with required hash & range keys.
+ * Storage-facing record type with required keys.
  *
  * @typeParam CC - {@link ConfigMap | `ConfigMap`} that defines an {@link Config | `EntityManager configuration`}'s {@link EntityMap | `EntityMap`}, key properties, and {@link TranscodeRegistry | `TranscodeRegistry`}. If omitted, defaults to {@link BaseConfigMap | `BaseConfigMap`}.
  *
  * @category EntityManager
- * @protected
  */
-type EntityRecord<CC extends BaseConfigMap> = EntityItem<CC> & EntityKey<CC>;
+type StorageRecord<CC extends BaseConfigMap> = StorageItem<CC> & EntityKey<CC>;
 
 /**
  * Base EntityClient options.
@@ -777,8 +805,8 @@ declare abstract class BaseEntityClient<CC extends BaseConfigMap, CF = unknown> 
 }
 
 type ConfigOfClient<EC> = EC extends BaseEntityClient<infer CC> ? CC : never;
-type EntityClientRecordByToken<EC, ET extends EntityToken<ConfigOfClient<EC>>> = EntityRecordByToken<ConfigOfClient<EC>, ET>;
-type EntityClientItemByToken<EC, ET extends EntityToken<ConfigOfClient<EC>>> = EntityItemByToken<ConfigOfClient<EC>, ET>;
+type EntityClientRecordByToken<EC, ET extends EntityToken<ConfigOfClient<EC>>> = EntityRecord<ConfigOfClient<EC>, ET>;
+type EntityClientItemByToken<EC, ET extends EntityToken<ConfigOfClient<EC>>> = EntityItem<ConfigOfClient<EC>, ET>;
 
 /**
  * Constructor options for {@link BaseQueryBuilder | `BaseQueryBuilder`}.
@@ -850,4 +878,4 @@ declare abstract class BaseQueryBuilder<CC extends BaseConfigMap, EntityClient e
 }
 
 export { BaseEntityClient, BaseQueryBuilder, EntityManager, configSchema, createEntityManager };
-export type { BaseConfigMap, BaseEntityClientOptions, BaseQueryBuilderOptions, CapturedConfigMapFrom, Config, ConfigInput, ConfigMap, ConfigOfClient, EntitiesFromSchema, EntityClientItemByToken, EntityClientRecordByToken, EntityItem, EntityItemByToken, EntityKey, EntityOfToken, EntityRecord, EntityRecordByToken, EntityToken, HasIndexFor, HashKeyFrom, IndexComponentTokens, IndexHashKeyOf, IndexRangeKeyOf, IndexTokensFrom, IndexTokensOf, KeysFrom, PageKey, PageKeyByIndex, ParsedConfig, Projected, ProjectedItemByToken, QueryBuilderQueryOptions, QueryOptions, QueryOptionsByCC, QueryOptionsByCF, QueryResult, RangeKeyFrom, ShardBump, ShardQueryFunction, ShardQueryMap, ShardQueryMapByCC, ShardQueryMapByCF, ShardQueryResult, ShardedKeysFrom, TranscodedPropertiesFrom, UnshardedKeysFrom, ValidateConfigMap };
+export type { BaseConfigMap, BaseEntityClientOptions, BaseKeyTokens, BaseQueryBuilderOptions, CapturedConfigMapFrom, Config, ConfigInput, ConfigMap, ConfigOfClient, EntitiesFromSchema, EntityClientItemByToken, EntityClientRecordByToken, EntityItem, EntityItemPartial, EntityKey, EntityOfToken, EntityRecord, EntityRecordPartial, EntityToken, FallbackIndexTokenSet, HasIndexFor, HashKeyFrom, IndexComponentTokens, IndexHashKeyOf, IndexRangeKeyOf, IndexTokensFrom, IndexTokensOf, KeysFrom, PageKey, PageKeyByIndex, ParsedConfig, PresentIndexTokenSet, Projected, QueryBuilderQueryOptions, QueryOptions, QueryOptionsByCC, QueryOptionsByCF, QueryResult, RangeKeyFrom, ShardBump, ShardQueryFunction, ShardQueryMap, ShardQueryMapByCC, ShardQueryMapByCF, ShardQueryResult, ShardedKeysFrom, StorageItem, StorageRecord, TranscodedPropertiesFrom, UnshardedKeysFrom, ValidateConfigMap };

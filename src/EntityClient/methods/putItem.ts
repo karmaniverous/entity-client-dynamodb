@@ -27,7 +27,7 @@ export async function putItem<C extends BaseConfigMap>(
     TableName: client.tableName,
     ...(hashKey in itemOrOptions && rangeKey in itemOrOptions
       ? {
-          Item: itemOrOptions as EntityRecord<C>,
+          Item: itemOrOptions,
         }
       : itemOrOptions),
     ...options,
