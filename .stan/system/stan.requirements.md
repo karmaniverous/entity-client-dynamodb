@@ -1,29 +1,43 @@
-# Entity Manager — Requirements (authoritative)
+# Entity Manager & DynamoDB Plugin — Requirements (authoritative)
 
 Scope
 
-- This document specifies the desired end state for entity-manager (vNext). It supersedes prior guidance where conflicts arise and reflects a coordinated, inference-first typing strategy across the “entity-\*” stack.
-- It remains provider-agnostic (DynamoDB is a common target) and retains current runtime semantics unless explicitly changed.
+- This document specifies the desired end state for:
+  - Entity Manager (vNext) with an inference‑first, by‑token type model.
+  - The DynamoDB get‑dotenv CLI plugin: versioned table lifecycle, data migration, and local DynamoDB orchestration.
+- It supersedes prior guidance where conflicts arise and remains provider‑agnostic unless explicitly stated.
+- Runtime semantics remain the same unless noted; the primary changes are type model/shape and API ergonomics.
 
 Overview
 
-- Entity Manager implements rational indexing and cross-shard querying at scale in your NoSQL database so you can focus on application logic.
-- Core responsibilities:
-  - Generate and maintain database-facing keys (global hashKey and rangeKey) and other generated properties used by indexes.
-  - Encode/decode generated property elements via transcodes.
-  - Dehydrate/rehydrate page keys for multi-index, cross-shard paging.
-  - Execute provider-agnostic, parallel shard queries through injected shard query functions, combining, de-duplicating, and sorting results.
+- Entity Manager implements rational indexing and cross‑shard querying at scale in your NoSQL database so you can focus on application logic.
+- The DynamoDB plugin provides operational tooling on top:
+  - Opinionated, versioned table definitions (YAML with comment‑preserving refresh)
+  - Validate/create/delete/purge flows
+  - Version‑aware data migration (step‑wise; transforms; progress ticks)
+  - Local DynamoDB orchestration (config‑first with embedded fallback)
+
+---
+
+## Entity Manager vNext — By‑token model (authoritative)
+
+Core responsibilities
+
+- Generate and maintain database‑facing keys (global hashKey and rangeKey) and other generated properties used by indexes.
+- Encode/decode generated property elements via transcodes.
+- Dehydrate/rehydrate page keys for multi‑index, cross‑shard paging.
+- Execute provider‑agnostic, parallel shard queries through injected shard query functions, combining, de‑duplicating, and sorting results.
 
 Key concepts and terminology
 
-- Entity: application data type; accepts unknown keys (record-like).
+- Entity: application data type; accepts unknown keys (record‑like).
 - Generated properties:
   - Sharded: include the hashKey value and one or more property=value elements; require all elements to be present (atomic), otherwise undefined.
   - Unsharded: one or more property=value elements; missing element values are encoded as empty strings.
 - Keys:
   - Global hashKey (shared name across entities) with shard suffix.
   - Global rangeKey (shared name across entities) in the form "uniqueProperty#value".
-- Shard bump: a time-windowed rule (timestamp, charBits, chars) defining shard key width and radix for records created within/after that timestamp.
+- Shard bump: a time‑windowed rule (timestamp, charBits, chars) defining shard key width and radix for records created within/after that timestamp.
 - Index components: tokens defining index hashKey and rangeKey. Tokens may be:
   - Global hashKey or rangeKey.
   - A sharded generated property (hashKey side only).
@@ -31,110 +45,61 @@ Key concepts and terminology
 
 Compatibility and assumptions
 
-- Provider-agnostic orchestration; intended to work over platforms like DynamoDB.
+- Provider‑agnostic orchestration; intended to work with platforms like DynamoDB.
 - Canonicalization (e.g., name search fields) is an application concern; Entity Manager treats such strings as opaque values and provides transcodes for ordering/encoding.
 
-Non-requirements (current behavior)
+Non‑requirements (current behavior)
 
-- No automatic fan-out reduction relative to remaining limit in the query loop.
+- No automatic fan‑out reduction relative to remaining limit in the query loop.
 - No enforcement of globally unique (hashKey, rangeKey) pairs across separate index tokens.
 
----
-
-## Inference-first typing (refactor) — strict acronyms and API requirements
+### Inference‑first typing (refactor) — by‑token model
 
 Goals
 
-- Inference-first configuration: callers pass a literal config value; Entity Manager captures tokens and index names directly from the value (no explicit generic parameters required in normal use).
-- Token-aware and index-aware typing end-to-end: entity token (ET) and index token (IT/ITS) narrow items, records, page keys, low-level helpers, shard query contracts, and query results without casts.
-- Value-first helpers and patterns ensure literal keys are preserved across module boundaries (use "as const" and "satisfies").
-- Runtime behavior remains unchanged: Zod-based validation persists; we intersect parsed configuration with captured literal types at the type level.
+- Values‑first configuration: callers pass a literal config value; Entity Manager captures tokens and index names directly from the value (“as const” and “satisfies”).
+- Token‑aware and index‑aware typing end‑to‑end: entity token (ET) and index token (IT/ITS) narrow items, records, page keys, shard query contracts, and query results without casts.
+- Runtime behavior remains unchanged; the type surface is modernized for clarity and DX.
 
-Zod-schema-first EM inference (no generics at call sites)
+By‑token types (replacing legacy names)
+
+- EntityItem<CC, ET>
+  - Domain‑facing item narrowed to a specific entity token, plus optional key/token properties.
+- EntityItemPartial<CC, ET, K = unknown>
+  - Projected/seed domain shape by token.
+  - If K provided: required projected keys (Pick by K).
+  - If K omitted: permissive partial (seed).
+- EntityRecord<CC, ET>
+  - DB‑facing record (required keys) plus partial domain fields.
+- EntityRecordPartial<CC, ET, K = unknown>
+  - Projected DB record (Pick by K).
+
+Projection‑aware typing (type‑only K channel; provider‑agnostic)
+
+- K narrows shapes when present; otherwise items are permissive partials.
+- Helper types:
+  - KeysFrom<K> (normalize tuple/string to a key union)
+  - Projected<T, K> (Pick on K)
+- Query & shard contracts thread K consistently, e.g.:
+  - ShardQueryFunction<CC, ET, IT, CF, K>
+  - ShardQueryResult<CC, ET, IT, CF, K>
+  - QueryOptions<CC, ET, ITS, CF, K>
+  - QueryResult<CC, ET, ITS, K>
+
+Zod‑schema‑first EM inference (no generics at call sites)
 
 - Factory supports optional entitiesSchema: Record<entityToken, Zod schema>.
 - When provided, EM is inferred as { [ET]: z.infer<typeof schema[ET]> } directly from values.
 - When omitted, EM falls back to a broad EntityMap (no breaking change).
-- Schemas define only non-generated properties (base/domain fields). Do not include:
+- Schemas define only non‑generated properties (base/domain fields). Do not include:
   - global keys (hashKey/rangeKey),
-  - generated property tokens (sharded/unsharded keys such as userPK, firstNameRK).
-- Item-facing types layer optional key/token strings and base properties over schemas where applicable.
-- Record-facing types layer required global keys (hashKey/rangeKey) over schemas for storage-facing shapes.
-- Runtime config parsing/validation remains unchanged; entitiesSchema is used for type capture only.
+  - generated property tokens (sharded/unsharded).
+- Runtime config parsing/validation persists (Zod). The parsed result is intersected with captured literal types at the type level.
 
 Naming and acronym policy (hard rule)
 
-- Acronyms are reserved for type-parameter names only (e.g., CC, EM, ET, IT, ITS, EOT, EIBT, ERBT as template parameter identifiers).
-- Never export abbreviated type aliases. All exported types must be fully named (e.g., EntityOfToken, EntityItemByToken, EntityRecordByToken).
-
-Projection-aware typing (type-only K channel; provider-agnostic)
-
-- Add a type-only "projection" channel K that narrows item shapes when a provider projects a subset of attributes.
-  - Helpers:
-    - KeysFrom<K>, Projected<T, K>, ProjectedItemByToken<CC, ET, K>.
-  - Thread K (default unknown) through:
-    - ShardQueryFunction/ShardQueryResult/ShardQueryMap,
-    - QueryOptions/QueryResult (and ByCF/ByCC aliases),
-    - EntityManager.query,
-    - BaseQueryBuilder (getShardQueryFunction, build, query).
-- No runtime behavior changes. Projection execution remains an adapter/provider concern.
-- Sort typing alignment: QueryOptions.sortOrder is typed over ProjectedItemByToken<CC, ET, K>. Callers should include sort keys in K or adapters should auto-include them at runtime to preserve invariants.
-
-Strict capitalized type-parameter dictionary (type parameters only; no alias exports)
-
-- EM — EntityMap
-- E — Entity (single entity shape)
-- ET — EntityToken (keys of EM)
-- EOT — EntityOfToken (Exactify<EM[ET]>)
-- TR — TranscodeRegistry (name → value type)
-- TN — TranscodeName (keys of TR)
-- CC — CapturedConfig (inference-first config type captured from the literal value)
-- HKT — HashKeyToken
-- RKT — RangeKeyToken
-- SGKT — ShardedGeneratedKeyToken
-- UGKT — UnshardedGeneratedKeyToken
-- PT — PropertyToken (transcodable scalar property)
-- IT — IndexToken (keys of config.indexes)
-- ITS — IndexTokenSubset (subset of IT valid for ET in context)
-- EIBT — EntityItemByToken (partial EOT + key/generated tokens as strings)
-- ERBT — EntityRecordByToken (EIBT + required HKT/RKT)
-- PKBI — PageKeyByIndex
-- PKMBIS — PageKeyMapByIndexSet
-- SQFBI — ShardQueryFunctionByIndex
-- QO — QueryOptions
-- QR — QueryResult
-- PK — PropertyKey (utility)
-- V — Value (utility)
-
-Inference-first API and typing (entity-manager)
-
-- Factory (values-first)
-  - createEntityManager<const CC extends ConfigInput, EM extends EntityMap = EntitiesFromSchema<CC>>(config: CC, logger?): EntityManager<CC, EM>
-  - Behavior:
-    - CC is captured from the literal value; callers should prefer "satisfies" for structure checks and "as const" for nested records (indexes, generatedProperties) to preserve literal keys.
-    - EM is optional; if entitiesSchema is provided, EM is inferred from the Zod schemas. Otherwise, EM falls back to a broad EntityMap.
-    - Zod still validates at runtime; the parsed result is intersected with the captured literal types at the type level (no runtime change).
-- Items/records (entity-token aware)
-  - EIBT<CC, EM, ET extends keyof EM> — partial EOT with key/generated tokens string-typed.
-  - ERBT<CC, EM, ET> — EIBT plus required keys HKT|RKT present as strings.
-- Core methods (no explicit generics at call sites; inferred from parameters)
-  - addKeys<CC, EM, ET>(entityToken: ET, item: EIBT<CC, EM, ET>, overwrite?): ERBT<CC, EM, ET>
-  - removeKeys<CC, EM, ET>(entityToken: ET, item: ERBT<CC, EM, ET>): EIBT<CC, EM, ET>
-  - getPrimaryKey<CC, EM, ET>(entityToken: ET, item: EIBT<CC, EM, ET>, overwrite?): EntityKey<CC>[]
-- Query (entity + index aware; values-first)
-  - Page keys:
-    - PKBI<CC, EM, ET, IT> — index-specific page-key object type
-    - PKMBIS<CC, EM, ET, ITS> — per-index map of per-hashKey page keys
-  - Shard query:
-    - SQFBI<CC, EM, ET, IT> = (hashKey: string, pageKey?: PKBI<CC, EM, ET, IT>, pageSize?: number) => Promise<{ count: number; items: EIBT<CC, EM, ET>[]; pageKey?: PKBI<CC, EM, ET, IT> }>
-  - Options/results:
-    - QO<CC, EM, ET extends keyof EM, ITS extends ITSubsetForEntity<CC, EM, ET>>
-    - QR<CC, EM, ET, ITS>
-  - query<CC, EM, ET extends keyof EM, ITS extends ITSubsetForEntity<CC, EM, ET>>(options: QO<CC, EM, ET, ITS>): Promise<QR<CC, EM, ET, ITS>>
-  - Inference:
-    - ET inferred from options.entityToken.
-    - ITS inferred from the literal keys of options.shardQueryMap (subset of IT).
-    - Optional K (projection) narrows result item shape when provided; defaults to unknown for back-compat.
+- Acronyms are reserved for type‑parameter names only (e.g., CC, EM, ET, IT, ITS, CF, K).
+- Never export abbreviated type aliases in public API. All exported type aliases must be fully named (e.g., EntityItemPartial, EntityRecordPartial, etc.).
 
 Configuration model (runtime shape; validated with Zod)
 
@@ -148,9 +113,9 @@ Configuration model (runtime shape; validated with Zod)
 
 Runtime config validation (selected checks)
 
-- Delimiters must be non-word sequences, not containing each other.
-- Keys sets mutually exclusive; types consistent with transcodes.
-- Generated elements non-empty, unique, properly transcodable.
+- Delimiters must be non‑word sequences, not containing each other.
+- Key sets mutually exclusive; types consistent with transcodes.
+- Generated elements non‑empty, unique, properly transcodable.
 - Indexes valid (hash side: global or sharded generated; range side: global range, unsharded generated, or scalar).
 - Entities valid; shardBumps sorted, monotonic; defaults injected.
 
@@ -158,7 +123,7 @@ Generated property encoding
 
 - Sharded: "<hashKey>|k#v|k#v…" (atomic; undefined if any element nil).
 - Unsharded: "k#v|k#v…" (missing → empty string).
-- decodeGeneratedProperty reverses into EIBT patch.
+- decodeGeneratedProperty reverses into EntityItemPartial patch.
 
 Global key updates
 
@@ -168,8 +133,8 @@ Global key updates
 
 Page key map dehydration/rehydration
 
-- dehydratePageKeyMap: stable, typed emission per index/token/hashKey set; strings for compact carry-over.
-- rehydratePageKeyMap: validates index set; reconstructs per-hash/per-index typed keys; error on shape mismatch.
+- dehydratePageKeyMap: stable, typed emission per index/token/hashKey set; strings for compact carry‑over.
+- rehydratePageKeyMap: validates index set; reconstructs per‑hash/per‑index typed keys; error on shape mismatch.
 
 Shard space enumeration
 
@@ -177,81 +142,274 @@ Shard space enumeration
 
 Query orchestration
 
-- QO/QR typed; dedupe by uniqueProperty and sort by provided order; rehydrate/dehydrate loop for paging; optional K type-only narrowing.
-- Adapter-level projection policy: when projections are supplied, auto-include uniqueProperty and explicit sort keys to preserve dedupe/sort invariants.
+- QueryOptions/QueryResult typed; de‑dupe by uniqueProperty and sort by provided order; rehydrate/dehydrate loop for paging; optional K type‑only narrowing.
+- Adapter‑level projection policy (invariants):
+  - When projections are supplied, adapters auto‑include uniqueProperty and explicit sort keys at runtime to preserve de‑dupe/sort invariants.
 
-Transcodes (entity-tools; canonical names)
-
-- DefaultTranscodeRegistry, defaultTranscodes authored via defineTranscodes; encode/decode agreement at compile time.
-
-Logging and errors
-
-- Injected logger with debug/error; helpers log context and rethrow errors.
-
-Documentation guidance (DX)
-
-- Show “values-first” config patterns using satisfies and as const to preserve literal keys.
-- Prefer examples that do not require explicit generic parameters at call sites; demonstrate narrowing via values (entityToken, index tokens).
-- Provide concise examples of PageKey typing by index, token-aware add/remove/keys, and value-first factory usage.
-- Provide a projection K example with const tuples and document adapter projection policy.
-
----
-
-## Adapter-level QueryBuilder ergonomics (DynamoDB) — helper methods
-
-Purpose
-
-- Provide small, explicit helpers for common per-index query parameters and projection lifecycle while preserving the type-only K channel invariants in adapters.
-
-Helpers and behavior (adapter-level)
+Adapter‑level QueryBuilder ergonomics (DynamoDB)
 
 - setScanIndexForward(indexToken: ITS, value: boolean): this
-  - Runtime: sets IndexParams.scanIndexForward for the index; getDocumentQueryArgs emits ScanIndexForward.
-  - Typing: no effect on K (pure query-direction toggle).
-
+  - Runtime: sets per‑index scan direction; reflected in getDocumentQueryArgs.
+  - Typing: no effect on K.
 - setProjection<KAttr extends readonly string[]>(indexToken: ITS, attrs: KAttr): QueryBuilder<…, KAttr>
-  - Runtime: sets per-index projection attributes; getDocumentQueryArgs emits ProjectionExpression.
-  - Query-time invariant: when any projections are present, auto-include uniqueProperty and explicit sort keys to preserve dedupe/sort invariants.
-  - Typing: narrows the builder’s K to KAttr (global to the builder; reflects the merged result shape).
-
 - resetProjection(indexToken: ITS): QueryBuilder<…, unknown>
-  - Runtime: clears projectionAttributes for the index (no ProjectionExpression ⇒ full items).
-  - Typing: widens K back to unknown (result items are no longer uniformly projected).
-
 - resetAllProjections(): QueryBuilder<…, unknown>
-  - Runtime: clears projections for all indices on the builder.
-  - Typing: widens K to unknown (result items are full shape).
-
 - setProjectionAll<KAttr extends readonly string[]>(indices: ITS[] | readonly ITS[], attrs: KAttr): QueryBuilder<…, KAttr>
-  - Runtime: applies the same ProjectionExpression across the supplied indices (or all, if a “current indices” form is later added).
-  - Typing: narrows K to KAttr, keeping a uniform projected shape aligned with EntityManager’s merged result semantics.
+  - Runtime: uses ProjectionExpression; query() auto‑includes uniqueProperty + explicit sort keys to preserve invariants.
+  - Typing: narrows K builder‑wide for a uniform projected shape.
 
-Notes
+Internals / variance (typing contract with adapters)
 
-- K remains a single, builder-wide type parameter to match merged results across all indices. Uniform projections via setProjectionAll are recommended to keep typing and runtime aligned.
-- The adapter’s runtime policy continues to auto-include uniqueProperty and explicit sort keys when projections are present, ensuring stable dedupe/sort.
+- Helper functions that operate on builder state SHOULD accept a minimal structural builder shape (indexParamsMap + logger) or a fully generic BaseQueryBuilder signature to avoid variance casts in downstream adapters.
+- No runtime changes; type ergonomics only.
+
+Acceptance criteria (Entity Manager)
+
+- Values‑first factory compiles and captures literal tokens/index names from the provided config value.
+- By‑token type family replaces legacy names across public typings and TypeDoc.
+- Query contracts thread K (projection) consistently and align with adapter behavior.
+- Adapter policy to auto‑include uniqueProperty + explicit sort keys when projections present is documented and tested in adapters (e.g., DynamoDB).
 
 ---
 
-## Internals / variance (typing contract with entity‑manager)
+## DynamoDB get‑dotenv plugin and versioned migration (authoritative)
 
-Problem
+Scope and purpose
 
-- Downstream adapters (this repo) extend BaseQueryBuilder with CF/K and sometimes need to call helper functions exported by entity‑manager (e.g., addFilterCondition/addRangeKeyCondition).
-- Current helper parameter typing can force downstreams into variance‑bridging casts (unknown as QueryBuilder<C>) even though the helpers only rely on a small structural subset (indexParamsMap, entityClient.logger).
+- Provide a robust, host‑aware get‑dotenv CLI plugin “dynamodb” for table lifecycle and data migration on top of Entity Manager and EntityClient (DynamoDB).
+- Support versioned table definitions and transforms with strong typing, comment‑preserving YAML refresh, and streaming, large‑scale migrations.
+- Keep EntityClient pure and type‑safe for application code; dynamic versioned resolution lives in plugin/utilities only.
 
-Proposed upstream support (typing-only; no runtime change)
+Versioned layout (opinionated; configurable tokens)
 
-- Relax helper function parameter types to accept a generic builder shape rather than a concrete/bounded one, or accept a minimal structural interface:
-  - Structural option: accept any object with indexParamsMap and a logger-like entityClient.
-  - BaseQueryBuilder option: generic in BaseQueryBuilder with unconstrained generics (ET/ITS/CF/K) so extensions remain assignable without casts.
+- Default root: tables/ (configurable via tablesPath)
+- Per‑version directory “NNN/” (zero‑padded):
+  - entityManager.ts — value‑first EM config for that version (typed; optional, see resolution below).
+  - table.yml — full AWS::DynamoDB::Table resource including Type and Properties (required for create‑table).
+  - transform.ts — optional, per‑entity transform handlers from previous→this version.
+- Root baseline template (optional): tables/table.template.yml for non‑generated Properties (billing, TTL, PITR, Streams, SSE, tags, etc.).
+- Configurable tokens (plugin config):
+  - tablesPath (default "tables")
+  - tokens.table (default "table" → table.yml)
+  - tokens.entityManager (default "entityManager" → entityManager.ts/.js)
+  - tokens.transform (default "transform" → transform.ts/.js)
+- File resolution supports .yml/.yaml and .ts/.js.
 
-Expected outcome
+EntityManager resolution per step (prev → next)
 
-- No runtime changes in entity‑manager.
-- Downstream adapters can call helpers without variance casts, improving safety and readability while preserving exact output behavior.
+- For a chain step V, resolve both “prev EM” and “next EM”:
+  - Try V/entityManager.(ts|js); if absent, walk backward to the nearest lower version that defines entityManager.(ts|js).
+  - If none found across ancestry for a role (prev/next), error with guidance to add an EM file or set an earlier floor version.
+- Rationale:
+  - Default transform behavior requires prev.removeKeys and next.addKeys.
+  - Allows next EM to be optional when only non‑updatable properties changed (e.g., TableName) because fallback applies.
 
-Acceptance criteria
+Table definition generation and refresh (comment‑preserving)
 
-- Updated helper signatures in entity‑manager compile clean and are backward‑compatible.
-- This repo removes variance‑bridging casts (unknown as …) on those helper calls after upstream merges.
+- generate‑table‑definition:
+  - Compose or refresh tables/NNN/table.yml using:
+    - Type: AWS::DynamoDB::Table
+    - Properties:
+      - Replace only generated sections from generateTableDefinition(entityManager):
+        - AttributeDefinitions
+        - KeySchema
+        - GlobalSecondaryIndexes
+      - Preserve all other Properties from:
+        - Existing table.yml (when refreshing), or
+        - Root baseline tables/table.template.yml (when creating new file), or
+        - Empty object (no baseline).
+  - YAML comment preservation is critical:
+    - Parse into a CST‑backed Document (eemeli/yaml).
+    - Update only the three generated child nodes under Properties; keep all comments/anchors/order elsewhere.
+  - Warning banner (YAML comment at top of file):
+    - “Generated sections (AttributeDefinitions, KeySchema, GlobalSecondaryIndexes) are overwritten by tooling. Edit baseline/template‑only. Use validate‑table‑definition to check drift.”
+  - Optional overlays at generation time (applied once):
+    - BillingMode, ProvisionedThroughput (RCU/WCU), TableName.
+  - No per‑version template; only a root baseline template (tables/table.template.yml).
+
+Validation and create‑table policy
+
+- validate‑table‑definition:
+  - Recompute the generated sections from resolved EM and compare to table.yml.
+  - Exit non‑zero on drift (CI‑friendly).
+- create‑table:
+  - Reads tables/NNN/table.yml (required; errors if missing).
+  - Defaults: validate=true, refreshGenerated=false.
+  - Behavior:
+    - If refreshGenerated: update generated nodes in place then create.
+    - Else if validate=true: error on drift unless --force is provided.
+  - TableName override:
+    - Optional flag allows a one‑off override (merged into Properties at runtime only).
+  - Waiter: maxSeconds configurable (default 60).
+
+Delete and purge
+
+- delete‑table:
+  - TableName from flags/config/env; confirm unless --force; waiter with maxSeconds.
+- purge‑table:
+  - TableName from flags/config/env; confirm unless --force.
+
+Data migration (version‑aware chain; streaming; progress)
+
+- migrate‑data:
+  - Inputs:
+    - sourceTable, targetTable (dotenv‑expanded).
+    - fromVersion, toVersion (zero‑padded).
+    - tablesPath and tokens for versioned layout.
+    - pageSize (default 100), limit (default Infinity).
+    - transformConcurrency (default 1).
+    - progressIntervalMs (default 2000).
+  - Discovery:
+    - Build step list K = { k | fromVersion < k ≤ toVersion } in ascending order.
+    - For each k, resolve prev EM and next EM (fallback rules above).
+    - Load transform.ts if present; normalize to TransformMap (see below).
+  - Default chain (mandatory):
+    - Missing transform.ts ⇒ default step for all entities:
+      - item = prev.removeKeys(entityToken, record) // storage → domain
+      - record’ = next.addKeys(entityToken, item) // domain → storage
+      - return record’
+  - Transform authoring (typed; async OK):
+    - Handlers receive (record, ctx) where:
+      - record: EntityRecord<PrevCM, ET>
+      - ctx: { prev: EntityManager<PrevCM>; next: EntityManager<NextCM>; entityToken: ET }
+    - Return values:
+      - undefined → drop (no migration for this input record)
+      - Single value → item/record for the same ET:
+        - EntityItem<NextCM, ET>
+        - EntityRecord<NextCM, ET>
+      - Array of item/record → fan‑out for the same ET:
+        - (EntityItem<NextCM, ET> | EntityRecord<NextCM, ET>)[]
+    - Side effects permitted (async); transformConcurrency controls parallelism (default 1).
+  - Streaming and batching:
+    - Scan pages from source with Limit=pageSize and ExclusiveStartKey.
+    - For each page:
+      - Determine entityToken from the source record’s global hashKey string prefix (entity + shardKeyDelimiter from EM config).
+      - Apply transform chain; normalize items to storage records (call next.addKeys if item returned).
+      - Batch write to target via EntityClient.putItems(items, { tableName: targetTable }).
+    - No whole‑table accumulation; memory bounded by page + in‑flight batches; unprocessed items retried via EntityClient utils.
+  - Progress output:
+    - Pages processed, items processed, items written, rolling items/sec rate emitted every progressIntervalMs.
+
+Transform typing patterns (DX)
+
+- Each version’s transform.ts imports types from its local EM to be step‑accurate:
+  - import type { ConfigMap as PrevCM } from '../NNN-1/entityManager'
+  - import type { ConfigMap as NextCM } from './entityManager'
+  - export default defineTransformMap<PrevCM, NextCM>({ …handlers… })
+- Identity helper: defineTransformMap preserves inference while keeping signatures concise.
+- Cross‑entity fan‑out is not supported in v1; all outputs are interpreted for the same ET.
+
+EntityClient posture (pure) and IDE guidance
+
+- EntityClient remains pure; it requires an EntityManager at construction and does not perform dynamic versioned resolution internally.
+- Application code:
+  - Choose the “current” EM once (usually latest) and pass it into new EntityClient({ entityManager, … }).
+  - Downstream, import only entityClient; refer to entityClient.entityManager when needed.
+- The plugin/utilities handle dynamic EM resolution at runtime for migrations/Lifecycle tasks.
+
+get‑dotenv integration (config, env tokens, precedence)
+
+- Plugin reads once‑per‑invocation context from host (ctx = getCtx()).
+- Every string option supports $VAR or ${VAR[:default]} and is expanded via dotenvExpand(value, ctx.dotenv).
+- Resolution precedence for any option:
+  1. CLI flag (dotenv‑expanded)
+  2. getdotenv.config.\* under plugins.dynamodb (dotenv‑expanded)
+  3. documented defaults
+- Plugin config shape (getdotenv.config.\* → plugins.dynamodb):
+  - tablesPath, tokens.{table,entityManager,transform}
+  - generate: { version, overlays.{billingMode, readCapacityUnits, writeCapacityUnits, tableName}, force? }
+  - validate: { version }
+  - create: { version, validate, refreshGenerated, force, waiter.maxSeconds, tableNameOverride }
+  - delete: { tableName, waiter.maxSeconds }
+  - purge: { tableName }
+  - migrate: {
+    sourceTable, targetTable, fromVersion, toVersion,
+    pageSize, limit, transformConcurrency, progressIntervalMs
+    }
+  - local: {
+    port?, endpoint?, start?, stop?, status?
+    }
+
+YAML safety and formatting
+
+- Use the yaml Document API with CST to:
+  - Update only the generated nodes (Properties.AttributeDefinitions, Properties.KeySchema, Properties.GlobalSecondaryIndexes).
+  - Preserve all other nodes, order, and comments.
+- New files (no table.yml):
+  - Compose from root baseline (if present) + generated nodes + comment banner.
+- validate‑table‑definition compares generated sections normalized for stable order.
+
+Errors and confirmations
+
+- Destructive ops (purge/delete/migrate) prompt for confirm unless --force is provided.
+- EM resolution failures produce actionable errors (list probed paths); instruct adding entityManager.ts at V or a lower version.
+- Drift validation errors suggest running “generate‑table‑definition --force” or “create‑table --refresh‑generated”.
+
+Performance limits and safety
+
+- pageSize default 100; transformConcurrency default 1 to make side effects safe by default.
+- No unbounded buffering; rely on DocumentClient batch write retry semantics for unprocessed items.
+
+Local DynamoDB orchestration (config‑first with embedded fallback)
+
+Commands
+
+- dynamodb local start [--port <n>]
+- dynamodb local stop
+- dynamodb local status
+
+Behavior and precedence
+
+1. Config‑driven path (preferred when configured)
+   - Execute verbatim command strings from `plugins.dynamodb.local.*` in get‑dotenv’s composed environment.
+   - For start: after the configured start command returns, perform a readiness probe before returning success.
+   - For status: when a status command is configured, return its exit code verbatim (0 = running/healthy).
+   - For stop: execute and return non‑zero on operational failure.
+
+2. Embedded fallback (only when no config command is set)
+   - If `@karmaniverous/dynamodb-local` is installed (optional peer):
+     - start: setupDynamoDbLocal(port) then dynamoDbLocalReady(client)
+     - stop: teardownDynamoDbLocal()
+     - status: AWS SDK health probe (ListTables) against derived endpoint
+   - Otherwise, emit concise guidance and return non‑zero when invoked.
+
+Endpoint & environment
+
+- derive endpoint with this precedence:
+  1. plugins.dynamodb.local.endpoint
+  2. plugins.dynamodb.local.port → http://localhost:{port}
+  3. DYNAMODB_LOCAL_ENDPOINT (env)
+  4. Fallback: http://localhost:${DYNAMODB_LOCAL_PORT ?? '8000'}
+- On successful start, print:
+  - local dynamodb: endpoint <url>
+  - Hint: export DYNAMODB_LOCAL_ENDPOINT=<url> so app code targets Local.
+
+Shell/env/capture
+
+- Compose env for children via buildSpawnEnv(process.env, ctx.dotenv).
+- Honor host root options for shell selection (POSIX /bin/bash; Windows powershell.exe), and for capture (`GETDOTENV_STDIO=pipe` or `--capture`).
+
+Acceptance criteria (DynamoDB plugin)
+
+- Versioned layout respected; utilities resolve prev/next EM and transforms per step with documented fallback.
+- generate‑table‑definition preserves comments and all non‑generated Properties across refresh; overwrites only generated sections; optional root baseline honored; header banner present.
+- validate‑table‑definition detects drift in generated sections and exits non‑zero.
+- create‑table validates by default; supports refresh‑generated; waiter supported; optional TableName override at runtime only.
+- migrate‑data streams end‑to‑end with mandatory chain semantics:
+  - Missing transform ⇒ default prev.removeKeys / next.addKeys.
+  - TransformMap with async handling; returns undefined to drop; array to fan‑out; normalized to next records as required.
+  - Progress printed at interval; performance flags respected.
+- EntityClient usage remains pure and type‑safe in application code; dynamic versioned resolution is provided via plugin/utilities only.
+- Local DynamoDB orchestration commands function per precedence; start waits for readiness; endpoint derivation and export hint printed.
+
+---
+
+## Adapter/Interop Notes (summarized alignment to by‑token model)
+
+- Replace any legacy type names in downstream code (examples, docs, or templates) with:
+  - EntityItem / EntityItemPartial (for domain)
+  - EntityRecord / EntityRecordPartial (for DB)
+- Token‑aware read APIs (recommended):
+  - getItem(entityToken, key [, attributes as const])
+  - getItems(entityToken, keys [, attributes as const])
+- When K (projection) is present in QueryBuilder, ensure uniqueProperty and explicit sort keys are auto‑included at runtime; document this invariant alongside projected typing.

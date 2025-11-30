@@ -2,7 +2,53 @@
 
 ## Next up (priority order)
 
-None.
+- Align codebase to entity-manager vNext by-token type model (no back-compat shims)
+  - Replace legacy types with by-token types across the repo:
+    - EntityItemByToken -> EntityItem / EntityItemPartial
+    - EntityRecordByToken -> EntityRecord / EntityRecordPartial
+    - ProjectedItemByToken -> EntityItemPartial
+  - Re-export types: Projected from entity-manager (remove local duplicate).
+  - Update imports in:
+    - src/EntityClient/\*\*
+    - src/QueryBuilder/\*\*
+    - src/get-dotenv/types.ts
+    - src/index.ts (public re-exports)
+
+- Simplify read APIs to token-aware forms only (no tokenless overloads)
+  - EntityClient.getItem/getItems:
+    - getItem(entityToken, key[, attributes as const])
+    - getItems(entityToken, keys[, attributes as const])
+  - Return types:
+    - Without attributes -> EntityRecord<CC, ET>
+    - With attributes (const tuple) -> EntityRecordPartial<CC, ET, A>
+  - Update method implementations and helper modules under src/EntityClient/methods/\*\*
+  - Update tests to use token-aware overloads exclusively
+
+- QueryBuilder alignment
+  - Replace cast from ProjectedItemByToken[] to EntityItemPartial[] in getShardQueryFunction
+  - Preserve runtime invariant in query(): auto-include uniqueProperty + explicit sort keys when any projection is present
+  - Verify IndexParams/Index tokens typing remains intact (ITS via client-captured CF)
+
+- get-dotenv plugin types and services
+  - Update TransformHandler typing in src/get-dotenv/types.ts:
+    - record: EntityRecord<PrevCM, ET>
+    - returns: undefined | EntityItem<NextCM, ET> | EntityRecord<NextCM, ET> | (array of those)
+  - Sanity check migrate/services; ensure addKeys normalization is applied when transform returns items
+
+- Lint & type fixes
+  - Resolve “any overrides” diagnostics in EntityClient and methods
+  - Ensure method return types are explicitly typed to the new model
+  - Run: npm run lint && npm run typecheck
+
+- Docs update (guides + re-exports)
+  - Replace old names in examples (EntityItemByToken/EntityRecordByToken/ProjectedItemByToken)
+  - Keep projection K explanations; note uniform projection advice
+  - Confirm CLI plugin docs remain accurate (table lifecycle, migrate, local)
+
+- Release notes (internal)
+  - Briefly summarize type-surface changes; token-less read overloads removed
+  - Note unchanged runtime behavior; DX improvements and consistency
+  - Coordinate major version bump if needed
 
 ## Completed
 
@@ -34,3 +80,7 @@ None.
 - Docs pass: update README guide index to replace “config‑literal cf” with
   “values‑first config (automatic index inference)” to match the new API and
   updated guides.
+
+- Requirements synthesis (by-token + plugin)
+  - Merged Entity Manager requirements and DynamoDB plugin requirements into a single authoritative document.
+  - Updated terminology and type references to the by-token model (EntityItem*, EntityRecord*).
