@@ -91,3 +91,10 @@
 
 - Lint: removed non-null assertions in EntityClient methods/getItems.ts by deriving
   a fallback tableNameKey. ESLint no-non-null-assertion satisfied.
+
+- Typecheck: updated tsd test (test-d/querybuilder-projection-k.test-d.ts) to by-token types.
+  Replaced EntityItemByToken with EntityItem/EntityItemPartial and aligned
+  expectations for projected and reset-projection cases.
+
+- Lint: removed non-null assertions in EntityClient methods/getItems.ts by deriving
+  a fallback tableNameKey. ESLint no-non-null-assertion satisfied.
