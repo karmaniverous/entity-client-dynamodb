@@ -2,9 +2,16 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.9.0](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.9.0-0...0.9.0)
+
+- updated dependencies [`ec00daa`](https://github.com/karmaniverous/entity-client-dynamodb/commit/ec00daa494f2e9e2a1d50a922aba22767e7392ee)
+
 #### [0.9.0-0](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.8.5...0.9.0-0)
 
+> 30 November 2025
+
 - docs+plan: synthesize requirements (by-token) and update dev plan [`e42d707`](https://github.com/karmaniverous/entity-client-dynamodb/commit/e42d7070f95a8069e1b705860d0f40784ab108e7)
+- chore: release v0.9.0-0 [`93c66b6`](https://github.com/karmaniverous/entity-client-dynamodb/commit/93c66b6fe462e6b0001ad2c2e07684f0beb67842)
 - updated requirements [`35ea706`](https://github.com/karmaniverous/entity-client-dynamodb/commit/35ea706af4f5c3af95d7e53dce419d9708914360)
 - feat(core): adopt by-token model (Option A), remove tokenless reads [`91a2595`](https://github.com/karmaniverous/entity-client-dynamodb/commit/91a25956a74073bd9426c4a6f9a1e6588f644361)
 - fix: correct getItems export & typing; finalize token-aware tests [`ca6a60f`](https://github.com/karmaniverous/entity-client-dynamodb/commit/ca6a60fd5ca4de174bdbe7a8e6de30765276bdc1)
