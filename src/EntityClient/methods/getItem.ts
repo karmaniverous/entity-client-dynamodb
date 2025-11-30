@@ -2,7 +2,8 @@ import type { GetCommandInput, GetCommandOutput } from '@aws-sdk/lib-dynamodb';
 import type {
   BaseConfigMap,
   EntityKey,
-  EntityRecord,
+  EntityRecord as EMEntityRecord,
+  EntityToken,
 } from '@karmaniverous/entity-manager';
 import type { MakeOptional, ReplaceKey } from '@karmaniverous/entity-tools';
 import { zipToObject } from 'radash';
@@ -28,7 +29,13 @@ export async function getItem<C extends BaseConfigMap>(
     >,
     'TableName'
   >,
-): Promise<ReplaceKey<GetCommandOutput, 'Item', EntityRecord<C> | undefined>> {
+): Promise<
+  ReplaceKey<
+    GetCommandOutput,
+    'Item',
+    EMEntityRecord<C, EntityToken<C>> | undefined
+  >
+> {
   // Resolve options.
   const { hashKey, rangeKey } = client.entityManager.config;
 
@@ -62,7 +69,7 @@ export async function getItem<C extends BaseConfigMap>(
     const output = (await client.doc.get(input)) as ReplaceKey<
       GetCommandOutput,
       'Item',
-      EntityRecord<C> | undefined
+      EMEntityRecord<C, EntityToken<C>> | undefined
     >;
 
     client.logger.debug('got item from table', {

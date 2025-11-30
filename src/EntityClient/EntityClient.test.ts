@@ -295,7 +295,7 @@ describe('EntityClient', function () {
                 const item2 = { hashKey2, rangeKey: '2' };
 
                 // Get item.
-                const response = await entityClient.getItem(item2);
+                const response = await entityClient.getItem('user', item2);
                 expect(response.Item).not.to.exist;
               });
             });

@@ -24,7 +24,7 @@ export async function putItems<C extends BaseConfigMap>(
   };
 
   try {
-    const batchHandler = async (batch: EntityRecord<C>[]) =>
+    const batchHandler = async (batch: EMEntityRecord<C, EntityToken<C>>[]) =>
       await client.doc.batchWrite({
         RequestItems: {
           [tableName]: batch.map((item) => ({
@@ -40,7 +40,9 @@ export async function putItems<C extends BaseConfigMap>(
         // DocumentClient returns WriteRequest[] with PutRequest/DeleteRequest.
         // Re-queue original items only.
         const asAny = wr as unknown as {
-          PutRequest?: { Item?: EntityRecord<C> };
+          PutRequest?: {
+            Item?: EMEntityRecord<C, EntityToken<C>>;
+          };
         };
         return asAny.PutRequest?.Item ? [asAny.PutRequest.Item] : [];
       });

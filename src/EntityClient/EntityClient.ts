@@ -18,7 +18,6 @@ import {
 import {
   type BaseConfigMap,
   BaseEntityClient,
-  type EntityItemPartial as EMEntityItemPartial,
   type EntityKey,
   type EntityRecord as EMEntityRecord,
   type EntityRecordPartial as EMEntityRecordPartial,
@@ -265,7 +264,7 @@ export class EntityClient<
   /**
    * Token-aware getItem overloads (records). Strip keys in handlers when needed via entityManager.removeKeys.
    *
-   * Token-aware with tuple projection (attributes as const) -> projected DB record
+   * Token-aware with tuple projection (attributes as const) -\> projected DB record
    */
   async getItem<ET extends EntityToken<C>, A extends readonly string[]>(
     entityToken: ET,

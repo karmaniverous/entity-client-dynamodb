@@ -1,95 +1,98 @@
-import type { GetCommandInput, GetCommandOutput } from '@aws-sdk/lib-dynamodb';
+import type { BatchGetCommandOutput } from '@aws-sdk/lib-dynamodb';
+import { batchProcess } from '@karmaniverous/batch-process';
 import type {
   BaseConfigMap,
   EntityKey,
   EntityRecord as EMEntityRecord,
   EntityToken,
 } from '@karmaniverous/entity-manager';
-import type { MakeOptional, ReplaceKey } from '@karmaniverous/entity-tools';
 import { zipToObject } from 'radash';
 
 import type { EntityClient } from '../EntityClient';
 
 /**
- * Helper implementation for EntityClient.getItem.
+ * Helper implementation for EntityClient.getItems.
  */
-export async function getItem<C extends BaseConfigMap>(
+export async function getItems<C extends BaseConfigMap>(
   client: EntityClient<C>,
-  keyOrOptions: EntityKey<C> | MakeOptional<GetCommandInput, 'TableName'>,
-  attributesOrOptions?:
-    | string[]
-    | MakeOptional<Omit<GetCommandInput, 'Key'>, 'TableName'>,
-  options?: MakeOptional<
-    Omit<
-      GetCommandInput,
-      | 'AttributesToGet'
-      | 'ExpressionAttributeNames'
-      | 'Key'
-      | 'ProjectionExpression'
-    >,
-    'TableName'
-  >,
-): Promise<
-  ReplaceKey<
-    GetCommandOutput,
-    'Item',
-    EMEntityRecord<C, EntityToken<C>> | undefined
-  >
-> {
-  // Resolve options.
-  const { hashKey, rangeKey } = client.entityManager.config;
+  keys: EntityKey<C>[],
+  attributesOrOptions?: string[] | import('../BatchGetOptions').BatchGetOptions,
+  maybeOptions?: import('../BatchGetOptions').BatchGetOptions,
+): Promise<{
+  items: EMEntityRecord<C, EntityToken<C>>[];
+  outputs: BatchGetCommandOutput[];
+}> {
+  const hasAttributes = Array.isArray(attributesOrOptions);
+  const attributes = hasAttributes ? attributesOrOptions : undefined;
 
-  const { AttributesToGet: attributes, ...resolvedOptions } = {
-    TableName: client.tableName,
-    ...(hashKey in keyOrOptions && rangeKey in keyOrOptions
-      ? { Key: keyOrOptions as EntityKey<C> }
-      : keyOrOptions),
-    ...(Array.isArray(attributesOrOptions)
-      ? { AttributesToGet: attributesOrOptions }
-      : attributesOrOptions),
-    ...options,
-  } as ReplaceKey<GetCommandInput, 'Key', EntityKey<C>>;
+  const resolvedOptions: import('../BatchGetOptions').BatchGetOptions =
+    hasAttributes ? (maybeOptions ?? {}) : (attributesOrOptions ?? {});
 
-  const attributeExpressions = attributes?.map((a) => `#${a}`);
-
-  const input: ReplaceKey<GetCommandInput, 'Key', EntityKey<C>> = {
-    ...(attributes && attributeExpressions
-      ? {
-          ExpressionAttributeNames: zipToObject(
-            attributeExpressions,
-            attributes,
-          ),
-          ProjectionExpression: attributeExpressions.join(','),
-        }
-      : {}),
+  const { tableName, batchProcessOptions, ...input } = {
+    tableName: client.tableName,
     ...resolvedOptions,
-  };
+  } as import('../BatchGetOptions').BatchGetOptions;
+
+  // Prepare projection expression if attributes provided.
+  const attributeExpressions = attributes?.length
+    ? attributes.map((a) => `#${a}`)
+    : undefined;
+
+  const expressionAttributeNames =
+    attributes && attributeExpressions
+      ? zipToObject(attributeExpressions, attributes)
+      : undefined;
 
   try {
-    const output = (await client.doc.get(input)) as ReplaceKey<
-      GetCommandOutput,
-      'Item',
-      EMEntityRecord<C, EntityToken<C>> | undefined
-    >;
+    const batchHandler = async (batch: EntityKey<C>[]) =>
+      await client.doc.batchGet({
+        RequestItems: {
+          [tableName!]: {
+            Keys: batch,
+            ...(attributes && attributeExpressions
+              ? {
+                  ExpressionAttributeNames: expressionAttributeNames,
+                  ProjectionExpression: attributeExpressions.join(','),
+                }
+              : {}),
+          },
+        },
+        ...input,
+      });
 
-    client.logger.debug('got item from table', {
-      keyOrOptions,
-      attributesOrOptions,
-      options,
-      attributes,
-      resolvedOptions,
-      attributeExpressions,
-      input,
-      output,
+    const unprocessedItemExtractor = (output: BatchGetCommandOutput) =>
+      output.UnprocessedKeys?.[tableName!]?.Keys as EntityKey<C>[];
+
+    const outputs = await batchProcess(keys, {
+      batchHandler,
+      unprocessedItemExtractor,
+      ...Object.assign({}, client.batchProcessOptions, batchProcessOptions),
     });
 
-    return output;
+    client.logger.debug('got items from table', {
+      keys,
+      options: resolvedOptions,
+      attributes,
+      expressionAttributeNames,
+      attributeExpressions,
+      tableName,
+      batchProcessOptions,
+      input,
+      outputs,
+    });
+
+    return {
+      items: outputs.flatMap(
+        (output) => output.Responses?.[tableName!] ?? [],
+      ) as EMEntityRecord<C, EntityToken<C>>[],
+      outputs,
+    };
   } catch (error) {
     if (error instanceof Error)
       client.logger.error(error.message, {
-        keyOrOptions,
+        keys,
         attributesOrOptions,
-        options,
+        options: resolvedOptions,
       });
 
     throw error;
