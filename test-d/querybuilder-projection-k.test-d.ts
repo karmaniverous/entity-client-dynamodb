@@ -1,6 +1,7 @@
 import { createQueryBuilder } from '@karmaniverous/entity-client-dynamodb';
 import type {
-  EntityItemByToken,
+  EntityItem,
+  EntityItemPartial,
   EntityClient,
 } from '@karmaniverous/entity-client-dynamodb';
 import type { MyConfigMap } from '../test/entityManager';
@@ -24,14 +25,14 @@ type QueryItemsOf<B> = B extends {
 // Narrow K via setProjection (single index)
 const qb1 = qb0.setProjection('created', ['created'] as const);
 type Items1 = QueryItemsOf<typeof qb1>;
-expectType<Array<Pick<EntityItemByToken<MyConfigMap, 'user'>, 'created'>>>(
+expectType<Array<Pick<EntityItem<MyConfigMap, 'user'>, 'created'>>>(
   null as unknown as Items1,
 );
 
 // Widen K back to unknown via resetProjection (single index)
 const qb2 = qb1.resetProjection('created');
 type Items2 = QueryItemsOf<typeof qb2>;
-expectType<Array<EntityItemByToken<MyConfigMap, 'user'>>>(
+expectType<Array<EntityItemPartial<MyConfigMap, 'user'>>>(
   null as unknown as Items2,
 );
 
@@ -42,5 +43,5 @@ const qb3 = qb0.setProjectionAll(
 );
 type Items3 = QueryItemsOf<typeof qb3>;
 expectType<
-  Array<Pick<EntityItemByToken<MyConfigMap, 'user'>, 'created' | 'updated'>>
+  Array<Pick<EntityItem<MyConfigMap, 'user'>, 'created' | 'updated'>>
 >(null as unknown as Items3);

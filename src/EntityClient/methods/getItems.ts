@@ -32,6 +32,8 @@ export async function getItems<C extends BaseConfigMap>(
     tableName: client.tableName,
     ...resolvedOptions,
   } as import('../BatchGetOptions').BatchGetOptions;
+  // Effective table name for downstream lookups and request keys
+  const tableNameKey = tableName ?? client.tableName;
 
   // Prepare projection expression if attributes provided.
   const attributeExpressions = attributes?.length
@@ -47,7 +49,7 @@ export async function getItems<C extends BaseConfigMap>(
     const batchHandler = async (batch: EntityKey<C>[]) =>
       await client.doc.batchGet({
         RequestItems: {
-          [tableName!]: {
+          [tableNameKey]: {
             Keys: batch,
             ...(attributes && attributeExpressions
               ? {
@@ -61,7 +63,7 @@ export async function getItems<C extends BaseConfigMap>(
       });
 
     const unprocessedItemExtractor = (output: BatchGetCommandOutput) =>
-      output.UnprocessedKeys?.[tableName!]?.Keys as EntityKey<C>[];
+      output.UnprocessedKeys?.[tableNameKey]?.Keys as EntityKey<C>[];
 
     const outputs = await batchProcess(keys, {
       batchHandler,
@@ -75,7 +77,7 @@ export async function getItems<C extends BaseConfigMap>(
       attributes,
       expressionAttributeNames,
       attributeExpressions,
-      tableName,
+      tableName: tableNameKey,
       batchProcessOptions,
       input,
       outputs,
@@ -83,7 +85,7 @@ export async function getItems<C extends BaseConfigMap>(
 
     return {
       items: outputs.flatMap(
-        (output) => output.Responses?.[tableName!] ?? [],
+        (output) => output.Responses?.[tableNameKey] ?? [],
       ) as EMEntityRecord<C, EntityToken<C>>[],
       outputs,
     };

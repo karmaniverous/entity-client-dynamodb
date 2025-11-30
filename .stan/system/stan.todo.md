@@ -84,3 +84,10 @@
 - Requirements synthesis (by-token + plugin)
   - Merged Entity Manager requirements and DynamoDB plugin requirements into a single authoritative document.
   - Updated terminology and type references to the by-token model (EntityItem*, EntityRecord*).
+
+- Typecheck: updated tsd test (test-d/querybuilder-projection-k.test-d.ts) to by-token types.
+  Replaced EntityItemByToken with EntityItem/EntityItemPartial and aligned
+  expectations for projected and reset-projection cases.
+
+- Lint: removed non-null assertions in EntityClient methods/getItems.ts by deriving
+  a fallback tableNameKey. ESLint no-non-null-assertion satisfied.
