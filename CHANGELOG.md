@@ -2,8 +2,22 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.9.0-0](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.8.5...0.9.0-0)
+
+- docs+plan: synthesize requirements (by-token) and update dev plan [`e42d707`](https://github.com/karmaniverous/entity-client-dynamodb/commit/e42d7070f95a8069e1b705860d0f40784ab108e7)
+- updated requirements [`35ea706`](https://github.com/karmaniverous/entity-client-dynamodb/commit/35ea706af4f5c3af95d7e53dce419d9708914360)
+- feat(core): adopt by-token model (Option A), remove tokenless reads [`91a2595`](https://github.com/karmaniverous/entity-client-dynamodb/commit/91a25956a74073bd9426c4a6f9a1e6588f644361)
+- fix: correct getItems export & typing; finalize token-aware tests [`ca6a60f`](https://github.com/karmaniverous/entity-client-dynamodb/commit/ca6a60fd5ca4de174bdbe7a8e6de30765276bdc1)
+- feat(core): adopt by-token model (Option A), remove tokenless reads [`b3192fd`](https://github.com/karmaniverous/entity-client-dynamodb/commit/b3192fdab281593ae78db87e41c376a895ce4d8a)
+- fix: tsd types and lint for by-token model [`a7042af`](https://github.com/karmaniverous/entity-client-dynamodb/commit/a7042af14d28bfb85fb1943fae84865c2a41d472)
+- fix: tsd types and lint for by-token model [`dc3962b`](https://github.com/karmaniverous/entity-client-dynamodb/commit/dc3962b8e32f12160b6c4be2063f6d131f077d7b)
+- docs: fix tokenless getItem examples in README and Getting Started [`9f71902`](https://github.com/karmaniverous/entity-client-dynamodb/commit/9f719024baefaaf1870428d8c9778f1487d26e4a)
+
 #### [0.8.5](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.8.4...0.8.5)
 
+> 29 November 2025
+
+- chore: release v0.8.5 [`3c2c620`](https://github.com/karmaniverous/entity-client-dynamodb/commit/3c2c620282580235d5117f0471e99009c5fc9c46)
 - support exactOptionalPropertyTypes [`a2b364e`](https://github.com/karmaniverous/entity-client-dynamodb/commit/a2b364e732dc44d4ddac0a193c0dfe68038b34b3)
 
 #### [0.8.4](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.8.3...0.8.4)
