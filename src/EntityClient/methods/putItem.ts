@@ -1,7 +1,8 @@
 import type { PutCommandInput, PutCommandOutput } from '@aws-sdk/lib-dynamodb';
 import type {
   BaseConfigMap,
-  EntityRecord,
+  EntityRecord as EMEntityRecord,
+  EntityToken,
 } from '@karmaniverous/entity-manager';
 import type { MakeOptional, ReplaceKey } from '@karmaniverous/entity-tools';
 
@@ -13,9 +14,9 @@ import type { EntityClient } from '../EntityClient';
 export async function putItem<C extends BaseConfigMap>(
   client: EntityClient<C>,
   itemOrOptions:
-    | EntityRecord<C>
+    | EMEntityRecord<C, EntityToken<C>>
     | MakeOptional<
-        ReplaceKey<PutCommandInput, 'Item', EntityRecord<C>>,
+        ReplaceKey<PutCommandInput, 'Item', EMEntityRecord<C, EntityToken<C>>>,
         'TableName'
       >,
   options: MakeOptional<Omit<PutCommandInput, 'Item'>, 'TableName'> = {},
@@ -31,7 +32,7 @@ export async function putItem<C extends BaseConfigMap>(
         }
       : itemOrOptions),
     ...options,
-  } as ReplaceKey<PutCommandInput, 'Item', EntityRecord<C>>;
+  } as ReplaceKey<PutCommandInput, 'Item', EMEntityRecord<C, EntityToken<C>>>;
 
   try {
     // Send command.

@@ -5,7 +5,8 @@ import type {
 import type {
   BaseConfigMap,
   EntityKey,
-  EntityRecord,
+  EntityRecord as EMEntityRecord,
+  EntityToken,
 } from '@karmaniverous/entity-manager';
 import type { MakeOptional, ReplaceKey } from '@karmaniverous/entity-tools';
 
@@ -31,11 +32,11 @@ export async function deleteItem<C extends BaseConfigMap>(
     TableName: client.tableName,
     ...(hashKey in keyOrOptions && rangeKey in keyOrOptions
       ? {
-          Key: keyOrOptions as EntityRecord<C>,
+          Key: keyOrOptions as EMEntityRecord<C, EntityToken<C>>,
         }
       : keyOrOptions),
     ...options,
-  } as ReplaceKey<DeleteCommandInput, 'Key', EntityRecord<C>>;
+  } as ReplaceKey<DeleteCommandInput, 'Key', EMEntityRecord<C, EntityToken<C>>>;
 
   try {
     // Send command.

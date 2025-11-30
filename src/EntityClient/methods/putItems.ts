@@ -2,7 +2,8 @@ import type { BatchWriteCommandOutput } from '@aws-sdk/lib-dynamodb';
 import { batchProcess } from '@karmaniverous/batch-process';
 import type {
   BaseConfigMap,
-  EntityRecord,
+  EntityRecord as EMEntityRecord,
+  EntityToken,
 } from '@karmaniverous/entity-manager';
 
 import type { BatchWriteOptions } from '../BatchWriteOptions';
@@ -13,7 +14,7 @@ import type { EntityClient } from '../EntityClient';
  */
 export async function putItems<C extends BaseConfigMap>(
   client: EntityClient<C>,
-  items: EntityRecord<C>[],
+  items: EMEntityRecord<C, EntityToken<C>>[],
   options: BatchWriteOptions = {},
 ): Promise<BatchWriteCommandOutput[]> {
   // Resolve options.

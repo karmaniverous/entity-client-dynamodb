@@ -16,9 +16,9 @@
 
 import type {
   BaseConfigMap,
-  EntityItemByToken,
+  EntityItem,
   EntityManager,
-  EntityRecordByToken,
+  EntityRecord,
   EntityToken,
 } from '@karmaniverous/entity-manager';
 
@@ -51,18 +51,18 @@ export type TransformHandler<
   NextCM extends BaseConfigMap,
   ET extends EntityToken<PrevCM>,
 > = (
-  record: EntityRecordByToken<PrevCM, ET>,
+  record: EntityRecord<PrevCM, ET>,
   ctx: TransformContext<PrevCM, NextCM, ET>,
 ) =>
   | undefined
-  | EntityItemByToken<NextCM, ET>
-  | EntityRecordByToken<NextCM, ET>
-  | (EntityItemByToken<NextCM, ET> | EntityRecordByToken<NextCM, ET>)[]
+  | EntityItem<NextCM, ET>
+  | EntityRecord<NextCM, ET>
+  | (EntityItem<NextCM, ET> | EntityRecord<NextCM, ET>)[]
   | Promise<
       | undefined
-      | EntityItemByToken<NextCM, ET>
-      | EntityRecordByToken<NextCM, ET>
-      | (EntityItemByToken<NextCM, ET> | EntityRecordByToken<NextCM, ET>)[]
+      | EntityItem<NextCM, ET>
+      | EntityRecord<NextCM, ET>
+      | (EntityItem<NextCM, ET> | EntityRecord<NextCM, ET>)[]
     >;
 
 /**

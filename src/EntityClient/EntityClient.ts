@@ -18,9 +18,10 @@ import {
 import {
   type BaseConfigMap,
   BaseEntityClient,
+  type EntityItemPartial as EMEntityItemPartial,
   type EntityKey,
-  type EntityRecord,
-  type EntityRecordByToken,
+  type EntityRecord as EMEntityRecord,
+  type EntityRecordPartial as EMEntityRecordPartial,
   type EntityToken,
 } from '@karmaniverous/entity-manager';
 import type { MakeOptional, ReplaceKey } from '@karmaniverous/entity-tools';
@@ -42,12 +43,6 @@ import { putItems as putItemsFn } from './methods/putItems';
 import { transactDeleteItems as transactDeleteItemsFn } from './methods/transactDeleteItems';
 import { transactPutItems as transactPutItemsFn } from './methods/transactPutItems';
 import type { WaiterConfig } from './WaiterConfig';
-
-// Local type helper for tuple-based projection narrowing
-export type Projected<T, A extends readonly string[]> = Pick<
-  T,
-  Extract<A[number], keyof T>
->;
 
 /**
  * Convenience wrapper around the AWS DynamoDB SDK in addition to
@@ -133,13 +128,13 @@ export class EntityClient<
   /**
    * Puts an item to a DynamoDB table.
    *
-   * @param item - EntityRecord object.
+   * @param item - EntityRecord object (storage-facing).
    * @param options - PutCommandInput with Item omitted; TableName optional.
    *
    * @overload
    */
   async putItem(
-    item: EntityRecord<C>,
+    item: EMEntityRecord<C, EntityToken<C>>,
     options?: MakeOptional<Omit<PutCommandInput, 'Item'>, 'TableName'>,
   ): Promise<PutCommandOutput>;
   /**
@@ -151,15 +146,19 @@ export class EntityClient<
    */
   async putItem(
     options: MakeOptional<
-      ReplaceKey<PutCommandInput, 'Item', EntityRecord<C>>,
+      ReplaceKey<PutCommandInput, 'Item', EMEntityRecord<C, EntityToken<C>>>,
       'TableName'
     >,
   ): Promise<PutCommandOutput>;
   async putItem(
     itemOrOptions:
-      | EntityRecord<C>
+      | EMEntityRecord<C, EntityToken<C>>
       | MakeOptional<
-          ReplaceKey<PutCommandInput, 'Item', EntityRecord<C>>,
+          ReplaceKey<
+            PutCommandInput,
+            'Item',
+            EMEntityRecord<C, EntityToken<C>>
+          >,
           'TableName'
         >,
     options?: MakeOptional<Omit<PutCommandInput, 'Item'>, 'TableName'>,
@@ -211,7 +210,7 @@ export class EntityClient<
    * @param options - BatchWriteOptions.
    */
   async putItems(
-    items: EntityRecord<C>[],
+    items: EMEntityRecord<C, EntityToken<C>>[],
     options?: BatchWriteOptions,
   ): Promise<BatchWriteCommandOutput[]> {
     return putItemsFn(this, items, options ?? {});
@@ -247,7 +246,7 @@ export class EntityClient<
    * @param items - Array of EntityRecord.
    */
   async transactPutItems(
-    items: EntityRecord<C>[],
+    items: EMEntityRecord<C, EntityToken<C>>[],
   ): Promise<TransactWriteCommandOutput> {
     return transactPutItemsFn(this, items);
   }
@@ -265,8 +264,9 @@ export class EntityClient<
 
   /**
    * Token-aware getItem overloads (records). Strip keys in handlers when needed via entityManager.removeKeys.
+   *
+   * Token-aware with tuple projection (attributes as const) -> projected DB record
    */
-  // Token-aware with tuple projection (attributes as const)
   async getItem<ET extends EntityToken<C>, A extends readonly string[]>(
     entityToken: ET,
     key: EntityKey<C>,
@@ -283,10 +283,10 @@ export class EntityClient<
     >,
   ): Promise<
     Omit<GetCommandOutput, 'Item'> & {
-      Item?: Projected<EntityRecordByToken<C, ET>, A> | undefined;
+      Item?: EMEntityRecordPartial<C, ET, A> | undefined;
     }
   >;
-  // Token-aware with attributes string[]
+  // Token-aware with attributes string[] -> cannot narrow at type level, return full DB record
   async getItem<ET extends EntityToken<C>>(
     entityToken: ET,
     key: EntityKey<C>,
@@ -303,10 +303,10 @@ export class EntityClient<
     >,
   ): Promise<
     Omit<GetCommandOutput, 'Item'> & {
-      Item?: EntityRecordByToken<C, ET> | undefined;
+      Item?: EMEntityRecord<C, ET> | undefined;
     }
   >;
-  // Token-aware without attributes (records)
+  // Token-aware without attributes (records) -> full DB record
   async getItem<ET extends EntityToken<C>>(
     entityToken: ET,
     key: EntityKey<C>,
@@ -322,64 +322,18 @@ export class EntityClient<
     >,
   ): Promise<
     Omit<GetCommandOutput, 'Item'> & {
-      Item?: EntityRecordByToken<C, ET> | undefined;
+      Item?: EMEntityRecord<C, ET> | undefined;
     }
   >;
-  // Token-aware variant accepting a TableName-bearing GetCommandInput (kept per request)
+  // Token-aware variant accepting a TableName-bearing GetCommandInput
   async getItem<ET extends EntityToken<C>>(
     entityToken: ET,
     options: MakeOptional<GetCommandInput, 'TableName'>,
   ): Promise<
     Omit<GetCommandOutput, 'Item'> & {
-      Item?: EntityRecordByToken<C, ET> | undefined;
+      Item?: EMEntityRecord<C, ET> | undefined;
     }
   >;
-
-  /**
-   * Get item from a DynamoDB table.
-   *
-   * @param key - EntityKey object.
-   * @param attributes - Item attributes to retrieve.
-   * @param options - GetCommandInput with Key omitted; TableName optional.
-   *
-   * @overload
-   */
-  async getItem(
-    key: EntityKey<C>,
-    attributes: string[],
-    options?: MakeOptional<
-      Omit<
-        GetCommandInput,
-        | 'AttributesToGet'
-        | 'ExpressionAttributeNames'
-        | 'Key'
-        | 'ProjectionExpression'
-      >,
-      'TableName'
-    >,
-  ): Promise<ReplaceKey<GetCommandOutput, 'Item', EntityRecord<C> | undefined>>;
-  /**
-   * Get item from a DynamoDB table.
-   *
-   * @param key - EntityKey object.
-   * @param options - GetCommandInput with Key omitted; TableName optional.
-   *
-   * @overload
-   */
-  async getItem(
-    key: EntityKey<C>,
-    options?: MakeOptional<Omit<GetCommandInput, 'Key'>, 'TableName'>,
-  ): Promise<ReplaceKey<GetCommandOutput, 'Item', EntityRecord<C> | undefined>>;
-  /**
-   * Get item from a DynamoDB table.
-   *
-   * @param options - GetCommandInput; TableName optional.
-   *
-   * @overload
-   */
-  async getItem(
-    options: MakeOptional<GetCommandInput, 'TableName'>,
-  ): Promise<ReplaceKey<GetCommandOutput, 'Item', EntityRecord<C> | undefined>>;
   async getItem(...args: unknown[]): Promise<unknown> {
     // Normalize to: (token?), keyOrOptions, attributesOrOptions, options
     let keyOrOptions: EntityKey<C> | MakeOptional<GetCommandInput, 'TableName'>;
@@ -419,7 +373,7 @@ export class EntityClient<
         }
       }
     } else {
-      // legacy: getItem(key, attributes?, options?) OR getItem(options)
+      // Fallback not used (tokenless reads removed) - retain normalization for internal call paths.
       keyOrOptions = args[0] as
         | EntityKey<C>
         | MakeOptional<GetCommandInput, 'TableName'>;
@@ -442,7 +396,7 @@ export class EntityClient<
   }
 
   /**
-   * Gets multiple items from a DynamoDB table in batches (records). Strip keys in handlers when needed via entityManager.removeKeys.
+   * Gets multiple items from a DynamoDB table in batches (records). Token-aware; strip keys in handlers when needed via entityManager.removeKeys.
    *
    * @param keys - Array of EntityKey.
    * @param attributes - Optional list of attributes to project.
@@ -455,7 +409,7 @@ export class EntityClient<
     attributes: A,
     options?: BatchGetOptions,
   ): Promise<{
-    items: Projected<EntityRecordByToken<C, ET>, A>[];
+    items: EMEntityRecordPartial<C, ET, A>[];
     outputs: BatchGetCommandOutput[];
   }>;
   // Token-aware with attributes string[]
@@ -465,7 +419,7 @@ export class EntityClient<
     attributes: string[],
     options?: BatchGetOptions,
   ): Promise<{
-    items: EntityRecordByToken<C, ET>[];
+    items: EMEntityRecord<C, ET>[];
     outputs: BatchGetCommandOutput[];
   }>;
   // Token-aware without attributes
@@ -474,31 +428,9 @@ export class EntityClient<
     keys: EntityKey<C>[],
     options?: BatchGetOptions,
   ): Promise<{
-    items: EntityRecordByToken<C, ET>[];
+    items: EMEntityRecord<C, ET>[];
     outputs: BatchGetCommandOutput[];
   }>;
-  /**
-   * Gets multiple items from a DynamoDB table in batches.
-   *
-   * @param keys - Array of EntityKey.
-   * @param attributes - Optional list of attributes to project.
-   * @param options - BatchGetOptions.
-   */
-  async getItems(
-    keys: EntityKey<C>[],
-    attributes: string[],
-    options?: BatchGetOptions,
-  ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }>;
-  /**
-   * Gets multiple items from a DynamoDB table in batches.
-   *
-   * @param keys - Array of EntityKey.
-   * @param options - BatchGetOptions.
-   */
-  async getItems(
-    keys: EntityKey<C>[],
-    options?: BatchGetOptions,
-  ): Promise<{ items: EntityRecord<C>[]; outputs: BatchGetCommandOutput[] }>;
   async getItems(...args: unknown[]): Promise<unknown> {
     // Normalize to: keys, attributesOrOptions, options
     let keys: EntityKey<C>[];
@@ -506,7 +438,7 @@ export class EntityClient<
     let options: BatchGetOptions | undefined;
 
     if (Array.isArray(args[0])) {
-      // getItems(keys, attributes?, options?)
+      // Fallback (not normally used; token-aware overloads preferred)
       keys = args[0] as EntityKey<C>[];
       if (Array.isArray(args[1])) {
         attributesOrOptions = args[1] as string[];

@@ -242,8 +242,8 @@ describe('EntityClient', function () {
           describe('put ... delete', function () {
             let hashKey2: string;
 
-            let item0: EntityRecord<MyConfigMap>;
-            let item1: EntityRecord<MyConfigMap>;
+            let item0: EntityRecord<MyConfigMap, 'user'>;
+            let item1: EntityRecord<MyConfigMap, 'user'>;
 
             beforeEach(async function () {
               hashKey2 = nanoid();
@@ -268,12 +268,12 @@ describe('EntityClient', function () {
             describe('get', function () {
               it('should get items', async function () {
                 // Get item.
-                const response0 = await entityClient.getItem(
+                const response0 = await entityClient.getItem('user',
                   pick(item0, ['hashKey2', 'rangeKey']),
                 );
                 expect(response0.Item).to.deep.equal(item0);
 
-                const response1 = await entityClient.getItem(
+                const response1 = await entityClient.getItem('user',
                   pick(item1, ['hashKey2', 'rangeKey']),
                 );
                 expect(response1.Item).to.deep.equal(item1);
@@ -281,7 +281,7 @@ describe('EntityClient', function () {
 
               it('should get designated attributes', async function () {
                 // Get item.
-                const response0 = await entityClient.getItem(
+                const response0 = await entityClient.getItem('user',
                   pick(item0, ['hashKey2', 'rangeKey']),
                   ['a0'],
                 );
@@ -300,7 +300,7 @@ describe('EntityClient', function () {
             describe('gets', function () {
               it('should get multiple items', async function () {
                 // Get items.
-                const response = await entityClient.getItems([
+                const response = await entityClient.getItems('user', [
                   pick(item0, ['hashKey2', 'rangeKey']),
                   pick(item1, ['hashKey2', 'rangeKey']),
                 ]);

@@ -4,7 +4,7 @@ import {
   type EntityToken,
   type IndexRangeKeyOf,
   type PageKeyByIndex,
-  type ProjectedItemByToken,
+  type EntityItemPartial,
   type QueryBuilderQueryOptions,
   type QueryResult,
   type ShardQueryFunction,
@@ -63,7 +63,7 @@ export class QueryBuilder<
       );
 
       // Narrow to the projected shape at the boundary.
-      const projectedItems = rawItems as ProjectedItemByToken<C, ET, K>[];
+      const projectedItems = rawItems as EntityItemPartial<C, ET, K>[];
       const result: ShardQueryResult<C, ET, ITS, CF, K> = {
         count,
         // K-aware: project item shape when a projection K is supplied.

@@ -1,7 +1,8 @@
 import type { TransactWriteCommandOutput } from '@aws-sdk/lib-dynamodb';
 import type {
   BaseConfigMap,
-  EntityRecord,
+  EntityRecord as EMEntityRecord,
+  EntityToken,
 } from '@karmaniverous/entity-manager';
 
 import type { EntityClient } from '../EntityClient';
@@ -11,7 +12,7 @@ import type { EntityClient } from '../EntityClient';
  */
 export async function transactPutItems<C extends BaseConfigMap>(
   client: EntityClient<C>,
-  items: EntityRecord<C>[],
+  items: EMEntityRecord<C, EntityToken<C>>[],
 ): Promise<TransactWriteCommandOutput> {
   try {
     const output = await client.doc.transactWrite({
