@@ -268,12 +268,14 @@ describe('EntityClient', function () {
             describe('get', function () {
               it('should get items', async function () {
                 // Get item.
-                const response0 = await entityClient.getItem('user',
+                const response0 = await entityClient.getItem(
+                  'user',
                   pick(item0, ['hashKey2', 'rangeKey']),
                 );
                 expect(response0.Item).to.deep.equal(item0);
 
-                const response1 = await entityClient.getItem('user',
+                const response1 = await entityClient.getItem(
+                  'user',
                   pick(item1, ['hashKey2', 'rangeKey']),
                 );
                 expect(response1.Item).to.deep.equal(item1);
@@ -281,7 +283,8 @@ describe('EntityClient', function () {
 
               it('should get designated attributes', async function () {
                 // Get item.
-                const response0 = await entityClient.getItem('user',
+                const response0 = await entityClient.getItem(
+                  'user',
                   pick(item0, ['hashKey2', 'rangeKey']),
                   ['a0'],
                 );

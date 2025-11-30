@@ -1,10 +1,10 @@
 import {
   type BaseConfigMap,
   BaseQueryBuilder,
+  type EntityItemPartial,
   type EntityToken,
   type IndexRangeKeyOf,
   type PageKeyByIndex,
-  type EntityItemPartial,
   type QueryBuilderQueryOptions,
   type QueryResult,
   type ShardQueryFunction,

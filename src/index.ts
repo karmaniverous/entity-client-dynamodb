@@ -10,4 +10,4 @@ export type {
   EntityRecordPartial,
   EntityToken,
   Projected,
-} from '@karmaniverous/entity-manager';
+} from '@karmaniverous/entity-manager';
