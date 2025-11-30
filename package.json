@@ -13,13 +13,13 @@
     "@aws-sdk/client-dynamodb": "^3.940.0",
     "@aws-sdk/lib-dynamodb": "^3.940.0",
     "@karmaniverous/batch-process": "^0.1.0",
-    "@karmaniverous/entity-manager": "^8.0.0-0",
-    "@karmaniverous/entity-tools": "^0.7.1",
+    "@karmaniverous/entity-manager": "^8.0.0",
+    "@karmaniverous/entity-tools": "^0.8.0",
     "aws-xray-sdk": "^3.12.0",
     "execa": "^9.6.1",
     "nanoid": "^5.1.6",
     "radash": "^12.1.1",
-    "yaml": "^2.8.1"
+    "yaml": "^2.8.2"
   },
   "description": "Entity Manager integrated into a DynamoDB client wrapper.",
   "devDependencies": {
