@@ -35,7 +35,7 @@ await client.createTable({
 
 // Put / Get (records; strip keys to get domain)
 await client.putItem({ hashKey2: 'h', rangeKey: 'r', a: 1 });
-const out = await client.getItem({ hashKey2: 'h', rangeKey: 'r' });
+const out = await client.getItem('user', { hashKey2: 'h', rangeKey: 'r' });
 const item = out.Item && client.entityManager.removeKeys('user', out.Item);
 ```
 

@@ -47,8 +47,8 @@ Put / Get
 // Put a record (storage-facing shape)
 await client.putItem({ hashKey2: 'h', rangeKey: 'r', a: 1 });
 
-// Get a record (storage)
-const out = await client.getItem({ hashKey2: 'h', rangeKey: 'r' });
+// Get a record (storage; token-aware)
+const out = await client.getItem('user', { hashKey2: 'h', rangeKey: 'r' });
 
 // Convert to domain (strip keys)
 const item = out.Item && client.entityManager.removeKeys('user', out.Item);

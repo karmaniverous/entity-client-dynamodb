@@ -98,3 +98,7 @@
 
 - Lint: removed non-null assertions in EntityClient methods/getItems.ts by deriving
   a fallback tableNameKey. ESLint no-non-null-assertion satisfied.
+
+- Docs: update token-aware reads in examples
+  - README Quick start now uses client.getItem('user', key).
+  - Getting Started guide "Put / Get" now uses token-aware getItem.
