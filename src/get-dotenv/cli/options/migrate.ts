@@ -30,24 +30,17 @@ export function resolveMigrate(
   progressIntervalMs?: number;
 } {
   const cfg = resolveLayoutConfig({}, config, ref);
+  // Host interpolates config strings once; expand flags only.
   const fromVersion =
-    dotenvExpandLocal(
-      firstDefined(flags.fromVersion, config?.migrate?.fromVersion),
-      ref,
-    ) ?? '';
+    dotenvExpandLocal(flags.fromVersion, ref) ??
+    config?.migrate?.fromVersion ??
+    '';
   const toVersion =
-    dotenvExpandLocal(
-      firstDefined(flags.toVersion, config?.migrate?.toVersion),
-      ref,
-    ) ?? '';
-  const sourceTableName = dotenvExpandLocal(
-    firstDefined(flags.sourceTable, config?.migrate?.sourceTable),
-    ref,
-  );
-  const targetTableName = dotenvExpandLocal(
-    firstDefined(flags.targetTable, config?.migrate?.targetTable),
-    ref,
-  );
+    dotenvExpandLocal(flags.toVersion, ref) ?? config?.migrate?.toVersion ?? '';
+  const sourceTableName =
+    dotenvExpandLocal(flags.sourceTable, ref) ?? config?.migrate?.sourceTable;
+  const targetTableName =
+    dotenvExpandLocal(flags.targetTable, ref) ?? config?.migrate?.targetTable;
   const pageSize = num(firstDefined(flags.pageSize, config?.migrate?.pageSize));
   const limit = num(firstDefined(flags.limit, config?.migrate?.limit));
   const transformConcurrency = num(

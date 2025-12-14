@@ -12,10 +12,9 @@ export function resolveDelete(
   config?: DynamodbPluginConfig,
   ref: EnvRef = process.env,
 ): { options: { waiter?: WaiterConfig; tableNameOverride?: string } } {
-  const tableNameOverride = dotenvExpandLocal(
-    firstDefined(flags.tableName, config?.delete?.tableName),
-    ref,
-  );
+  // Host interpolates config strings once; expand flags only.
+  const tableNameOverride =
+    dotenvExpandLocal(flags.tableName, ref) ?? config?.delete?.tableName;
   const maxSeconds = num(
     firstDefined(flags.maxSeconds, config?.delete?.waiter?.maxSeconds),
   );

@@ -21,13 +21,14 @@ describe('dynamodb CLI option resolvers', () => {
   });
 
   it('resolveGenerateAtVersion should merge overlays and expand strings', () => {
+    // Config is assumed to be interpolated by the host already.
     const cfg: DynamodbPluginConfig = {
       tablesPath: './tables',
       generate: {
         version: '001',
         overlays: {
           billingMode: 'PAY_PER_REQUEST',
-          tableName: '$NAME',
+          tableName: 'CfgTable',
         },
       },
     };
@@ -35,6 +36,7 @@ describe('dynamodb CLI option resolvers', () => {
       overlays: {
         readCapacityUnits: '5',
         writeCapacityUnits: '6',
+        tableName: '$NAME',
       },
     };
     const ref = { NAME: 'MyTable' };
@@ -59,11 +61,12 @@ describe('dynamodb CLI option resolvers', () => {
   });
 
   it('resolveCreateAtVersion should map waiter and tableNameOverride with expansion', () => {
+    // Config is assumed to be interpolated by the host already.
     const cfg: DynamodbPluginConfig = {
       create: {
         version: '001',
         waiter: { maxSeconds: 10 },
-        tableNameOverride: '$NAME',
+        tableNameOverride: 'FromCfg',
       },
     };
     const flags = {
@@ -85,9 +88,10 @@ describe('dynamodb CLI option resolvers', () => {
   });
 
   it('resolveDelete should choose flags over config and map waiter seconds', () => {
+    // Config is assumed to be interpolated by the host already.
     const cfg: DynamodbPluginConfig = {
       delete: {
-        tableName: '$TBLCFG',
+        tableName: 'CfgName',
         waiter: { maxSeconds: 5 },
       },
     };
@@ -102,17 +106,18 @@ describe('dynamodb CLI option resolvers', () => {
   });
 
   it('resolvePurge should expand table name', () => {
-    const cfg: DynamodbPluginConfig = { purge: { tableName: '$NAME' } };
-    const out = resolvePurge({}, cfg, { NAME: 'T' });
+    const cfg: DynamodbPluginConfig = { purge: { tableName: 'CfgTable' } };
+    const out = resolvePurge({ tableName: '$NAME' }, cfg, { NAME: 'T' });
     expect(out.options.tableNameOverride).toEqual('T');
   });
 
   it('resolveMigrate should merge/expand and coerce numerics', () => {
+    // Config is assumed to be interpolated by the host already.
     const cfg: DynamodbPluginConfig = {
       tablesPath: './tables',
       migrate: {
-        sourceTable: '$SRC',
-        targetTable: '$TGT',
+        sourceTable: 'S',
+        targetTable: 'T',
         fromVersion: '010',
         toVersion: '020',
         pageSize: 25,

@@ -1,9 +1,5 @@
 import type { VersionedLayoutConfig } from '../../layout';
-import {
-  dotenvExpandAllLocal,
-  dotenvExpandLocal,
-  firstDefined,
-} from './expand';
+import { dotenvExpandAllLocal, dotenvExpandLocal } from './expand';
 import type { DynamodbPluginConfig, EnvRef } from './types';
 
 /** Build VersionedLayoutConfig from flags+config with dotenv expansion. */
@@ -12,20 +8,18 @@ export function resolveLayoutConfig(
   config?: DynamodbPluginConfig,
   ref: EnvRef = process.env,
 ): VersionedLayoutConfig {
-  const tablesPath = dotenvExpandLocal(
-    firstDefined(flags.tablesPath, config?.tablesPath),
-    ref,
-  );
-  const mergedTokens = {
+  // Host interpolates config strings once before plugin execution.
+  // We only expand runtime flags to avoid double-expansion.
+  const tablesPath =
+    dotenvExpandLocal(flags.tablesPath, ref) ?? config?.tablesPath;
+
+  const mergedTokens: Record<string, unknown> = {
     ...(config?.tokens ?? {}),
-    ...(flags.tokens ?? {}),
+    ...(flags.tokens ? dotenvExpandAllLocal(flags.tokens, ref) : {}),
   };
   const tokens =
     Object.keys(mergedTokens).length > 0
-      ? (dotenvExpandAllLocal(
-          mergedTokens,
-          ref,
-        ) as VersionedLayoutConfig['tokens'])
+      ? (mergedTokens as VersionedLayoutConfig['tokens'])
       : undefined;
   return {
     ...(tablesPath ? { tablesPath } : {}),

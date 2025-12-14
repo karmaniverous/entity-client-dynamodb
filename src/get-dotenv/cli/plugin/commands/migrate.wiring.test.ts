@@ -5,7 +5,6 @@ const h = vi.hoisted(() => ({
   emSpy: vi.fn(() => Promise.resolve({})),
   migrateSpy: vi.fn(() => Promise.resolve({ pages: 1, items: 2, outputs: 2 })),
   buildSpy: vi.fn((_em: unknown, tableName: string) => ({ tableName })),
-  pluginCfgSpy: vi.fn(() => ({})),
 }));
 
 // Mocks for dependencies used by the command module.
@@ -18,7 +17,6 @@ vi.mock('../../../services/migrate', () => ({
 // Mock helpers to avoid constructing a real AWS client.
 vi.mock('../helpers', () => ({
   buildEntityClient: h.buildSpy,
-  getPluginConfig: h.pluginCfgSpy,
   ensureForce: (force: unknown) => !!force,
 }));
 
@@ -49,16 +47,12 @@ describe('dynamodb plugin: migrate wiring', () => {
   const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
   const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
+  const plugin = { readConfig: () => ({}) };
   const fakeCli = {
     ns: () => group as unknown as Record<string, unknown>,
     getCtx: () =>
       ({
         dotenv: {},
-        pluginConfigs: {
-          dynamodb: {
-            tablesPath: './tables',
-          },
-        },
       }) as unknown,
   } as unknown as Record<string, unknown>;
 
@@ -67,13 +61,12 @@ describe('dynamodb plugin: migrate wiring', () => {
     h.emSpy.mockClear();
     h.migrateSpy.mockClear();
     h.buildSpy.mockClear();
-    h.pluginCfgSpy.mockClear();
     infoSpy.mockClear();
     logSpy.mockClear();
   });
 
   it('registers migrate action and calls service with resolved args', async () => {
-    registerMigrate(fakeCli as never, group as never);
+    registerMigrate(plugin as never, fakeCli as never, group as never);
     expect(typeof group.actionFn).toBe('function');
     await group.actionFn?.({
       sourceTable: 'Source',

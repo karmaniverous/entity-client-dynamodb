@@ -5,7 +5,6 @@ const h = vi.hoisted(() => ({
   startSpy: vi.fn(() => Promise.resolve({ endpoint: 'http://localhost:9001' })),
   statusSpy: vi.fn(() => Promise.resolve(true)),
   stopSpy: vi.fn(() => Promise.resolve()),
-  pluginCfgSpy: vi.fn(() => ({ local: {} })),
 }));
 
 // Mock readMergedOptions to return an empty options bag
@@ -18,11 +17,6 @@ vi.mock('../../../services/local', () => ({
   startLocal: h.startSpy,
   statusLocal: h.statusSpy,
   stopLocal: h.stopSpy,
-}));
-
-// Mock helpers to provide plugin config.
-vi.mock('../helpers', () => ({
-  getPluginConfig: h.pluginCfgSpy,
 }));
 
 // Minimal command-builder stub that captures the registered actions by name
@@ -58,16 +52,12 @@ describe('dynamodb plugin: local wiring', () => {
     .spyOn(console, 'error')
     .mockImplementation(() => undefined);
 
+  const plugin = { readConfig: () => ({ local: {} }) };
   const fakeCli = {
     ns: () => group as unknown as Record<string, unknown>,
     getCtx: () =>
       ({
         dotenv: {},
-        pluginConfigs: {
-          dynamodb: {
-            local: {},
-          },
-        },
       }) as unknown,
   } as unknown as Record<string, unknown>;
 
@@ -76,12 +66,11 @@ describe('dynamodb plugin: local wiring', () => {
     h.startSpy.mockClear();
     h.statusSpy.mockClear();
     h.stopSpy.mockClear();
-    h.pluginCfgSpy.mockClear();
     infoSpy.mockClear();
     logSpy.mockClear();
     errorSpy.mockClear();
     // Build the command tree and capture actions
-    registerLocal(fakeCli as never, group as never);
+    registerLocal(plugin as never, fakeCli as never, group as never);
     process.exitCode = undefined;
   });
 

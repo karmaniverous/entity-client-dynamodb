@@ -11,10 +11,14 @@ export function deriveEndpoint(
   envRef: Record<string, string | undefined> = process.env,
   overridePort?: number,
 ): { endpoint: string; port: number } {
+  const cfgPortRaw = cfg?.port;
+  const cfgPort =
+    typeof cfgPortRaw === 'string' ? Number(cfgPortRaw) : cfgPortRaw;
+
   // Prefer override, then configured numeric port, then env var coerced to number.
   // Use Number(NaN) pattern to avoid ternary and still filter via isFinite guard below.
   const basePort: number | undefined =
-    overridePort ?? cfg?.port ?? Number(envRef.DYNAMODB_LOCAL_PORT ?? NaN);
+    overridePort ?? cfgPort ?? Number(envRef.DYNAMODB_LOCAL_PORT ?? NaN);
 
   const port =
     typeof basePort === 'number' && Number.isFinite(basePort) && basePort > 0
@@ -23,8 +27,8 @@ export function deriveEndpoint(
 
   const endpoint =
     cfg?.endpoint ??
-    (cfg?.port !== undefined
-      ? `http://localhost:${String(cfg.port)}`
+    (cfgPortRaw !== undefined
+      ? `http://localhost:${String(cfgPortRaw)}`
       : undefined) ??
     envRef.DYNAMODB_LOCAL_ENDPOINT ??
     `http://localhost:${String(port)}`;

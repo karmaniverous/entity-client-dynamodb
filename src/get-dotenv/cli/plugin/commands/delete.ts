@@ -1,12 +1,22 @@
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
+import type { PluginWithInstanceHelpers } from '@karmaniverous/get-dotenv/cliHost';
 import type { Command } from 'commander';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
 import { deleteTable } from '../../../services/delete';
+import type { DynamodbPluginConfig } from '../../options';
 import { resolveDelete, resolveLayoutConfig } from '../../options';
-import { buildEntityClient, ensureForce, getPluginConfig } from '../helpers';
+import { buildEntityClient, ensureForce } from '../helpers';
 
-export function registerDelete(cli: GetDotenvCliPublic, group: Command) {
+type PluginReader = Pick<PluginWithInstanceHelpers, 'readConfig'> & {
+  readConfig(cli: GetDotenvCliPublic): Readonly<DynamodbPluginConfig>;
+};
+
+export function registerDelete(
+  plugin: PluginReader,
+  cli: GetDotenvCliPublic,
+  group: Command,
+) {
   group
     .command('delete')
     .description(
@@ -20,7 +30,7 @@ export function registerDelete(cli: GetDotenvCliPublic, group: Command) {
       if (!ensureForce(flags.force, 'delete-table')) return;
       const ctx = cli.getCtx();
       const envRef = ctx?.dotenv ?? process.env;
-      const pluginCfg = getPluginConfig(cli);
+      const pluginCfg = plugin.readConfig(cli);
       const { options } = resolveDelete(
         {
           tableName: flags.tableName as string | undefined,

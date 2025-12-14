@@ -1,5 +1,5 @@
 import type { VersionedLayoutConfig } from '../../layout';
-import { dotenvExpandLocal, firstDefined } from './expand';
+import { dotenvExpandLocal } from './expand';
 import { resolveLayoutConfig } from './layout';
 import type { DynamodbPluginConfig, EnvRef, ValidateFlags } from './types';
 
@@ -9,10 +9,8 @@ export function resolveValidateAtVersion(
   ref: EnvRef = process.env,
 ): { version: string; cfg: VersionedLayoutConfig } {
   const cfg = resolveLayoutConfig({}, config, ref);
+  // Host interpolates config strings once; expand flags only.
   const version =
-    dotenvExpandLocal(
-      firstDefined(flags.version, config?.validate?.version),
-      ref,
-    ) ?? '';
+    dotenvExpandLocal(flags.version, ref) ?? config?.validate?.version ?? '';
   return { version, cfg };
 }

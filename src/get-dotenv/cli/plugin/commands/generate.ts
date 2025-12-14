@@ -1,13 +1,22 @@
 import type { CreateTableCommandInput } from '@aws-sdk/client-dynamodb';
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
+import type { PluginWithInstanceHelpers } from '@karmaniverous/get-dotenv/cliHost';
 import type { Command } from 'commander';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
 import { generateTableDefinitionAtVersion } from '../../../services/generate';
+import type { DynamodbPluginConfig } from '../../options';
 import { resolveGenerateAtVersion, resolveLayoutConfig } from '../../options';
-import { getPluginConfig } from '../helpers';
 
-export function registerGenerate(cli: GetDotenvCliPublic, group: Command) {
+type PluginReader = Pick<PluginWithInstanceHelpers, 'readConfig'> & {
+  readConfig(cli: GetDotenvCliPublic): Readonly<DynamodbPluginConfig>;
+};
+
+export function registerGenerate(
+  plugin: PluginReader,
+  cli: GetDotenvCliPublic,
+  group: Command,
+) {
   group
     .command('generate')
     .description('Compose or refresh tables/NNN/table.yml (comment-preserving)')
@@ -40,7 +49,7 @@ export function registerGenerate(cli: GetDotenvCliPublic, group: Command) {
     .action(async (flags: Record<string, unknown>) => {
       const ctx = cli.getCtx();
       const envRef = ctx?.dotenv ?? process.env;
-      const pluginCfg = getPluginConfig(cli);
+      const pluginCfg = plugin.readConfig(cli);
       const cfg = resolveLayoutConfig(
         {
           tablesPath: flags.tablesPath as string | undefined,

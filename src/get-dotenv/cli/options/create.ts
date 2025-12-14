@@ -29,15 +29,12 @@ export function resolveCreateAtVersion(
   };
 } {
   const cfg = resolveLayoutConfig({}, config, ref);
+  // Host interpolates config strings once; expand flags only.
   const version =
-    dotenvExpandLocal(
-      firstDefined(flags.version, config?.create?.version),
-      ref,
-    ) ?? '';
-  const tableNameOverride = dotenvExpandLocal(
-    firstDefined(flags.tableNameOverride, config?.create?.tableNameOverride),
-    ref,
-  );
+    dotenvExpandLocal(flags.version, ref) ?? config?.create?.version ?? '';
+  const tableNameOverride =
+    dotenvExpandLocal(flags.tableNameOverride, ref) ??
+    config?.create?.tableNameOverride;
   const maxSeconds = num(
     firstDefined(flags.maxSeconds, config?.create?.waiter?.maxSeconds),
   );

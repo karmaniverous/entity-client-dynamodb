@@ -1,11 +1,20 @@
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
+import type { PluginWithInstanceHelpers } from '@karmaniverous/get-dotenv/cliHost';
 import type { Command } from 'commander';
 
 import { validateTableDefinitionAtVersion } from '../../../services/validateTable';
+import type { DynamodbPluginConfig } from '../../options';
 import { resolveLayoutConfig, resolveValidateAtVersion } from '../../options';
-import { getPluginConfig } from '../helpers';
 
-export function registerValidate(cli: GetDotenvCliPublic, group: Command) {
+type PluginReader = Pick<PluginWithInstanceHelpers, 'readConfig'> & {
+  readConfig(cli: GetDotenvCliPublic): Readonly<DynamodbPluginConfig>;
+};
+
+export function registerValidate(
+  plugin: PluginReader,
+  cli: GetDotenvCliPublic,
+  group: Command,
+) {
   group
     .command('validate')
     .description('Validate generated YAML sections vs resolved EntityManager')
@@ -23,7 +32,7 @@ export function registerValidate(cli: GetDotenvCliPublic, group: Command) {
     .action(async (flags: Record<string, unknown>) => {
       const ctx = cli.getCtx();
       const envRef = ctx?.dotenv ?? process.env;
-      const pluginCfg = getPluginConfig(cli);
+      const pluginCfg = plugin.readConfig(cli);
       const cfg = resolveLayoutConfig(
         {
           tablesPath: flags.tablesPath as string | undefined,

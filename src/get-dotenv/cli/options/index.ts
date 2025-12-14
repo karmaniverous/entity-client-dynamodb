@@ -5,5 +5,6 @@ export * from './generate';
 export * from './layout';
 export * from './migrate';
 export * from './purge';
+export * from './schema';
 export * from './types';
 export * from './validate';

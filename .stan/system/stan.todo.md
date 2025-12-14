@@ -101,4 +101,8 @@
 
 - Docs: update token-aware reads in examples
   - README Quick start now uses client.getItem('user', key).
-  - Getting Started guide "Put / Get" now uses token-aware getItem.
+  - Getting Started guide "Put / Get" now uses token-aware getItem.
+
+- get-dotenv plugin host model migration (dynamodb)
+  - Switched to `definePlugin({ ns, configSchema })` and `plugin.readConfig(cli)`; removed brittle `ctx.pluginConfigs.dynamodb` access.
+  - Made AWS-safe defaults when run under shipped `aws` plugin (no forced localhost endpoint/creds); expand flags only to avoid config double-expansion.

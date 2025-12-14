@@ -7,7 +7,6 @@ const h = vi.hoisted(() => ({
     Promise.resolve({ waiterResult: { state: 'SUCCESS' as const } }),
   ),
   buildSpy: vi.fn((_em: unknown, tableName: string) => ({ tableName })),
-  pluginCfgSpy: vi.fn(() => ({})),
 }));
 
 // Mocks for dependencies used by the command module.
@@ -20,7 +19,6 @@ vi.mock('../../../services/delete', () => ({
 // Mock helpers to avoid constructing a real AWS client.
 vi.mock('../helpers', () => ({
   buildEntityClient: h.buildSpy,
-  getPluginConfig: h.pluginCfgSpy,
   // ensureForce is used as a guard; return true when force truthy
   ensureForce: (force: unknown) => !!force,
 }));
@@ -52,16 +50,12 @@ describe('dynamodb plugin: delete wiring', () => {
   const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
   const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
+  const plugin = { readConfig: () => ({}) };
   const fakeCli = {
     ns: () => group as unknown as Record<string, unknown>,
     getCtx: () =>
       ({
         dotenv: {},
-        pluginConfigs: {
-          dynamodb: {
-            tablesPath: './tables',
-          },
-        },
       }) as unknown,
   } as unknown as Record<string, unknown>;
 
@@ -70,13 +64,12 @@ describe('dynamodb plugin: delete wiring', () => {
     h.emSpy.mockClear();
     h.deleteSpy.mockClear();
     h.buildSpy.mockClear();
-    h.pluginCfgSpy.mockClear();
     infoSpy.mockClear();
     logSpy.mockClear();
   });
 
   it('registers delete action and calls service with resolved args', async () => {
-    registerDelete(fakeCli as never, group as never);
+    registerDelete(plugin as never, fakeCli as never, group as never);
     expect(typeof group.actionFn).toBe('function');
     await group.actionFn?.({
       tableName: 'TargetTable',

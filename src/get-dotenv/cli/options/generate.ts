@@ -28,22 +28,24 @@ export function resolveGenerateAtVersion(
   };
 } {
   const cfg = resolveLayoutConfig({}, config, ref);
+  // Host interpolates config strings once; expand flags only.
   const version =
-    dotenvExpandLocal(
-      firstDefined(flags.version, config?.generate?.version),
-      ref,
-    ) ?? '';
+    dotenvExpandLocal(flags.version, ref) ?? config?.generate?.version ?? '';
+
+  const overlaysExpandedFlags = flags.overlays
+    ? dotenvExpandAllLocal(flags.overlays, ref)
+    : {};
   const overlaysMerged = {
     ...(config?.generate?.overlays ?? {}),
-    ...(flags.overlays ?? {}),
+    ...overlaysExpandedFlags,
   };
-  const overlaysExpanded = dotenvExpandAllLocal(overlaysMerged, ref);
-  const BillingMode = overlaysExpanded.billingMode;
-  const R = num(overlaysExpanded.readCapacityUnits);
-  const W = num(overlaysExpanded.writeCapacityUnits);
-  const TableName = overlaysExpanded.tableName;
+
+  const BillingMode = overlaysMerged.billingMode;
+  const R = num(overlaysMerged.readCapacityUnits);
+  const W = num(overlaysMerged.writeCapacityUnits);
+  const TableName = overlaysMerged.tableName;
   const options = {
-    ...(BillingMode || R || W || TableName
+    ...(BillingMode || R !== undefined || W !== undefined || TableName
       ? {
           overlays: {
             ...(BillingMode ? { BillingMode } : {}),

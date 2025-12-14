@@ -1,11 +1,20 @@
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
+import type { PluginWithInstanceHelpers } from '@karmaniverous/get-dotenv/cliHost';
 import { readMergedOptions } from '@karmaniverous/get-dotenv/cliHost';
 import type { Command } from 'commander';
 
 import { startLocal, statusLocal, stopLocal } from '../../../services/local';
-import { getPluginConfig } from '../helpers';
+import type { DynamodbPluginConfig } from '../../options';
 
-export function registerLocal(cli: GetDotenvCliPublic, group: Command) {
+type PluginReader = Pick<PluginWithInstanceHelpers, 'readConfig'> & {
+  readConfig(cli: GetDotenvCliPublic): Readonly<DynamodbPluginConfig>;
+};
+
+export function registerLocal(
+  plugin: PluginReader,
+  cli: GetDotenvCliPublic,
+  group: Command,
+) {
   const local = group
     .command('local')
     .description(
@@ -24,7 +33,7 @@ export function registerLocal(cli: GetDotenvCliPublic, group: Command) {
         try {
           const ctx = cli.getCtx();
           const envRef = ctx?.dotenv ?? process.env;
-          const pluginCfg = getPluginConfig(cli);
+          const pluginCfg = plugin.readConfig(cli);
           const bag = readMergedOptions(thisCommand) ?? {};
           const shell = (bag as { shell?: string | boolean }).shell;
           const capture =
@@ -70,7 +79,7 @@ export function registerLocal(cli: GetDotenvCliPublic, group: Command) {
         try {
           const ctx = cli.getCtx();
           const envRef = ctx?.dotenv ?? process.env;
-          const pluginCfg = getPluginConfig(cli);
+          const pluginCfg = plugin.readConfig(cli);
           const bag = readMergedOptions(thisCommand) ?? {};
           const shell = (bag as { shell?: string | boolean }).shell;
           const capture =
@@ -109,7 +118,7 @@ export function registerLocal(cli: GetDotenvCliPublic, group: Command) {
         try {
           const ctx = cli.getCtx();
           const envRef = ctx?.dotenv ?? process.env;
-          const pluginCfg = getPluginConfig(cli);
+          const pluginCfg = plugin.readConfig(cli);
           const bag = readMergedOptions(thisCommand) ?? {};
           const shell = (bag as { shell?: string | boolean }).shell;
           const capture =

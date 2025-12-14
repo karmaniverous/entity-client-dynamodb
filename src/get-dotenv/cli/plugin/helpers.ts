@@ -1,13 +1,4 @@
-import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
-
 import { EntityClient } from '../../../EntityClient';
-import type { DynamodbPluginConfig } from '../options';
-
-/** Read the plugin config slice from the host context. */
-export function getPluginConfig(cli: GetDotenvCliPublic): DynamodbPluginConfig {
-  const cfg = cli.getCtx()?.pluginConfigs?.dynamodb;
-  return (cfg ?? {}) as DynamodbPluginConfig;
-}
 
 /** Build an EntityClient from envRef and a resolved tableName. */
 export function buildEntityClient(
@@ -15,21 +6,37 @@ export function buildEntityClient(
   tableName: string,
   envRef: Record<string, string | undefined> = process.env,
 ) {
-  const region = envRef.AWS_REGION ?? envRef.AWS_DEFAULT_REGION ?? 'local';
+  // Explicit endpoint overrides only. Do not default to localhost here:
+  // this plugin may run as a child of the aws parent plugin (real AWS).
   const endpoint =
     envRef.AWS_ENDPOINT_URL_DYNAMODB ??
     envRef.DYNAMODB_ENDPOINT ??
-    `http://localhost:${envRef.DYNAMODB_LOCAL_PORT ?? '8000'}`;
-  const credentials = {
-    accessKeyId: envRef.AWS_ACCESS_KEY_ID ?? 'fake',
-    secretAccessKey: envRef.AWS_SECRET_ACCESS_KEY ?? 'fake',
-  };
+    envRef.DYNAMODB_LOCAL_ENDPOINT ??
+    undefined;
+
+  const hasEnvCreds =
+    !!envRef.AWS_ACCESS_KEY_ID && !!envRef.AWS_SECRET_ACCESS_KEY;
+
+  const region =
+    envRef.AWS_REGION ??
+    envRef.AWS_DEFAULT_REGION ??
+    (endpoint ? 'local' : 'us-east-1');
+
   return new EntityClient({
     entityManager: em as never,
     tableName,
     region,
-    endpoint,
-    credentials,
+    ...(endpoint ? { endpoint } : {}),
+    ...(hasEnvCreds
+      ? {}
+      : endpoint
+        ? {
+            credentials: {
+              accessKeyId: 'fake',
+              secretAccessKey: 'fake',
+            },
+          }
+        : {}),
   });
 }
 

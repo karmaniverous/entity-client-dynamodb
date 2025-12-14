@@ -1,12 +1,22 @@
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
+import type { PluginWithInstanceHelpers } from '@karmaniverous/get-dotenv/cliHost';
 import type { Command } from 'commander';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
 import { migrateData } from '../../../services/migrate';
+import type { DynamodbPluginConfig } from '../../options';
 import { resolveLayoutConfig, resolveMigrate } from '../../options';
-import { buildEntityClient, ensureForce, getPluginConfig } from '../helpers';
+import { buildEntityClient, ensureForce } from '../helpers';
 
-export function registerMigrate(cli: GetDotenvCliPublic, group: Command) {
+type PluginReader = Pick<PluginWithInstanceHelpers, 'readConfig'> & {
+  readConfig(cli: GetDotenvCliPublic): Readonly<DynamodbPluginConfig>;
+};
+
+export function registerMigrate(
+  plugin: PluginReader,
+  cli: GetDotenvCliPublic,
+  group: Command,
+) {
   group
     .command('migrate')
     .description(
@@ -41,7 +51,7 @@ export function registerMigrate(cli: GetDotenvCliPublic, group: Command) {
       if (!ensureForce(flags.force, 'migrate-data')) return;
       const ctx = cli.getCtx();
       const envRef = ctx?.dotenv ?? process.env;
-      const pluginCfg = getPluginConfig(cli);
+      const pluginCfg = plugin.readConfig(cli);
       const cfg = resolveLayoutConfig(
         {
           tablesPath: flags.tablesPath as string | undefined,

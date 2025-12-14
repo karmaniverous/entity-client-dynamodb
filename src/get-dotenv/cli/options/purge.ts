@@ -1,4 +1,4 @@
-import { dotenvExpandLocal, firstDefined } from './expand';
+import { dotenvExpandLocal } from './expand';
 import type { DynamodbPluginConfig, EnvRef } from './types';
 
 export interface PurgeFlags {
@@ -10,9 +10,8 @@ export function resolvePurge(
   config?: DynamodbPluginConfig,
   ref: EnvRef = process.env,
 ): { options: { tableNameOverride?: string } } {
-  const tableNameOverride = dotenvExpandLocal(
-    firstDefined(flags.tableName, config?.purge?.tableName),
-    ref,
-  );
+  // Host interpolates config strings once; expand flags only.
+  const tableNameOverride =
+    dotenvExpandLocal(flags.tableName, ref) ?? config?.purge?.tableName;
   return { options: { ...(tableNameOverride ? { tableNameOverride } : {}) } };
 }
