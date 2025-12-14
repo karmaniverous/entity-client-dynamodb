@@ -16,11 +16,10 @@ export const helloPlugin = () =>
     ns: 'hello',
     setup(cli) {
       cli
-        .ns('hello')
         .description('Say hello')
         .action(() => {
           const ctx = cli.getCtx();
-          console.log('hello', Object.keys(ctx?.dotenv ?? {}).length);
+          console.log('hello', Object.keys(ctx.dotenv).length);
         });
     },
   });
@@ -39,7 +38,7 @@ import {
 } from '@karmaniverous/get-dotenv/plugins';
 import { helloPlugin } from './plugins/hello';
 
-await createCli({
+const run = createCli({
   alias: 'toolbox',
   branding: 'Toolbox CLI',
   compose: (p) =>
@@ -51,7 +50,9 @@ await createCli({
       .use(awsPlugin())
       .use(initPlugin())
       .use(helloPlugin()),
-}).run(process.argv.slice(2));
+});
+
+await run();
 ```
 
 ### Access the true root command (typed helper)
@@ -68,7 +69,7 @@ export const helloPlugin = () => {
   const plugin = definePlugin({
     ns: 'hello',
     setup(cli) {
-      cli.ns('hello').action(() => {
+      cli.action(() => {
         const root = getRootCommand(cli); // typed Commander root
         // Example: include the root name in your output
         console.log(`[${root.name()}] hello from plugin`);
@@ -115,6 +116,8 @@ cli.ns('print').action((_args, _opts, thisCommand) => {
 });
 ```
 
+If your plugin accepts option values that may include environment references (for example, `--table-name '${TABLE_NAME}'`), expand them yourself at action time using the resolved context (so you are not dependent on `loadProcess`). See [Executing Shell Commands](./exec.md#expanding-environment-references-in-plugin-flag-values) for recommended patterns and cross-platform quoting guidance.
+
 See also:
 
 - Config & Validation
@@ -142,7 +145,6 @@ export const helloPlugin = () => {
     ns: 'hello',
     setup(cli) {
       cli
-        .ns('hello')
         .description('Say hello with current dotenv context')
         .addOption(
           plugin.createPluginDynamicOption<HelloConfig>(

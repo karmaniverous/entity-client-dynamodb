@@ -118,7 +118,6 @@ export const whoamiPlugin = () =>
     ns: 'whoami',
     setup(cli) {
       cli
-        .ns('whoami')
         .description('Print AWS caller identity (uses parent aws session)')
         .action(async () => {
           // The AWS SDK default providers will read credentials from

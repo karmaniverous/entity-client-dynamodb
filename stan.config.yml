@@ -26,6 +26,7 @@ stan-core:
     get-dotenv:
       - ../get-dotenv/.stan/interop/entity-client-dynamodb/**
       - ../get-dotenv/dist/cliHost.d.ts
+      - ../get-dotenv/dist/index.d.ts
       - ../get-dotenv/dist/plugins-aws.d.ts
       - ../get-dotenv/guides/authoring/**
       - ../get-dotenv/guides/shipped/aws.md

@@ -18,14 +18,21 @@ Honor the global capture contract:
 - Otherwise, inherit stdio for live interaction.
 
 ```ts
-import { readMergedOptions } from '@karmaniverous/get-dotenv/cliHost';
-import { execa } from 'execa';
+import { buildSpawnEnv } from '@karmaniverous/get-dotenv';
+import {
+  readMergedOptions,
+  runCommand,
+  shouldCapture,
+} from '@karmaniverous/get-dotenv/cliHost';
 
-const bag = readMergedOptions(thisCommand) ?? {};
-const capture =
-  process.env.GETDOTENV_STDIO === 'pipe' ||
-  (bag as { capture?: boolean }).capture;
-const { exitCode } = await execa(file, args, {
+const bag = readMergedOptions(thisCommand);
+const capture = shouldCapture(bag.capture);
+
+const ctx = cli.getCtx();
+const env = buildSpawnEnv(process.env, ctx.dotenv);
+
+await runCommand([file, ...args], false, {
+  env,
   stdio: capture ? 'pipe' : 'inherit',
 });
 ```

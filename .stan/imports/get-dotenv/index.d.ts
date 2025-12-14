@@ -1,6 +1,6 @@
-import { OptionValues, Command, InferCommandArguments, Option, CommandUnknownOpts } from '@commander-js/extra-typings';
 import { z, ZodObject } from 'zod';
 export { z } from 'zod';
+import { OptionValues, Command, InferCommandArguments, Option, CommandUnknownOpts } from '@commander-js/extra-typings';
 
 /**
  * Minimal root options shape shared by CLI and generator layers.
@@ -215,6 +215,21 @@ declare const getDotenvOptionsSchemaResolved: z.ZodObject<{
  */
 
 /**
+ * Compatibility shape for root options allowing string inputs for vars/paths.
+ * Used during CLI argument parsing before normalization.
+ */
+type RootOptionsShapeCompat = Omit<RootOptionsShape, 'vars' | 'paths'> & {
+    /**
+     * Extra variables as either a space‑delimited string of assignments
+     * (e.g., `"FOO=1 BAR=2"`) or an object map of `string | undefined` values.
+     */
+    vars?: string | Record<string, string | undefined>;
+    /**
+     * Dotenv search paths as a space‑delimited string or a pre‑split string[].
+     */
+    paths?: string | string[];
+};
+/**
  * A minimal representation of an environment key/value mapping.
  * Values may be `undefined` to represent "unset".
  */
@@ -248,6 +263,132 @@ type GetDotenvOptions = z.output<typeof getDotenvOptionsSchemaResolved> & {
      */
     dynamic?: GetDotenvDynamic;
 };
+/**
+ * Vars-aware dynamic helpers (compile-time DX).
+ * DynamicFn: receive the current expanded variables and optional env.
+ */
+type DynamicFn<Vars extends Record<string, string | undefined>> = (vars: Vars, env?: string) => string | undefined;
+type DynamicMap<Vars extends Record<string, string | undefined>> = Record<string, DynamicFn<Vars> | ReturnType<DynamicFn<Vars>>>;
+/**
+ * Helper to define a dynamic map with strong inference (Vars-aware).
+ *
+ * Overload A (preferred): bind Vars to your intended key set for improved inference.
+ */
+declare function defineDynamic<Vars extends Record<string, string | undefined>, T extends DynamicMap<Vars>>(d: T): T;
+/**
+ * Overload B (backward-compatible): generic over legacy GetDotenvDynamic.
+ *
+ * Accepts legacy GetDotenvDynamic without Vars binding.
+ */
+declare function defineDynamic<T extends GetDotenvDynamic>(d: T): T;
+/**
+ * Typed config shape and builder for authoring JS/TS getdotenv config files.
+ *
+ * Compile-time only; the runtime loader remains schema-driven.
+ */
+interface GetDotenvConfig<Vars extends ProcessEnv, Env extends string = string> {
+    /**
+     * Operational root defaults applied by the host (collapsed families; stringly form).
+     */
+    rootOptionDefaults?: Partial<RootOptionsShape>;
+    /** Token indicating a dotenv file. */
+    dotenvToken?: string;
+    /** Token indicating private variables. */
+    privateToken?: string;
+    /** Paths to search for dotenv files. */
+    paths?: string | string[];
+    /** Whether to load variables into `process.env`. */
+    loadProcess?: boolean;
+    /** Whether to log loaded variables. */
+    log?: boolean;
+    /** Shell execution strategy. */
+    shell?: string | boolean;
+    /** Scripts table. */
+    scripts?: ScriptsTable;
+    /** Keys required to be present in the final environment. */
+    requiredKeys?: string[];
+    /** Validation schema (e.g. Zod). */
+    schema?: unknown;
+    /** Global variables. */
+    vars?: Vars;
+    /** Environment-specific variables. */
+    envVars?: Record<Env, Partial<Vars>>;
+    /** Dynamic variable definitions. */
+    dynamic?: DynamicMap<Vars>;
+    /** Plugin configuration slices. */
+    plugins?: Record<string, unknown>;
+}
+/**
+ * Define a strongly‑typed get‑dotenv configuration document for JS/TS authoring.
+ *
+ * This helper is compile‑time only: it returns the input unchanged at runtime,
+ * but enables rich TypeScript inference for `vars`, `envVars`, and `dynamic`,
+ * and validates property names and value shapes as you author the config.
+ *
+ * @typeParam Vars - The string‑valued env map your project uses (for example,
+ *   `{ APP_SETTING?: string }`). Keys propagate to `dynamic` function arguments.
+ * @typeParam Env - Allowed environment names used for `envVars` (defaults to `string`).
+ * @typeParam T - The full config type being produced (defaults to `GetDotenvConfig<Vars, Env>`).
+ *   This type parameter is rarely supplied explicitly.
+ * @param cfg - The configuration object literal.
+ * @returns The same `cfg` value, with its type preserved for inference.
+ */
+declare function defineGetDotenvConfig<Vars extends ProcessEnv, Env extends string = string, T extends GetDotenvConfig<Vars, Env> = GetDotenvConfig<Vars, Env>>(cfg: T): T;
+/**
+ * Compile-time helper to derive the Vars shape from a typed getdotenv config document.
+ */
+type InferGetDotenvVarsFromConfig<T> = T extends {
+    vars?: infer V;
+} ? V extends Record<string, string | undefined> ? V : never : never;
+/**
+ * Converts programmatic CLI options to `getDotenv` options.
+ *
+ * Accepts "stringly" CLI inputs for vars/paths and normalizes them into
+ * the programmatic shape. Preserves exactOptionalPropertyTypes semantics by
+ * omitting keys when undefined.
+ */
+declare const getDotenvCliOptions2Options: ({ paths, pathsDelimiter, pathsDelimiterPattern, vars, varsAssignor, varsAssignorPattern, varsDelimiter, varsDelimiterPattern, debug: _debug, scripts: _scripts, ...rest }: RootOptionsShapeCompat) => GetDotenvOptions;
+
+/**
+ * Asynchronously process dotenv files of the form `.env[.<ENV>][.<PRIVATE_TOKEN>]`
+ *
+ * @param options - `GetDotenvOptions` object
+ * @returns The combined parsed dotenv object.
+ * * @example Load from the project root with default tokens
+ * ```ts
+ * const vars = await getDotenv();
+ * console.log(vars.MY_SETTING);
+ * ```
+ *
+ * @example Load from multiple paths and a specific environment
+ * ```ts
+ * const vars = await getDotenv({
+ *   env: 'dev',
+ *   dotenvToken: '.testenv',
+ *   privateToken: 'secret',
+ *   paths: ['./', './packages/app'],
+ * });
+ * ```
+ *
+ * @example Use dynamic variables
+ * ```ts
+ * // .env.js default-exports: { DYNAMIC: ({ PREV }) => `${PREV}-suffix` }
+ * const vars = await getDotenv({ dynamicPath: '.env.js' });
+ * ```
+ *
+ * @remarks
+ * - When {@link GetDotenvOptions | loadProcess} is true, the resulting variables are merged
+ *   into `process.env` as a side effect.
+ * - When {@link GetDotenvOptions | outputPath} is provided, a consolidated dotenv file is written.
+ *   The path is resolved after expansion, so it may reference previously loaded vars.
+ *
+ * @throws Error when a dynamic module is present but cannot be imported.
+ * @throws Error when an output path was requested but could not be resolved.
+ */
+declare function getDotenv<Vars extends ProcessEnv = ProcessEnv>(options?: Partial<GetDotenvOptions>): Promise<Vars>;
+declare function getDotenv<Vars extends ProcessEnv>(options: Partial<GetDotenvOptions> & {
+    vars: Vars;
+}): Promise<ProcessEnv & Vars>;
 
 /**
  * Unify Scripts via the generic ScriptsTable<TShell> so shell types propagate.
@@ -269,11 +410,6 @@ type GetDotenvCliOptions = z.output<typeof getDotenvCliOptionsSchemaResolved> & 
      */
     scripts?: Scripts;
 };
-/**
- * Base CLI options derived from the shared root option defaults.
- * Used for type-safe initialization of CLI options bags.
- */
-declare const baseGetDotenvCliOptions: Partial<GetDotenvCliOptions>;
 
 /**
  * Configuration context used for generating dynamic help descriptions.
@@ -288,11 +424,6 @@ type ResolvedHelpConfig = Partial<GetDotenvCliOptions> & {
      */
     plugins: Record<string, unknown>;
 };
-/**
- * Build a help-time configuration bag for dynamic option descriptions.
- * Centralizes construction and reduces inline casts at call sites.
- */
-declare const toHelpConfig: (merged: Partial<GetDotenvCliOptions> | Partial<RootOptionsShape>, plugins: Record<string, unknown> | undefined) => ResolvedHelpConfig;
 
 /** src/cliHost/definePlugin/contracts.ts
  * Public contracts for plugin authoring (types only).
@@ -441,62 +572,6 @@ declare function definePlugin<TOptions extends GetDotenvOptions>(spec: DefineSpe
  * Checks GETDOTENV_STDIO env var or the provided bag capture flag.
  */
 declare const shouldCapture: (bagCapture?: boolean) => boolean;
-/**
- * Options for runCommandResult (buffered execution).
- *
- * @public
- */
-interface RunCommandResultOptions {
-    /**
-     * Working directory for the child process.
-     */
-    cwd?: string | URL;
-    /**
-     * Environment variables for the child process. Undefined values are dropped.
-     */
-    env?: NodeJS.ProcessEnv;
-    /**
-     * Optional timeout (ms). Kills the child with SIGKILL on expiry.
-     */
-    timeoutMs?: number;
-}
-/**
- * Options for runCommand (execution with optional inherit/pipe).
- *
- * @public
- */
-interface RunCommandOptions {
-    /**
-     * Working directory for the child process.
-     */
-    cwd?: string | URL;
-    /**
-     * Environment variables for the child process. Undefined values are dropped.
-     */
-    env?: NodeJS.ProcessEnv;
-    /**
-     * Stdio strategy for the child process.
-     */
-    stdio?: 'inherit' | 'pipe';
-}
-/**
- * Execute a command and capture stdout/stderr (buffered).
- * - Preserves plain vs shell behavior and argv/string normalization.
- * - Never re-emits stdout/stderr to parent; returns captured buffers.
- * - Supports optional timeout (ms).
- */
-declare function runCommandResult(command: readonly string[], shell: false, opts?: RunCommandResultOptions): Promise<{
-    exitCode: number;
-    stdout: string;
-    stderr: string;
-}>;
-declare function runCommandResult(command: string | readonly string[], shell: string | boolean | URL, opts?: RunCommandResultOptions): Promise<{
-    exitCode: number;
-    stdout: string;
-    stderr: string;
-}>;
-declare function runCommand(command: readonly string[], shell: false, opts: RunCommandOptions): Promise<number>;
-declare function runCommand(command: string | readonly string[], shell: string | boolean | URL, opts: RunCommandOptions): Promise<number>;
 
 /** src/cliHost/GetDotenvCli.ts
  * Plugin-first CLI host for get-dotenv with Commander generics preserved.
@@ -627,65 +702,6 @@ declare class GetDotenvCli<TOptions extends GetDotenvOptions = GetDotenvOptions,
     private _runAfterResolve;
 }
 
-/** src/cliHost/getRootCommand.ts
- * Typed helper to retrieve the true root command (host) starting from any mount.
- */
-
-/**
- * Return the top-level root command for a given mount or action's thisCommand.
- *
- * @param cmd - any command (mount or thisCommand inside an action)
- * @returns the root command instance
- */
-declare const getRootCommand: (cmd: CommandUnknownOpts) => CommandUnknownOpts;
-
-/** src/cliHost/invoke.ts
- * Shared helpers for composing child env overlays and preserving argv for Node -e.
- */
-
-/**
- * Compose a child-process env overlay from dotenv and the merged CLI options bag.
- * Returns a shallow object including getDotenvCliOptions when serializable.
- *
- * @param merged - Resolved CLI options bag (or a JSON-serializable subset).
- * @param dotenv - Composed dotenv variables for the current invocation.
- * @returns A string-only env overlay suitable for child process spawning.
- */
-declare function composeNestedEnv(merged: GetDotenvCliOptions | Record<string, unknown>, dotenv: Record<string, string | undefined>): Record<string, string>;
-/**
- * Strip one layer of symmetric outer quotes (single or double) from a string.
- *
- * @param s - Input string.
- * @returns `s` without one symmetric outer quote pair (when present).
- */
-declare const stripOne: (s: string) => string;
-/**
- * Preserve argv array for Node -e/--eval payloads under shell-off and
- * peel one symmetric outer quote layer from the code argument.
- *
- * @param args - Argument vector intended for direct execution (shell-off).
- * @returns Either the original `args` or a modified copy with a normalized eval payload.
- */
-declare function maybePreserveNodeEvalArgv(args: string[]): string[];
-
-/** src/cliHost/paths.ts
- * Helpers for realized mount paths and plugin tree flattening.
- */
-
-/**
- * A flattened plugin entry with its realized path.
- *
- * @public
- */
-interface PluginFlattenedEntry<TOptions extends GetDotenvOptions = GetDotenvOptions, TArgs extends unknown[] = [], TOpts extends OptionValues = {}, TGlobal extends OptionValues = {}> {
-    /** The plugin instance for this entry in the flattened tree. */
-    plugin: GetDotenvCliPlugin<TOptions, TArgs, TOpts, TGlobal>;
-    /**
-     * The realized mount path for this plugin (root alias excluded), e.g. "aws/whoami".
-     */
-    path: string;
-}
-
 /**
  * Retrieve the merged root options bag from the current command context.
  * Climbs to the root `GetDotenvCli` instance to access the persisted options.
@@ -694,56 +710,6 @@ interface PluginFlattenedEntry<TOptions extends GetDotenvOptions = GetDotenvOpti
  * @throws Error if the root is not a GetDotenvCli or options are missing.
  */
 declare const readMergedOptions: (cmd: CommandUnknownOpts) => GetDotenvCliOptions;
-
-/**
- * Batch services (neutral): resolve command and shell settings.
- * Shared by the generator path and the batch plugin to avoid circular deps.
- */
-
-/**
- * Resolve a command string from the {@link ScriptsTable} table.
- * A script may be expressed as a string or an object with a `cmd` property.
- *
- * @param scripts - Optional scripts table.
- * @param command - User-provided command name or string.
- * @returns Resolved command string (falls back to the provided command).
- */
-declare const resolveCommand: (scripts: ScriptsTable | undefined, command: string) => string;
-/**
- * Resolve the shell setting for a given command:
- * - If the script entry is an object, prefer its `shell` override.
- * - Otherwise use the provided `shell` (string | boolean).
- *
- * @param scripts - Optional scripts table.
- * @param command - User-provided command name or string.
- * @param shell - Global shell preference (string | boolean).
- */
-declare const resolveShell: <TShell extends string | boolean>(scripts: ScriptsTable<TShell> | undefined, command: string, shell: TShell | undefined) => TShell | false;
-
-/**
- * Result of CLI option resolution.
- */
-interface ResolveCliOptionsResult<T> {
-    /**
-     * The merged options object after applying defaults, inherited parent
-     * values, and the current CLI flags. This bag is used as the effective
-     * root options for the current invocation.
-     */
-    merged: T;
-    /**
-     * Positional command (string) resolved for invokers that accept a command
-     * payload (e.g., batch parent or cmd alias). When absent, no command is set.
-     */
-    command?: string;
-}
-/**
- * Merge and normalize raw Commander options (current + parent + defaults)
- * into a GetDotenvCliOptions-like object. Types are intentionally wide to
- * avoid cross-layer coupling; callers may cast as needed.
- */
-declare const resolveCliOptions: <T extends Partial<RootOptionsShape> & {
-    scripts?: ScriptsTable;
-}>(rawCliOptions: unknown, defaults: Partial<T>, parentJson?: string) => ResolveCliOptionsResult<T>;
 
 /**
  * Build a sanitized environment object for spawning child processes.
@@ -755,5 +721,277 @@ declare const resolveCliOptions: <T extends Partial<RootOptionsShape> & {
  */
 declare const buildSpawnEnv: (base?: NodeJS.ProcessEnv, overlay?: Record<string, string | undefined>) => NodeJS.ProcessEnv;
 
-export { GetDotenvCli, baseGetDotenvCliOptions, buildSpawnEnv, composeNestedEnv, definePlugin, defineScripts, getRootCommand, maybePreserveNodeEvalArgv, readMergedOptions, resolveCliOptions, resolveCommand, resolveShell, runCommand, runCommandResult, shouldCapture, stripOne, toHelpConfig };
-export type { BrandOptions, DefineSpec, GetDotenvCliCtx, GetDotenvCliOptions, GetDotenvCliPlugin, GetDotenvCliPublic, InferPluginConfig, PluginChildEntry, PluginFlattenedEntry, PluginNamespaceOverride, PluginWithInstanceHelpers, ResolveAndLoadOptions, ResolveCliOptionsResult, ResolvedHelpConfig, RootOptionsShape, RunCommandOptions, RunCommandResultOptions, ScriptDef, Scripts, ScriptsTable };
+/**
+ * Create a get-dotenv CLI host with included plugins.
+ *
+ * Options:
+ * - alias: command name used for help/argv scaffolding (default: "getdotenv")
+ * - branding: optional help header; when omitted, brand() uses "<alias> v<version>"
+ *
+ * Usage:
+ * ```ts
+ * import { createCli } from '@karmaniverous/get-dotenv';
+ *
+ * await createCli({
+ *    alias: 'getdotenv',
+ *    branding: 'getdotenv vX.Y.Z'
+ * })();
+ * ```
+ */
+type CreateCliOptions = {
+    /**
+     * CLI command name used for help and argv scaffolding.
+     * Defaults to `'getdotenv'` when omitted.
+     */
+    alias?: string;
+    /**
+     * Optional help header text. When omitted, brand() uses
+     * `"<alias> v<resolved-version>"` if a version can be read.
+     */
+    branding?: string;
+    /**
+     * Optional composer to wire the CLI (plugins/options). If not provided,
+     * the shipped default wiring is applied. Any `configureOutput`/`exitOverride`
+     * you call here override the defaults.
+     */
+    compose?: (program: GetDotenvCli) => GetDotenvCli;
+    /**
+     * Root defaults applied once before composition. These are used by flag declaration
+     * and merge-time defaults (and top-level -h parity labels).
+     * Note: shipped CLI does not force loadProcess OFF; base defaults apply unless set here.
+     */
+    rootOptionDefaults?: Partial<RootOptionsShape>;
+    /**
+     * Visibility map to hide families/singles from root help. When a key is false,
+     * the corresponding option(s) are hidden (via hideHelp) after flags are declared.
+     */
+    rootOptionVisibility?: Partial<Record<keyof RootOptionsShape, boolean>>;
+};
+/**
+ * Create a configured get-dotenv CLI host.
+ * Applies defaults, installs root hooks, and composes plugins.
+ * Returns a runner function that accepts an argv array.
+ */
+declare function createCli(opts?: CreateCliOptions): (argv?: string[]) => Promise<void>;
+
+/**
+ * Base root CLI defaults (shared; kept untyped here to avoid cross-layer deps).
+ * Used as the bottom layer for CLI option resolution.
+ */
+/**
+ * Default values for root CLI options used by the host and helpers as the
+ * baseline layer during option resolution.
+ *
+ * These defaults correspond to the "stringly" root surface (see `RootOptionsShape`)
+ * and are merged by precedence with create-time overrides and any discovered
+ * configuration `rootOptionDefaults` before CLI flags are applied.
+ */
+declare const baseRootOptionDefaults: {
+    readonly dotenvToken: ".env";
+    readonly loadProcess: true;
+    readonly logger: Console;
+    readonly warnEntropy: true;
+    readonly entropyThreshold: 3.8;
+    readonly entropyMinLength: 16;
+    readonly entropyWhitelist: readonly ["^GIT_", "^npm_", "^CI$", "SHLVL"];
+    readonly paths: "./";
+    readonly pathsDelimiter: " ";
+    readonly privateToken: "local";
+    readonly scripts: {
+        readonly 'git-status': {
+            readonly cmd: "git branch --show-current && git status -s -u";
+            readonly shell: true;
+        };
+    };
+    readonly shell: true;
+    readonly vars: "";
+    readonly varsAssignor: "=";
+    readonly varsDelimiter: " ";
+};
+
+/**
+ * Configuration options for entropy analysis.
+ *
+ * @public
+ */
+interface EntropyOptions {
+    /** Enable entropy warnings. */
+    warnEntropy?: boolean;
+    /** Entropy threshold (bits/char). */
+    entropyThreshold?: number;
+    /** Minimum string length to check. */
+    entropyMinLength?: number;
+    /** Whitelist of regex patterns to ignore. */
+    entropyWhitelist?: Array<string | RegExp>;
+}
+/**
+ * Maybe emit a one-line entropy warning for a key.
+ * Caller supplies an `emit(line)` function; the helper ensures once-per-key.
+ */
+declare const maybeWarnEntropy: (key: string, value: string | undefined, origin: "dotenv" | "parent" | "unset", opts: EntropyOptions | undefined, emit: (line: string) => void) => void;
+
+/** src/diagnostics/redact.ts
+ * Presentation-only redaction utilities for logs/trace.
+ * - Default secret-like key patterns: SECRET, TOKEN, PASSWORD, API_KEY, KEY
+ * - Optional custom patterns (regex strings) may be provided.
+ * - Never alters runtime env; only affects displayed values.
+ */
+
+/**
+ * Configuration options for secret redaction.
+ *
+ * @public
+ */
+interface RedactOptions {
+    /** Enable redaction. */
+    redact?: boolean;
+    /** Regex patterns for keys to redact. */
+    redactPatterns?: Array<string | RegExp>;
+}
+/**
+ * Redact a single displayed value according to key/patterns.
+ * Returns the original value when redaction is disabled or key is not matched.
+ */
+declare const redactDisplay: (key: string, value: string | undefined, opts?: RedactOptions) => string | undefined;
+/**
+ * Produce a shallow redacted copy of an env-like object for display.
+ */
+declare const redactObject: (obj: ProcessEnv, opts?: RedactOptions) => Record<string, string | undefined>;
+
+/**
+ * Options for tracing composed child environment variables.
+ *
+ * Presentation-only: values are never mutated; output is written to {@link write}.
+ *
+ * @public
+ */
+interface TraceChildEnvOptions extends Pick<RedactOptions, 'redact' | 'redactPatterns'>, EntropyOptions {
+    /**
+     * Parent process environment (source).
+     */
+    parentEnv: ProcessEnv;
+    /**
+     * Composed dotenv map (target).
+     */
+    dotenv: ProcessEnv;
+    /**
+     * Optional subset of keys to trace. When omitted, all keys are traced.
+     */
+    keys?: string[];
+    /**
+     * Sink for trace lines (e.g., write to stderr).
+     */
+    write: (line: string) => void;
+}
+/**
+ * Trace child env composition with redaction and entropy warnings.
+ * Presentation-only: does not mutate env; writes lines via the provided sink.
+ */
+declare function traceChildEnv(opts: TraceChildEnvOptions): void;
+
+/**
+ * Recursively expands environment variables in a string. Variables may be
+ * presented with optional default as `$VAR[:default]` or `${VAR[:default]}`.
+ * Unknown variables will expand to an empty string.
+ *
+ * @param value - The string to expand.
+ * @param ref - The reference object to use for variable expansion.
+ * @returns The expanded string.
+ *
+ * @example
+ * ```ts
+ * process.env.FOO = 'bar';
+ * dotenvExpand('Hello $FOO'); // "Hello bar"
+ * dotenvExpand('Hello $BAZ:world'); // "Hello world"
+ * ```
+ *
+ * @remarks
+ * The expansion is recursive. If a referenced variable itself contains
+ * references, those will also be expanded until a stable value is reached.
+ * Escaped references (e.g. `\$FOO`) are preserved as literals.
+ */
+declare const dotenvExpand: (value: string | undefined, ref?: ProcessEnv) => string | undefined;
+/**
+ * Options for {@link dotenvExpandAll}.
+ *
+ * @public
+ */
+interface DotenvExpandAllOptions {
+    /**
+     * The reference object to use for expansion (defaults to process.env).
+     */
+    ref?: Record<string, string | undefined>;
+    /**
+     * Whether to progressively add expanded values to the set of reference keys.
+     */
+    progressive?: boolean;
+}
+/**
+ * Recursively expands environment variables in the values of a JSON object.
+ * Variables may be presented with optional default as `$VAR[:default]` or
+ * `${VAR[:default]}`. Unknown variables will expand to an empty string.
+ *
+ * @param values - The values object to expand.
+ * @param options - Expansion options.
+ * @returns The value object with expanded string values.
+ *
+ * @example
+ * ```ts
+ * process.env.FOO = 'bar';
+ * dotenvExpandAll({ A: '$FOO', B: 'x${FOO}y' });
+ * // => { A: "bar", B: "xbary" }
+ * ```
+ *
+ * @remarks
+ * Options:
+ * - ref: The reference object to use for expansion (defaults to process.env).
+ * - progressive: Whether to progressively add expanded values to the set of
+ *   reference keys.
+ *
+ * When `progressive` is true, each expanded key becomes available for
+ * subsequent expansions in the same object (left-to-right by object key order).
+ */
+declare function dotenvExpandAll<T extends Record<string, string | undefined> | Readonly<Record<string, string | undefined>>>(values: T, options?: DotenvExpandAllOptions): Record<string, string | undefined> & {
+    [K in keyof T]: string | undefined;
+};
+/**
+ * Recursively expands environment variables in a string using `process.env` as
+ * the expansion reference. Variables may be presented with optional default as
+ * `$VAR[:default]` or `${VAR[:default]}`. Unknown variables will expand to an
+ * empty string.
+ *
+ * @param value - The string to expand.
+ * @returns The expanded string.
+ *
+ * @example
+ * ```ts
+ * process.env.FOO = 'bar';
+ * dotenvExpandFromProcessEnv('Hello $FOO'); // "Hello bar"
+ * ```
+ */
+declare const dotenvExpandFromProcessEnv: (value: string | undefined) => string | undefined;
+
+/**
+ * Deep interpolation utility for string leaves.
+ * - Expands string values using dotenv-style expansion against the provided envRef.
+ * - Preserves non-strings as-is.
+ * - Does not recurse into arrays (arrays are returned unchanged).
+ *
+ * Intended for:
+ * - Phase C option/config interpolation after composing ctx.dotenv.
+ * - Per-plugin config slice interpolation before afterResolve.
+ */
+
+/**
+ * Deeply interpolate string leaves against envRef.
+ * Arrays are not recursed into; they are returned unchanged.
+ *
+ * @typeParam T - Shape of the input value.
+ * @param value - Input value (object/array/primitive).
+ * @param envRef - Reference environment for interpolation.
+ * @returns A new value with string leaves interpolated.
+ */
+declare const interpolateDeep: <T>(value: T, envRef: ProcessEnv) => T;
+
+export { GetDotenvCli, baseRootOptionDefaults, buildSpawnEnv, createCli, defineDynamic, defineGetDotenvConfig, definePlugin, defineScripts, dotenvExpand, dotenvExpandAll, dotenvExpandFromProcessEnv, getDotenv, getDotenvCliOptions2Options, interpolateDeep, maybeWarnEntropy, readMergedOptions, redactDisplay, redactObject, shouldCapture, traceChildEnv };
+export type { CreateCliOptions, DynamicFn, DynamicMap, EntropyOptions, GetDotenvCliOptions, GetDotenvCliPlugin, GetDotenvCliPublic, GetDotenvConfig, GetDotenvDynamic, GetDotenvOptions, InferGetDotenvVarsFromConfig, InferPluginConfig, PluginWithInstanceHelpers, ProcessEnv, RedactOptions, ScriptsTable, TraceChildEnvOptions };

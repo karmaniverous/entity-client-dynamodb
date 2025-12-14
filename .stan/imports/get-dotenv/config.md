@@ -33,7 +33,7 @@ If your plugin exposes a config shape, export a Zod schema and attach it to your
 import { z } from 'zod';
 import { definePlugin } from '@karmaniverous/get-dotenv/cliHost';
 
-export const MyPluginConfig = z.object({
+export const MyPluginConfigSchema = z.object({
   toolPath: z.string().optional(),
   // Rare, CLI-driven case only: plugin-scoped scripts
   scripts: z
@@ -49,15 +49,15 @@ export const MyPluginConfig = z.object({
     )
     .optional(),
 });
-export type MyPluginConfig = z.infer<typeof MyPluginConfig>;
+export type MyPluginConfig = z.infer<typeof MyPluginConfigSchema>;
 
 export const myPlugin = () => {
   const plugin = definePlugin({
     ns: 'my',
-    configSchema: MyPluginConfig,
+    configSchema: MyPluginConfigSchema,
     setup(cli) {
-      cli.ns('my').action(() => {
-        const cfg = plugin.readConfig<MyPluginConfig>(cli);
+      cli.action(() => {
+        const cfg = plugin.readConfig(cli);
         // cfg is validated and strings are already interpolated
       });
     },
@@ -74,18 +74,18 @@ When your plugin declares a config schema, prefer the instance‑bound helper to
 import { z } from 'zod';
 import { definePlugin } from '@karmaniverous/get-dotenv/cliHost';
 
-export const MyPluginConfig = z.object({
+export const MyPluginConfigSchema = z.object({
   toolPath: z.string().optional(),
   color: z.string().optional(),
 });
-export type MyPluginConfig = z.infer<typeof MyPluginConfig>;
+export type MyPluginConfig = z.infer<typeof MyPluginConfigSchema>;
 
 export const myPlugin = () => {
   const plugin = definePlugin({
     ns: 'my',
-    configSchema: MyPluginConfig,
+    configSchema: MyPluginConfigSchema,
     setup(cli) {
-      cli.ns('my').action(() => {
+      cli.action(() => {
         const cfg = plugin.readConfig(cli);
         // cfg is validated and strings are already interpolated once
       });
