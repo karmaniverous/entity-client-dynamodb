@@ -454,23 +454,23 @@ type TranscodableProperties<O extends EntityMap | Entity, TR extends TranscodeRe
 type UntranscodableProperties<O extends EntityMap | Entity, TR extends TranscodeRegistry> = PropertiesNotOfType<O extends EntityMap ? FlattenEntityMap<O> : O, TR[keyof Exactify<TR>]>;
 
 /**
- * Creates a shallow update of `record` with the properties of `update` according to the following conventions:
+ * Creates a shallow update of `item` with the properties of `update` according to the following conventions:
  *
- * * `record` and `update` must be compatible types.
+ * * `item` and `update` must be compatible types.
  * * `undefined` properties in `update` are ignored.
- * * `null` properties in `update` are assigned to `record`.
+ * * `null` properties in `update` are assigned to `item`.
  * * All `undefined` and `null` properties in the resulting update are removed.
  *
- * Does not mutate `record` or `update`.
+ * Does not mutate `item` or `update`.
  *
- * @param record - The record to update.
- * @param update - A compatible record with properties to update.
+ * @param item - The item to update.
+ * @param update - A compatible item with properties to update.
  *
- * @returns A shallow copy of `record` merged with the properties of `update`.
+ * @returns A shallow copy of `item` merged with the properties of `update`.
  *
  * @category Entities
  */
-declare const updateRecord: <T extends object>(record: T, update: MakeUpdatable<T>) => T;
+declare const updateItem: <T extends object>(item: T, update: MakeUpdatable<T>) => T;
 
 /**
  * Returns an object type with specific properties rendered required and non-nullable.
@@ -598,5 +598,5 @@ declare function hashString(value: string): number;
  */
 declare function shardSuffixFromHash(hash: number, radix: number, chars: number): string;
 
-export { conditionalize, decodePairs, defaultTranscodes, defineSortOrder, defineTranscodes, encodePairs, enumerateShardSuffixes, hashString, isNil, shardSuffixFromHash, sort, updateRecord };
+export { conditionalize, decodePairs, defaultTranscodes, defineSortOrder, defineTranscodes, encodePairs, enumerateShardSuffixes, hashString, isNil, shardSuffixFromHash, sort, updateItem };
 export type { AllDisjoint, ConditionalProperty, DecodeReturn, DefaultTranscodeRegistry, EncodeDecodeAgreement, EncodeDecodeMismatchError, EncodeParam, Entity, EntityKeys, EntityMap, EntityMapValues, EntityValue, Exactify, FlattenEntityMap, MakeOptional, MakeRequired, MakeUpdatable, MissingDecodeError, MissingEncodeError, MutuallyExclusive, Nil, NotNever, PropertiesNotOfType, PropertiesOfType, ReplaceKey, ReplaceKeys, SortOrder, TranscodableProperties, TranscodeName, TranscodeRegistry, TranscodeRegistryFrom, TranscodedType, Transcoder, Transcodes, UntranscodableProperties, WithRequiredAndNonNullable };

@@ -4,6 +4,8 @@ title: Executing Shell Commands
 
 # Authoring Plugins: Executing Shell Commands
 
+For an overview of default shells and quoting across platforms, see [Shell execution behavior](../shell.md). The host normalizes `--shell` defaults to `/bin/bash` on POSIX and `powershell.exe` on Windows unless explicitly overridden, and CLI‑driven plugins should usually honor the root shell (with rare per‑script overrides).
+
 There are two distinct patterns for plugins that run shell commands:
 
 1. CLI‑driven (cmd/batch‑like): the user types arbitrary commands; a scripts table helps encapsulate frequently used commands.
@@ -62,6 +64,18 @@ Honor the shared capture contract for CI‑friendly logs:
 - Shell‑on: pass a single string to the selected shell and document quoting rules:
   - POSIX and PowerShell both treat single quotes as literal and double quotes as interpolating. Recommend single quotes when users want to prevent outer‑shell expansion.
 
+### Preserve Node `-e/--eval` argv under shell‑off
+
+When executing a plain `node -e` snippet without a shell, preserve the argv array so code payloads remain intact across platforms (especially Windows/PowerShell). The host exports a small helper for this:
+
+```ts
+import { maybePreserveNodeEvalArgv } from '@karmaniverous/get-dotenv/cliHost';
+
+// args = ['node', '-e', 'console.log("ok")', ...]
+const argv = maybePreserveNodeEvalArgv(args);
+// pass argv directly to execa(...)
+```
+
 ## Double‑expansion and safety
 
 - Config strings are already interpolated once by the host. Do not re‑expand them in your plugin. If you need a late expansion step, do it exactly once and document it.
@@ -80,8 +94,8 @@ import { execa } from 'execa';
 
 export const dockerPlugin = () =>
   definePlugin({
-    id: 'docker',
-    setup(cli: GetDotenvCliPublic) {
+    ns: 'docker',
+    setup(cli) {
       cli
         .ns('docker')
         .argument('[args...]')
@@ -145,10 +159,10 @@ function resolveScript(
   return typeof entry === 'string' ? { cmd: entry } : entry;
 }
 
-export const runPlugin = () =>
-  definePlugin({
-    id: 'run',
-    setup(cli: GetDotenvCliPublic) {
+export const runPlugin = () => {
+  const plugin = definePlugin({
+    ns: 'run',
+    setup(cli) {
       cli
         .ns('run')
         .argument('[command...]')
@@ -165,9 +179,9 @@ export const runPlugin = () =>
             return;
           }
           // Prefer plugin-scoped scripts first (rare), then optionally fall back to root scripts
-          const pluginScripts =
-            (ctx?.pluginConfigs?.['run'] as { scripts?: Scripts })?.scripts ??
-            undefined;
+          const { scripts: pluginScripts } = plugin.readConfig<{
+            scripts?: Scripts;
+          }>(cli);
           const rootScripts =
             (bag as { scripts?: Scripts }).scripts ?? undefined;
           const chosen = resolveScript(pluginScripts ?? rootScripts, input);
@@ -187,15 +201,22 @@ export const runPlugin = () =>
         });
     },
   });
+  return plugin;
+};
 ```
 
 Notes:
 
 - Commands typed at the CLI may be a script name or a raw command.
-- Prefer plugin‑scoped `plugins.run.scripts` for clarity; fall back to root scripts when it’s helpful.
+- Prefer plugin‑scoped `plugins.<mount-path>.scripts` for clarity; fall back to root scripts when it’s helpful.
 - Rarely, the object form `{ cmd, shell }` lets a single script request a different shell; otherwise the root shell applies.
 
 See also:
 
 - [Shell Execution Behavior](../shell.md)
 - [Diagnostics](./diagnostics.md)
+
+## TypeScript notes
+
+- A helper `defineScripts<TShell>()(table)` is available when you want to preserve concrete shell types through your scripts table (useful for rare per‑script overrides).
+- Env overlay/expansion utilities accept readonly record inputs, so you can pass `as const` objects where it improves inference without extra casts.
