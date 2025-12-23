@@ -104,4 +104,6 @@
 
 - Tests: local wiring now uses GetDotenvCli+resolveAndLoad for ctx/bag.
 
-- Tests: ensure GetDotenvCli.install() runs before parse in local wiring.
+- Tests: ensure GetDotenvCli.install() runs before parse in local wiring.
+
+- Tests: fix local wiring test mocking by deferring dynamodbPlugin import (dynamic import after vi.mock) and avoid reusing a Commander instance across multiple parseAsync calls.

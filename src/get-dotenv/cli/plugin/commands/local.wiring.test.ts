@@ -1,8 +1,6 @@
 import { GetDotenvCli } from '@karmaniverous/get-dotenv/cliHost';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { dynamodbPlugin } from '../index';
-
 // Hoisted spies to satisfy vi.mock hoisting
 const h = vi.hoisted(() => ({
   startSpy: vi.fn(() => Promise.resolve({ endpoint: 'http://localhost:9001' })),
@@ -18,13 +16,16 @@ vi.mock('../../../services/local', () => ({
 }));
 
 async function setupCli() {
-  const cli = makeCli();
+  const cli = await makeCli();
   await cli.install();
   await cli.resolveAndLoad();
   return cli;
 }
 
-function makeCli() {
+async function makeCli() {
+  // Important: import the plugin only after vi.mock declarations so that
+  // the command modules pick up mocked leaf services.
+  const { dynamodbPlugin } = await import('../index');
   const cli = new GetDotenvCli('testcli');
   // Keep the host minimal and deterministic for tests.
   cli.attachRootOptions({ loadProcess: false, log: false });
@@ -81,10 +82,9 @@ describe('dynamodb plugin: local wiring', () => {
   });
 
   it('status wires to services.statusLocal and sets exitCode on false', async () => {
-    const cli = await setupCli();
-
     // Healthy branch (default spy result)
-    await cli.parseAsync([
+    const cliHealthy = await setupCli();
+    await cliHealthy.parseAsync([
       'node',
       'testcli',
       'dynamodb',
@@ -99,7 +99,8 @@ describe('dynamodb plugin: local wiring', () => {
     // Now simulate unhealthy branch
     process.exitCode = undefined;
     h.statusSpy.mockResolvedValueOnce(false);
-    await cli.parseAsync([
+    const cliUnhealthy = await setupCli();
+    await cliUnhealthy.parseAsync([
       'node',
       'testcli',
       'dynamodb',
