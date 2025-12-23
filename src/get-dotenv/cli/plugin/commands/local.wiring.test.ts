@@ -1,3 +1,4 @@
+import type { Command } from '@commander-js/extra-typings';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Hoisted spies to satisfy vi.mock hoisting

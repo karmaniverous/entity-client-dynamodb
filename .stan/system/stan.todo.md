@@ -94,4 +94,6 @@
 - DynamoDB plugin CLI typing groundwork
   - Added shared strict numeric parsers for Commander options.
   - Fixed local command action arity and improved local wiring test mocks to preserve real cliHost exports.
-  - Skipped Docker-backed EntityClient integration suite when Docker is unavailable.
+  - Skipped Docker-backed EntityClient integration suite when Docker is unavailable.
+
+- Typecheck: fix missing Command import in local wiring test.
