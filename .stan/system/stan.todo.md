@@ -24,9 +24,6 @@
   - Avoid partial mocks of `@karmaniverous/get-dotenv/cliHost`; if mocking is unavoidable, spread `vi.importActual` and override only specific exports.
   - Add a lightweight parent fixture plugin when we need to validate realized mount path behavior (e.g., simulating `aws/dynamodb`) without running the real aws plugin.
 
-- DynamoDB plugin parsers: lock parse-time rejection semantics
-  - Add unit tests for `parseFiniteNumber`, `parsePositiveInt`, and `parseNonNegativeInt` to pin invalid input rejection semantics independently of Commander.
-
 - Cleanup after typed CLI + fixtures land
   - Re-run and fix: `npm run typecheck`, `npm run lint`, `npm run test`.
   - Address remaining lint failures that are not resolved by typing:
