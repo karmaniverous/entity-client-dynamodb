@@ -145,7 +145,7 @@ export async function startLocal(args: {
       capture,
     });
     if (exitCode !== 0)
-      throw new Error(`local dynamodb start: exit ${exitCode}`);
+      throw new Error(`local dynamodb start: exit ${String(exitCode)}`);
     // Readiness: library first, else SDK probe
     const lib = await libraryAvailable();
     if (lib) {
@@ -196,7 +196,7 @@ export async function stopLocal(args: {
       capture,
     });
     if (exitCode !== 0)
-      throw new Error(`local dynamodb stop: exit ${exitCode}`);
+      throw new Error(`local dynamodb stop: exit ${String(exitCode)}`);
     return;
   }
   const lib = await libraryAvailable();

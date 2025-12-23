@@ -1,19 +1,15 @@
 import type { CreateTableCommandInput } from '@aws-sdk/client-dynamodb';
 import type { Command } from '@commander-js/extra-typings';
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
-import type { PluginWithInstanceHelpers } from '@karmaniverous/get-dotenv/cliHost';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
 import { generateTableDefinitionAtVersion } from '../../../services/generate';
-import type { DynamodbPluginConfig } from '../../options';
 import { resolveGenerateAtVersion, resolveLayoutConfig } from '../../options';
-
-type PluginReader = Pick<PluginWithInstanceHelpers, 'readConfig'> & {
-  readConfig(cli: GetDotenvCliPublic): Readonly<DynamodbPluginConfig>;
-};
+import { parsePositiveInt } from '../parsers';
+import type { DynamodbPluginInstance } from '../pluginInstance';
 
 export function registerGenerate(
-  plugin: PluginReader,
+  plugin: DynamodbPluginInstance,
   cli: GetDotenvCliPublic,
   group: Command,
 ) {
@@ -35,28 +31,30 @@ export function registerGenerate(
       '--overlay-billing-mode <string>',
       'BillingMode overlay (e.g., PAY_PER_REQUEST)',
     )
-    .option('--overlay-rcu <number>', 'ProvisionedThroughput.ReadCapacityUnits')
+    .option(
+      '--overlay-rcu <number>',
+      'ProvisionedThroughput.ReadCapacityUnits',
+      parsePositiveInt('overlayRcu'),
+    )
     .option(
       '--overlay-wcu <number>',
       'ProvisionedThroughput.WriteCapacityUnits',
+      parsePositiveInt('overlayWcu'),
     )
     .option('--overlay-table-name <string>', 'TableName overlay (one-off)')
-    .option(
-      '--force',
-      'force compose even if file exists (else refresh)',
-      false,
-    )
-    .action(async (flags: Record<string, unknown>) => {
+    .option('--force', 'force compose even if file exists (else refresh)')
+    .action(async (opts, thisCommand) => {
+      void thisCommand;
       const ctx = cli.getCtx();
-      const envRef = ctx?.dotenv ?? process.env;
+      const envRef = ctx.dotenv;
       const pluginCfg = plugin.readConfig(cli);
       const cfg = resolveLayoutConfig(
         {
-          tablesPath: flags.tablesPath as string | undefined,
+          tablesPath: opts.tablesPath,
           tokens: {
-            table: flags.tokenTable as string | undefined,
-            entityManager: flags.tokenEntityManager as string | undefined,
-            transform: flags.tokenTransform as string | undefined,
+            table: opts.tokenTable,
+            entityManager: opts.tokenEntityManager,
+            transform: opts.tokenTransform,
           },
         },
         pluginCfg,
@@ -64,13 +62,13 @@ export function registerGenerate(
       );
       const gen = resolveGenerateAtVersion(
         {
-          version: flags.version as string | undefined,
-          force: !!flags.force,
+          version: opts.version,
+          force: !!opts.force,
           overlays: {
-            billingMode: flags.overlayBillingMode as string | undefined,
-            readCapacityUnits: flags.overlayRcu as number | string | undefined,
-            writeCapacityUnits: flags.overlayWcu as number | string | undefined,
-            tableName: flags.overlayTableName as string | undefined,
+            billingMode: opts.overlayBillingMode,
+            readCapacityUnits: opts.overlayRcu,
+            writeCapacityUnits: opts.overlayWcu,
+            tableName: opts.overlayTableName,
           },
         },
         pluginCfg,

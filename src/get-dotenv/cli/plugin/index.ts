@@ -14,19 +14,17 @@ export const dynamodbPlugin = () => {
     ns: 'dynamodb',
     configSchema: DynamodbPluginConfigSchema,
     setup: (cli) => {
-      const group = cli
-        .ns('dynamodb')
-        .description(
-          'DynamoDB utilities (versioned table defs, lifecycle, migration)',
-        );
+      cli.description(
+        'DynamoDB utilities (versioned table defs, lifecycle, migration)',
+      );
 
-      registerGenerate(plugin, cli, group);
-      registerValidate(plugin, cli, group);
-      registerCreate(plugin, cli, group);
-      registerDelete(plugin, cli, group);
-      registerPurge(plugin, cli, group);
-      registerMigrate(plugin, cli, group);
-      registerLocal(plugin, cli, group);
+      registerGenerate(plugin, cli, cli);
+      registerValidate(plugin, cli, cli);
+      registerCreate(plugin, cli, cli);
+      registerDelete(plugin, cli, cli);
+      registerPurge(plugin, cli, cli);
+      registerMigrate(plugin, cli, cli);
+      registerLocal(plugin, cli, cli);
     },
   });
 

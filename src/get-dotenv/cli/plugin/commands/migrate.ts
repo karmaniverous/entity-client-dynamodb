@@ -1,19 +1,15 @@
 import type { Command } from '@commander-js/extra-typings';
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
-import type { PluginWithInstanceHelpers } from '@karmaniverous/get-dotenv/cliHost';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
 import { migrateData } from '../../../services/migrate';
-import type { DynamodbPluginConfig } from '../../options';
 import { resolveLayoutConfig, resolveMigrate } from '../../options';
 import { buildEntityClient, ensureForce } from '../helpers';
-
-type PluginReader = Pick<PluginWithInstanceHelpers, 'readConfig'> & {
-  readConfig(cli: GetDotenvCliPublic): Readonly<DynamodbPluginConfig>;
-};
+import { parseNonNegativeInt, parsePositiveInt } from '../parsers';
+import type { DynamodbPluginInstance } from '../pluginInstance';
 
 export function registerMigrate(
-  plugin: PluginReader,
+  plugin: DynamodbPluginInstance,
   cli: GetDotenvCliPublic,
   group: Command,
 ) {
@@ -36,29 +32,41 @@ export function registerMigrate(
       '--token-transform <string>',
       'token (transform) filename without ext',
     )
-    .option('--page-size <number>', 'scan page size (default 100)')
-    .option('--limit <number>', 'max outputs (default Infinity)')
+    .option(
+      '--page-size <number>',
+      'scan page size (default 100)',
+      parsePositiveInt('pageSize'),
+    )
+    .option(
+      '--limit <number>',
+      'max outputs (default Infinity)',
+      parseNonNegativeInt('limit'),
+    )
     .option(
       '--transform-concurrency <number>',
       'transform concurrency (default 1)',
+      parsePositiveInt('transformConcurrency'),
     )
     .option(
       '--progress-interval-ms <number>',
       'progress tick interval ms (default 2000)',
+      parsePositiveInt('progressIntervalMs'),
     )
-    .option('--force', 'proceed without confirmation', false)
-    .action(async (flags: Record<string, unknown>) => {
-      if (!ensureForce(flags.force, 'migrate-data')) return;
+    .option('--force', 'proceed without confirmation')
+    .action(async (opts, thisCommand) => {
+      void thisCommand;
+      if (!ensureForce(opts.force, 'migrate-data')) return;
       const ctx = cli.getCtx();
-      const envRef = ctx?.dotenv ?? process.env;
+      const envRef = ctx.dotenv;
+      const env = { ...process.env, ...envRef };
       const pluginCfg = plugin.readConfig(cli);
       const cfg = resolveLayoutConfig(
         {
-          tablesPath: flags.tablesPath as string | undefined,
+          tablesPath: opts.tablesPath,
           tokens: {
-            table: flags.tokenTable as string | undefined,
-            entityManager: flags.tokenEntityManager as string | undefined,
-            transform: flags.tokenTransform as string | undefined,
+            table: opts.tokenTable,
+            entityManager: opts.tokenEntityManager,
+            transform: opts.tokenTransform,
           },
         },
         pluginCfg,
@@ -66,20 +74,14 @@ export function registerMigrate(
       );
       const m = resolveMigrate(
         {
-          sourceTable: flags.sourceTable as string | undefined,
-          targetTable: flags.targetTable as string | undefined,
-          fromVersion: flags.fromVersion as string | undefined,
-          toVersion: flags.toVersion as string | undefined,
-          pageSize: flags.pageSize as number | string | undefined,
-          limit: flags.limit as number | string | undefined,
-          transformConcurrency: flags.transformConcurrency as
-            | number
-            | string
-            | undefined,
-          progressIntervalMs: flags.progressIntervalMs as
-            | number
-            | string
-            | undefined,
+          sourceTable: opts.sourceTable,
+          targetTable: opts.targetTable,
+          fromVersion: opts.fromVersion,
+          toVersion: opts.toVersion,
+          pageSize: opts.pageSize,
+          limit: opts.limit,
+          transformConcurrency: opts.transformConcurrency,
+          progressIntervalMs: opts.progressIntervalMs,
         },
         pluginCfg,
         envRef,
@@ -87,15 +89,9 @@ export function registerMigrate(
       const emFrom = await resolveAndLoadEntityManager(m.fromVersion, cfg);
       const emTo = await resolveAndLoadEntityManager(m.toVersion, cfg);
       const sourceTable =
-        m.sourceTableName ??
-        envRef.SOURCE_TABLE ??
-        envRef.TABLE_NAME ??
-        'Source';
+        m.sourceTableName ?? env.SOURCE_TABLE ?? env.TABLE_NAME ?? 'Source';
       const targetTable =
-        m.targetTableName ??
-        envRef.TARGET_TABLE ??
-        envRef.TABLE_NAME ??
-        'Target';
+        m.targetTableName ?? env.TARGET_TABLE ?? env.TABLE_NAME ?? 'Target';
       const source = buildEntityClient(emFrom, sourceTable, envRef);
       const target = buildEntityClient(emTo, targetTable, envRef);
       const out = await migrateData(source, target, {

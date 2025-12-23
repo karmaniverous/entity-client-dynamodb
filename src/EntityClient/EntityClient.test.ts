@@ -20,20 +20,15 @@ import {
 } from 'vitest';
 
 import { QueryBuilder } from '../QueryBuilder';
-// Wait for Docker engine to come up (cold start tolerant).
-const waitForDocker = async (timeoutMs = 90000, intervalMs = 1000) => {
-  const start = Date.now();
-  for (;;) {
-    try {
-      execSync('docker info', { stdio: 'ignore' });
-      return;
-    } catch {
-      if (Date.now() - start >= timeoutMs)
-        throw new Error('Docker engine not available');
-      await new Promise((r) => setTimeout(r, intervalMs));
-    }
+
+const dockerAvailable = (() => {
+  try {
+    execSync('docker info', { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
   }
-};
+})();
 import { entityManager, type MyConfigMap } from '../../test/entityManager';
 import { env } from '../env';
 import { generateTableDefinition } from '../Tables';
@@ -60,9 +55,10 @@ const tableOptions: Omit<CreateTableCommandInput, 'TableName'> = {
 
 let entityClient: EntityClient<MyConfigMap>;
 
-describe('EntityClient', function () {
+const describeDocker = dockerAvailable ? describe : describe.skip;
+
+describeDocker('EntityClient', function () {
   beforeAll(async function () {
-    await waitForDocker();
     entityClient = new EntityClient<MyConfigMap>({
       tableName: 'EntityClientTest',
       ...entityClientOptions,

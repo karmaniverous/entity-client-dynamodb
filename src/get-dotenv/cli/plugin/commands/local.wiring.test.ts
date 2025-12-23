@@ -7,10 +7,13 @@ const h = vi.hoisted(() => ({
   stopSpy: vi.fn(() => Promise.resolve()),
 }));
 
-// Mock readMergedOptions to return an empty options bag
-vi.mock('@karmaniverous/get-dotenv/cliHost', () => ({
-  readMergedOptions: () => ({}),
-}));
+// Avoid partial mocks: preserve real exports and override only what we need.
+vi.mock('@karmaniverous/get-dotenv/cliHost', async () => {
+  const actual = await vi.importActual<
+    typeof import('@karmaniverous/get-dotenv/cliHost')
+  >('@karmaniverous/get-dotenv/cliHost');
+  return { ...actual, readMergedOptions: () => ({}) };
+});
 
 // Mock services/local used by the command module.
 vi.mock('../../../services/local', () => ({
@@ -21,7 +24,7 @@ vi.mock('../../../services/local', () => ({
 
 // Minimal command-builder stub that captures the registered actions by name
 class FakeGroup {
-  actionFns: Record<string, (flags: Record<string, unknown>) => unknown> = {};
+  actionFns: Record<string, (...args: unknown[]) => unknown> = {};
   private _current?: string;
   command(name: string) {
     this._current = name;
@@ -34,7 +37,7 @@ class FakeGroup {
     return this;
     // We don't need to track options for wiring tests
   }
-  action(fn: (flags: Record<string, unknown>) => unknown): this {
+  action(fn: (...args: unknown[]) => unknown): this {
     const key = this._current ?? 'root';
     this.actionFns[key] = fn;
     return this;
@@ -77,7 +80,7 @@ describe('dynamodb plugin: local wiring', () => {
   it('start wires to services.startLocal and prints endpoint', async () => {
     const start = group.actionFns.start;
     expect(typeof start).toBe('function');
-    await start({ port: '9001' });
+    await start({ port: 9001 }, group as unknown as Command);
     // Side effects: endpoint info + JSON payload printed
     expect(infoSpy).toHaveBeenCalled();
     expect(logSpy).toHaveBeenCalled();
@@ -87,11 +90,11 @@ describe('dynamodb plugin: local wiring', () => {
     // Healthy branch (default spy result)
     const status = group.actionFns.status;
     expect(typeof status).toBe('function');
-    await status({ port: '9002' });
+    await status({ port: 9002 }, group as unknown as Command);
     expect(process.exitCode).toBeUndefined();
     // Now simulate unhealthy branch
     h.statusSpy.mockResolvedValueOnce(false);
-    await status({});
+    await status({}, group as unknown as Command);
     expect(process.exitCode).toBe(1);
     // Reset for subsequent tests
     process.exitCode = undefined;
@@ -100,7 +103,7 @@ describe('dynamodb plugin: local wiring', () => {
   it('stop wires to services.stopLocal', async () => {
     const stop = group.actionFns.stop;
     expect(typeof stop).toBe('function');
-    await stop({});
+    await stop({}, group as unknown as Command);
     // Nothing thrown → wiring OK; we asserted prints above on start
   });
 });

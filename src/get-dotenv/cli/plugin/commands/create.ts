@@ -1,19 +1,15 @@
 import type { Command } from '@commander-js/extra-typings';
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
-import type { PluginWithInstanceHelpers } from '@karmaniverous/get-dotenv/cliHost';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
 import { createTableAtVersion } from '../../../services/create';
-import type { DynamodbPluginConfig } from '../../options';
 import { resolveCreateAtVersion, resolveLayoutConfig } from '../../options';
 import { buildEntityClient } from '../helpers';
-
-type PluginReader = Pick<PluginWithInstanceHelpers, 'readConfig'> & {
-  readConfig(cli: GetDotenvCliPublic): Readonly<DynamodbPluginConfig>;
-};
+import { parsePositiveInt } from '../parsers';
+import type { DynamodbPluginInstance } from '../pluginInstance';
 
 export function registerCreate(
-  plugin: PluginReader,
+  plugin: DynamodbPluginInstance,
   cli: GetDotenvCliPublic,
   group: Command,
 ) {
@@ -33,30 +29,28 @@ export function registerCreate(
       '--token-transform <string>',
       'token (transform) filename without ext',
     )
-    .option('--validate', 'validate before create (default true)', false)
+    .option('--validate', 'validate before create (default true)')
+    .option('--refresh-generated', 'refresh generated sections (default false)')
+    .option('--force', 'proceed on drift when --validate (default false)')
     .option(
-      '--refresh-generated',
-      'refresh generated sections (default false)',
-      false,
+      '--max-seconds <number>',
+      'waiter max seconds',
+      parsePositiveInt('maxSeconds'),
     )
-    .option(
-      '--force',
-      'proceed on drift when --validate (default false)',
-      false,
-    )
-    .option('--max-seconds <number>', 'waiter max seconds')
     .option('--table-name-override <string>', 'one-off TableName override')
-    .action(async (flags: Record<string, unknown>) => {
+    .action(async (opts, thisCommand) => {
+      void thisCommand;
       const ctx = cli.getCtx();
-      const envRef = ctx?.dotenv ?? process.env;
+      const envRef = ctx.dotenv;
+      const env = { ...process.env, ...envRef };
       const pluginCfg = plugin.readConfig(cli);
       const cfg = resolveLayoutConfig(
         {
-          tablesPath: flags.tablesPath as string | undefined,
+          tablesPath: opts.tablesPath,
           tokens: {
-            table: flags.tokenTable as string | undefined,
-            entityManager: flags.tokenEntityManager as string | undefined,
-            transform: flags.tokenTransform as string | undefined,
+            table: opts.tokenTable,
+            entityManager: opts.tokenEntityManager,
+            transform: opts.tokenTransform,
           },
         },
         pluginCfg,
@@ -64,12 +58,12 @@ export function registerCreate(
       );
       const { version, options } = resolveCreateAtVersion(
         {
-          version: flags.version as string | undefined,
-          validate: flags.validate as boolean | undefined,
-          refreshGenerated: flags.refreshGenerated as boolean | undefined,
-          force: flags.force as boolean | undefined,
-          maxSeconds: flags.maxSeconds as number | string | undefined,
-          tableNameOverride: flags.tableNameOverride as string | undefined,
+          version: opts.version,
+          validate: opts.validate,
+          refreshGenerated: opts.refreshGenerated,
+          force: opts.force,
+          maxSeconds: opts.maxSeconds,
+          tableNameOverride: opts.tableNameOverride,
         },
         pluginCfg,
         envRef,
@@ -77,8 +71,8 @@ export function registerCreate(
       const em = await resolveAndLoadEntityManager(version, cfg);
       const clientTable =
         options.tableNameOverride ??
-        envRef.TABLE_NAME ??
-        envRef.DYNAMODB_TABLE ??
+        env.TABLE_NAME ??
+        env.DYNAMODB_TABLE ??
         'DynamoDBTable';
       const client = buildEntityClient(em, clientTable, envRef);
       const out = await createTableAtVersion(client, em, version, cfg, options);

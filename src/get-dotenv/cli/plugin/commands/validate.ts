@@ -1,17 +1,12 @@
 import type { Command } from '@commander-js/extra-typings';
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
-import type { PluginWithInstanceHelpers } from '@karmaniverous/get-dotenv/cliHost';
 
 import { validateTableDefinitionAtVersion } from '../../../services/validateTable';
-import type { DynamodbPluginConfig } from '../../options';
 import { resolveLayoutConfig, resolveValidateAtVersion } from '../../options';
-
-type PluginReader = Pick<PluginWithInstanceHelpers, 'readConfig'> & {
-  readConfig(cli: GetDotenvCliPublic): Readonly<DynamodbPluginConfig>;
-};
+import type { DynamodbPluginInstance } from '../pluginInstance';
 
 export function registerValidate(
-  plugin: PluginReader,
+  plugin: DynamodbPluginInstance,
   cli: GetDotenvCliPublic,
   group: Command,
 ) {
@@ -29,24 +24,25 @@ export function registerValidate(
       '--token-transform <string>',
       'token (transform) filename without ext',
     )
-    .action(async (flags: Record<string, unknown>) => {
+    .action(async (opts, thisCommand) => {
+      void thisCommand;
       const ctx = cli.getCtx();
-      const envRef = ctx?.dotenv ?? process.env;
+      const envRef = ctx.dotenv;
       const pluginCfg = plugin.readConfig(cli);
       const cfg = resolveLayoutConfig(
         {
-          tablesPath: flags.tablesPath as string | undefined,
+          tablesPath: opts.tablesPath,
           tokens: {
-            table: flags.tokenTable as string | undefined,
-            entityManager: flags.tokenEntityManager as string | undefined,
-            transform: flags.tokenTransform as string | undefined,
+            table: opts.tokenTable,
+            entityManager: opts.tokenEntityManager,
+            transform: opts.tokenTransform,
           },
         },
         pluginCfg,
         envRef,
       );
       const { version } = resolveValidateAtVersion(
-        { version: flags.version as string | undefined },
+        { version: opts.version },
         pluginCfg,
         envRef,
       );

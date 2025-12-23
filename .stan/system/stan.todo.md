@@ -90,3 +90,8 @@
   - Made AWS-safe defaults when run under shipped `aws` plugin (no forced localhost endpoint/creds); expand flags only to avoid config double-expansion.
 
 - Requirements: codify aws-pattern Commander typing and fixtures-first tests for dynamodb plugin (embed key semantics so imported docs can be dropped next thread).
+
+- DynamoDB plugin CLI typing groundwork
+  - Added shared strict numeric parsers for Commander options.
+  - Fixed local command action arity and improved local wiring test mocks to preserve real cliHost exports.
+  - Skipped Docker-backed EntityClient integration suite when Docker is unavailable.
