@@ -26,6 +26,13 @@ function makeRunner() {
   });
 }
 
+function runWithNodePrefix(
+  run: (argv?: string[]) => Promise<void>,
+  argv: string[],
+) {
+  return run(['node', 'testcli', ...argv]);
+}
+
 describe('dynamodb plugin: local wiring', () => {
   const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
   const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -45,7 +52,14 @@ describe('dynamodb plugin: local wiring', () => {
 
   it('start wires to services.startLocal and prints endpoint', async () => {
     const run = makeRunner();
-    await run(['--capture', 'dynamodb', 'local', 'start', '--port', '9001']);
+    await runWithNodePrefix(run, [
+      '--capture',
+      'dynamodb',
+      'local',
+      'start',
+      '--port',
+      '9001',
+    ]);
 
     expect(h.startSpy).toHaveBeenCalledTimes(1);
     expect(h.startSpy).toHaveBeenCalledWith(
@@ -62,19 +76,31 @@ describe('dynamodb plugin: local wiring', () => {
     const run = makeRunner();
 
     // Healthy branch (default spy result)
-    await run(['dynamodb', 'local', 'status', '--port', '9002']);
+    await runWithNodePrefix(run, [
+      'dynamodb',
+      'local',
+      'status',
+      '--port',
+      '9002',
+    ]);
     expect(h.statusSpy).toHaveBeenCalled();
     expect(process.exitCode).toBeUndefined();
 
     // Now simulate unhealthy branch
     h.statusSpy.mockResolvedValueOnce(false);
-    await run(['dynamodb', 'local', 'status', '--port', '9002']);
+    await runWithNodePrefix(run, [
+      'dynamodb',
+      'local',
+      'status',
+      '--port',
+      '9002',
+    ]);
     expect(process.exitCode).toBe(1);
   });
 
   it('stop wires to services.stopLocal', async () => {
     const run = makeRunner();
-    await run(['dynamodb', 'local', 'stop']);
+    await runWithNodePrefix(run, ['dynamodb', 'local', 'stop']);
     expect(h.stopSpy).toHaveBeenCalledTimes(1);
   });
 });

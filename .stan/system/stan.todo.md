@@ -98,4 +98,6 @@
 
 - Typecheck: fix missing Command import in local wiring test.
 
-- Tests: migrate local wiring test to createCli (fixtures-first).
+- Tests: migrate local wiring test to createCli (fixtures-first).
+
+- Tests: fix createCli argv shape (node/script prefix) in local wiring test.
