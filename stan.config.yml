@@ -26,10 +26,10 @@ stan-core:
       - node_modules/@karmaniverous/get-dotenv/dist/index.d.ts
       - node_modules/@karmaniverous/get-dotenv/dist/cliHost.d.ts
       - node_modules/@karmaniverous/get-dotenv/dist/plugins-aws.d.ts
-    '@karmaniverous/get-dotenv/src/plugins/aws':
-      - ../get-dotenv/src/plugins/aws/**/!(*.test).ts
-    '@commander-js/extra-typings':
-      - node_modules/@commander-js/extra-typings/index.d.ts
+    # '@karmaniverous/get-dotenv/src/plugins/aws':
+    #   - ../get-dotenv/src/plugins/aws/**/!(*.test).ts
+    # '@commander-js/extra-typings':
+    #   - node_modules/@commander-js/extra-typings/index.d.ts
     # smoz:
     #   - ../smoz/.stan/interop/entity-client-dynamodb/**
 stan-cli:

@@ -2,53 +2,35 @@
 
 ## Next up (priority order)
 
-- Align codebase to entity-manager vNext by-token type model (no back-compat shims)
-  - Replace legacy types with by-token types across the repo:
-    - EntityItemByToken -> EntityItem / EntityItemPartial
-    - EntityRecordByToken -> EntityRecord / EntityRecordPartial
-    - ProjectedItemByToken -> EntityItemPartial
-  - Re-export types: Projected from entity-manager (remove local duplicate).
-  - Update imports in:
-    - src/EntityClient/\*\*
-    - src/QueryBuilder/\*\*
-    - src/get-dotenv/types.ts
-    - src/index.ts (public re-exports)
+- DynamoDB get-dotenv plugin: aws-pattern typed Commander (hard gate)
+  - Implement `.stan/system/stan.requirements.dynamodb-plugin.cli-typing.md` across `src/get-dotenv/cli/plugin/**`:
+    - Fix action callback arity everywhere (options-only commands use `(opts, thisCommand)`).
+    - Replace `Record<string, unknown>` flags with Commander-inferred `opts` types (no casts at call sites).
+    - Reject invalid numerics at parse time using `InvalidArgumentError` parsers (maxSeconds, port, pageSize, limit, transformConcurrency, progressIntervalMs, RCU/WCU, etc).
+    - Remove `cli.getCtx()?.dotenv` optional chaining; ctx is required at action time.
+  - Introduce a shared, typed plugin instance seam (aws-pattern):
+    - Add a single exported alias (e.g., `DynamodbPluginInstance`) which threads `DynamodbPluginConfig` into `PluginWithInstanceHelpers`, and use it in every `register*` signature.
+    - Eliminate brittle `PluginReader` intersection typing that can collapse to `unknown`.
+  - Add dynamic option descriptions only where defaults are config-derived (schema defaults / config values):
+    - Use `plugin.createPluginDynamicOption` for `tablesPath`, `tokens.*`, and `local.*` defaults when present in validated config.
+    - Do not claim defaults for env-derived values (e.g., `TABLE_NAME`, derived endpoints).
 
-- Simplify read APIs to token-aware forms only (no tokenless overloads)
-  - EntityClient.getItem/getItems:
-    - getItem(entityToken, key[, attributes as const])
-    - getItems(entityToken, keys[, attributes as const])
-  - Return types:
-    - Without attributes -> EntityRecord<CC, ET>
-    - With attributes (const tuple) -> EntityRecordPartial<CC, ET, A>
-  - Update method implementations and helper modules under src/EntityClient/methods/\*\*
-  - Update tests to use token-aware overloads exclusively
+- DynamoDB get-dotenv plugin: fixtures-first tests (Commander + host)
+  - Replace FakeGroup wiring tests with integration-style tests that run real Commander dispatch through the get-dotenv host:
+    - Construct a real host (e.g., `createCli` / `GetDotenvCli`) and mount `dynamodbPlugin()`.
+    - Execute with argv and assert: resolved service calls, console output, and `process.exitCode` behavior.
+    - Mock only leaf seams (services/local, services/create/delete/generate/migrate/validate, emLoader).
+  - Avoid partial mocks of `@karmaniverous/get-dotenv/cliHost`; if mocking is unavoidable, spread `vi.importActual` and override only specific exports.
+  - Add a lightweight parent fixture plugin when we need to validate realized mount path behavior (e.g., simulating `aws/dynamodb`) without running the real aws plugin.
 
-- QueryBuilder alignment
-  - Replace cast from ProjectedItemByToken[] to EntityItemPartial[] in getShardQueryFunction
-  - Preserve runtime invariant in query(): auto-include uniqueProperty + explicit sort keys when any projection is present
-  - Verify IndexParams/Index tokens typing remains intact (ITS via client-captured CF)
+- Cleanup after typed CLI + fixtures land
+  - Re-run and fix: `npm run typecheck`, `npm run lint`, `npm run test`.
+  - Address remaining lint failures that are not resolved by typing:
+    - Fix `@typescript-eslint/restrict-template-expressions` in `src/get-dotenv/services/local.ts` (stringify numeric template parts).
+  - Ensure no command uses `process.exit()`; use `process.exitCode` for CI-friendly signaling.
 
-- get-dotenv plugin types and services
-  - Update TransformHandler typing in src/get-dotenv/types.ts:
-    - record: EntityRecord<PrevCM, ET>
-    - returns: undefined | EntityItem<NextCM, ET> | EntityRecord<NextCM, ET> | (array of those)
-  - Sanity check migrate/services; ensure addKeys normalization is applied when transform returns items
-
-- Lint & type fixes
-  - Resolve “any overrides” diagnostics in EntityClient and methods
-  - Ensure method return types are explicitly typed to the new model
-  - Run: npm run lint && npm run typecheck
-
-- Docs update (guides + re-exports)
-  - Replace old names in examples (EntityItemByToken/EntityRecordByToken/ProjectedItemByToken)
-  - Keep projection K explanations; note uniform projection advice
-  - Confirm CLI plugin docs remain accurate (table lifecycle, migrate, local)
-
-- Release notes (internal)
-  - Briefly summarize type-surface changes; token-less read overloads removed
-  - Note unchanged runtime behavior; DX improvements and consistency
-  - Coordinate major version bump if needed
+- Reduce reliance on imported upstream docs (next thread goal)
+  - After the above lands (and the requirements docs fully capture patterns), remove `.stan/imports/**` for commander typings and aws plugin source from the working set and rely on in-repo requirements docs instead.
 
 ## Completed
 
@@ -107,4 +89,4 @@
   - Switched to `definePlugin({ ns, configSchema })` and `plugin.readConfig(cli)`; removed brittle `ctx.pluginConfigs.dynamodb` access.
   - Made AWS-safe defaults when run under shipped `aws` plugin (no forced localhost endpoint/creds); expand flags only to avoid config double-expansion.
 
-- Requirements: codify aws-pattern Commander typing and fixtures-first tests for dynamodb plugin (embed key semantics so imported docs can be dropped next thread).
+- Requirements: codify aws-pattern Commander typing and fixtures-first tests for dynamodb plugin (embed key semantics so imported docs can be dropped next thread).
