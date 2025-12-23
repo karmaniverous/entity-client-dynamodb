@@ -100,4 +100,8 @@
 
 - Tests: migrate local wiring test to createCli (fixtures-first).
 
-- Tests: fix createCli argv shape (node/script prefix) in local wiring test.
+- Tests: fix createCli argv shape (node/script prefix) in local wiring test.
+
+- Tests: local wiring now uses GetDotenvCli+resolveAndLoad for ctx/bag.
+
+- Tests: ensure GetDotenvCli.install() runs before parse in local wiring.

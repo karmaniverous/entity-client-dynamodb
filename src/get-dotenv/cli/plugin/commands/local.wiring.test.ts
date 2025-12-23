@@ -1,5 +1,5 @@
-import { createCli } from '@karmaniverous/get-dotenv';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { GetDotenvCli } from '@karmaniverous/get-dotenv/cliHost';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { dynamodbPlugin } from '../index';
 
@@ -17,20 +17,19 @@ vi.mock('../../../services/local', () => ({
   stopLocal: h.stopSpy,
 }));
 
-function makeRunner() {
-  return createCli({
-    alias: 'testcli',
-    // Keep the host minimal and deterministic for tests.
-    rootOptionDefaults: { loadProcess: false, log: false },
-    compose: (p) => p.use(dynamodbPlugin()),
-  });
+async function setupCli() {
+  const cli = makeCli();
+  await cli.install();
+  await cli.resolveAndLoad();
+  return cli;
 }
 
-function runWithNodePrefix(
-  run: (argv?: string[]) => Promise<void>,
-  argv: string[],
-) {
-  return run(['node', 'testcli', ...argv]);
+function makeCli() {
+  const cli = new GetDotenvCli('testcli');
+  // Keep the host minimal and deterministic for tests.
+  cli.attachRootOptions({ loadProcess: false, log: false });
+  cli.use(dynamodbPlugin());
+  return cli;
 }
 
 describe('dynamodb plugin: local wiring', () => {
@@ -39,6 +38,7 @@ describe('dynamodb plugin: local wiring', () => {
   const errorSpy = vi
     .spyOn(console, 'error')
     .mockImplementation(() => undefined);
+  const prevStdio = process.env.GETDOTENV_STDIO;
 
   beforeEach(() => {
     h.startSpy.mockClear();
@@ -50,10 +50,17 @@ describe('dynamodb plugin: local wiring', () => {
     process.exitCode = undefined;
   });
 
+  afterEach(() => {
+    if (prevStdio === undefined) delete process.env.GETDOTENV_STDIO;
+    else process.env.GETDOTENV_STDIO = prevStdio;
+  });
+
   it('start wires to services.startLocal and prints endpoint', async () => {
-    const run = makeRunner();
-    await runWithNodePrefix(run, [
-      '--capture',
+    process.env.GETDOTENV_STDIO = 'pipe';
+    const cli = await setupCli();
+    await cli.parseAsync([
+      'node',
+      'testcli',
       'dynamodb',
       'local',
       'start',
@@ -68,15 +75,18 @@ describe('dynamodb plugin: local wiring', () => {
         portOverride: 9001,
       }),
     );
+    expect(errorSpy).not.toHaveBeenCalled();
     expect(infoSpy).toHaveBeenCalled();
     expect(logSpy).toHaveBeenCalled();
   });
 
   it('status wires to services.statusLocal and sets exitCode on false', async () => {
-    const run = makeRunner();
+    const cli = await setupCli();
 
     // Healthy branch (default spy result)
-    await runWithNodePrefix(run, [
+    await cli.parseAsync([
+      'node',
+      'testcli',
       'dynamodb',
       'local',
       'status',
@@ -87,8 +97,11 @@ describe('dynamodb plugin: local wiring', () => {
     expect(process.exitCode).toBeUndefined();
 
     // Now simulate unhealthy branch
+    process.exitCode = undefined;
     h.statusSpy.mockResolvedValueOnce(false);
-    await runWithNodePrefix(run, [
+    await cli.parseAsync([
+      'node',
+      'testcli',
       'dynamodb',
       'local',
       'status',
@@ -99,8 +112,8 @@ describe('dynamodb plugin: local wiring', () => {
   });
 
   it('stop wires to services.stopLocal', async () => {
-    const run = makeRunner();
-    await runWithNodePrefix(run, ['dynamodb', 'local', 'stop']);
+    const cli = await setupCli();
+    await cli.parseAsync(['node', 'testcli', 'dynamodb', 'local', 'stop']);
     expect(h.stopSpy).toHaveBeenCalledTimes(1);
   });
 });
