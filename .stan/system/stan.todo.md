@@ -105,4 +105,6 @@
 
 - get-dotenv plugin host model migration (dynamodb)
   - Switched to `definePlugin({ ns, configSchema })` and `plugin.readConfig(cli)`; removed brittle `ctx.pluginConfigs.dynamodb` access.
-  - Made AWS-safe defaults when run under shipped `aws` plugin (no forced localhost endpoint/creds); expand flags only to avoid config double-expansion.
+  - Made AWS-safe defaults when run under shipped `aws` plugin (no forced localhost endpoint/creds); expand flags only to avoid config double-expansion.
+
+- Requirements: codify aws-pattern Commander typing and fixtures-first tests for dynamodb plugin (embed key semantics so imported docs can be dropped next thread).
