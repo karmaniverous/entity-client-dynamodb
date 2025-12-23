@@ -4,25 +4,20 @@ stan-core:
     - CHANGELOG.md
     - docs
     - package-lock.json
+  includes:
+    - .stan/imports/**
   imports:
-    entity-manager:
-      - ../entity-manager/.stan/interop/entity-client-dynamodb/**
-      # - ../entity-manager/.stan/system/stan.requirements.md
-      # - ../entity-manager/.stan/system/stan.todo.md
-      - ../entity-manager/dist/index.d.ts
-      - ../entity-manager/README.md
-      # entity-manager-demo:
-      - ../entity-manager-demo/.stan/interop/entity-client-dynamodb/**
-      #   - ../entity-manager-demo/.stan/system/stan.requirements.md
-      #   - ../entity-manager-demo/.stan/system/stan.todo.md
-      - ../entity-manager-demo/dist/index.d.ts
-      - ../entity-manager-demo/README.md
-    entity-tools:
-      - ../entity-tools/.stan/interop/entity-client-dynamodb/**
-      # - ../entity-tools/.stan/system/stan.requirements.md
-      # - ../entity-tools/.stan/system/stan.todo.md
-      - ../entity-tools/dist/index.d.ts
-      - ../entity-tools/README.md
+    # entity-manager:
+    #   - ../entity-manager/.stan/interop/entity-client-dynamodb/**
+    #   - ../entity-manager/dist/index.d.ts
+    #   - ../entity-manager/README.md
+    #   - ../entity-manager-demo/.stan/interop/entity-client-dynamodb/**
+    #   - ../entity-manager-demo/dist/index.d.ts
+    #   - ../entity-manager-demo/README.md
+    # entity-tools:
+    #   - ../entity-tools/.stan/interop/entity-client-dynamodb/**
+    #   - ../entity-tools/dist/index.d.ts
+    #   - ../entity-tools/README.md
     get-dotenv:
       - ../get-dotenv/.stan/interop/entity-client-dynamodb/**
       - ../get-dotenv/dist/cliHost.d.ts
@@ -30,19 +25,12 @@ stan-core:
       - ../get-dotenv/dist/plugins-aws.d.ts
       - ../get-dotenv/guides/authoring/**
       - ../get-dotenv/guides/shipped/aws.md
-      # - ../get-dotenv/.stan/system/stan.requirements.md
-      # - ../get-dotenv/.stan/system/stan.todo.md
-      # - ../get-dotenv/package.json
-      # - ../get-dotenv/dist/index.d.ts
-      # - ../get-dotenv/dist/cliHost.d.ts
-      # - ../get-dotenv/README.md
-    smoz:
-      - ../smoz/.stan/interop/entity-client-dynamodb/**
-  includes: []
+    # smoz:
+    #   - ../smoz/.stan/interop/entity-client-dynamodb/**
 stan-cli:
   cliDefaults:
     run:
-      facets: false
+      facets: true
       plan: false
       sequential: true
   patchOpenCommand: code -g {file}

@@ -7,6 +7,9 @@ coverage/
 dist/
 esm/
 node_modules/
+
+# STAN
+.stan/imports/
 .stan/output/
 .stan/diff/
 .stan/dist/

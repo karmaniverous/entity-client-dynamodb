@@ -1,11 +1,22 @@
 import { DynamoDBClient, ListTablesCommand } from '@aws-sdk/client-dynamodb';
 import { buildSpawnEnv } from '@karmaniverous/get-dotenv';
-import { execaCommand } from 'execa';
+import {
+  runCommand,
+  runCommandResult,
+} from '@karmaniverous/get-dotenv/cliHost';
 
 import type { DynamodbPluginConfig } from '../cli/options/types';
 
 type LocalCfg = NonNullable<DynamodbPluginConfig['local']>;
 
+/**
+ * Derive an effective local DynamoDB endpoint and port.
+ *
+ * @param cfg - Local DynamoDB plugin config slice.
+ * @param envRef - Env overlay (typically `{ ...process.env, ...ctx.dotenv }`).
+ * @param overridePort - Optional port override (from flags).
+ * @returns Derived endpoint and port.
+ */
 export function deriveEndpoint(
   cfg?: LocalCfg,
   envRef: Record<string, string | undefined> = process.env,
@@ -34,6 +45,25 @@ export function deriveEndpoint(
     `http://localhost:${String(port)}`;
 
   return { endpoint, port };
+}
+
+async function runConfigCommand(args: {
+  command: string;
+  env: NodeJS.ProcessEnv;
+  shell?: string | boolean;
+  capture?: boolean;
+}): Promise<number> {
+  const { command, env, capture } = args;
+  // Config commands are string payloads; always run them under a shell.
+  const shell = args.shell === false ? true : (args.shell ?? true);
+
+  if (capture) {
+    const { exitCode } = await runCommandResult(command, shell, { env });
+    return exitCode;
+  }
+
+  // Inherit stdio for interactive/long-running local orchestration.
+  return runCommand(command, shell, { env, stdio: 'inherit' });
 }
 
 async function libraryAvailable(): Promise<
@@ -89,6 +119,12 @@ async function probeReadyWithSdk(endpoint: string): Promise<boolean> {
   return false;
 }
 
+/**
+ * Start local DynamoDB using a config command (preferred) or the embedded library fallback.
+ *
+ * @param args - Start options.
+ * @returns Effective endpoint (for UX / downstream wiring).
+ */
 export async function startLocal(args: {
   cfg?: LocalCfg;
   envRef?: Record<string, string | undefined>;
@@ -102,11 +138,14 @@ export async function startLocal(args: {
 
   if (cfg?.start) {
     // Config-driven
-    await execaCommand(cfg.start, {
+    const exitCode = await runConfigCommand({
+      command: cfg.start,
       env,
-      stdio: capture ? 'pipe' : 'inherit',
-      ...(shell !== undefined ? { shell } : {}),
+      shell,
+      capture,
     });
+    if (exitCode !== 0)
+      throw new Error(`local dynamodb start: exit ${exitCode}`);
     // Readiness: library first, else SDK probe
     const lib = await libraryAvailable();
     if (lib) {
@@ -135,6 +174,11 @@ export async function startLocal(args: {
   return { endpoint };
 }
 
+/**
+ * Stop local DynamoDB using a config command (preferred) or the embedded library fallback.
+ *
+ * @param args - Stop options.
+ */
 export async function stopLocal(args: {
   cfg?: LocalCfg;
   envRef?: Record<string, string | undefined>;
@@ -145,11 +189,14 @@ export async function stopLocal(args: {
   const env = buildSpawnEnv(process.env, envRef);
 
   if (cfg?.stop) {
-    await execaCommand(cfg.stop, {
+    const exitCode = await runConfigCommand({
+      command: cfg.stop,
       env,
-      stdio: capture ? 'pipe' : 'inherit',
-      ...(shell !== undefined ? { shell } : {}),
+      shell,
+      capture,
     });
+    if (exitCode !== 0)
+      throw new Error(`local dynamodb stop: exit ${exitCode}`);
     return;
   }
   const lib = await libraryAvailable();
@@ -161,6 +208,12 @@ export async function stopLocal(args: {
   await lib.teardownDynamoDbLocal();
 }
 
+/**
+ * Check local DynamoDB status using a config command (preferred) or an SDK health probe.
+ *
+ * @param args - Status options.
+ * @returns True when healthy/running; false otherwise.
+ */
 export async function statusLocal(args: {
   cfg?: LocalCfg;
   envRef?: Record<string, string | undefined>;
@@ -174,12 +227,13 @@ export async function statusLocal(args: {
 
   if (cfg?.status) {
     try {
-      await execaCommand(cfg.status, {
+      const exitCode = await runConfigCommand({
+        command: cfg.status,
         env,
-        stdio: capture ? 'pipe' : 'inherit',
-        ...(shell !== undefined ? { shell } : {}),
+        shell,
+        capture,
       });
-      return true;
+      return exitCode === 0;
     } catch {
       return false;
     }

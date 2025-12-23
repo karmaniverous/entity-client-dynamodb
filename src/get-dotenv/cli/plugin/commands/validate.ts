@@ -1,6 +1,6 @@
+import type { Command } from '@commander-js/extra-typings';
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
 import type { PluginWithInstanceHelpers } from '@karmaniverous/get-dotenv/cliHost';
-import type { Command } from 'commander';
 
 import { validateTableDefinitionAtVersion } from '../../../services/validateTable';
 import type { DynamodbPluginConfig } from '../../options';

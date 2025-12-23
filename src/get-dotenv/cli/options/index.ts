@@ -1,6 +1,5 @@
 export * from './create';
 export * from './delete';
-export * from './expand';
 export * from './generate';
 export * from './layout';
 export * from './migrate';

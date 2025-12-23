@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import type { DynamodbPluginConfig } from './options';
 import {
-  dotenvExpandLocal,
   resolveCreateAtVersion,
   resolveDelete,
   resolveGenerateAtVersion,
@@ -12,12 +11,15 @@ import {
 } from './options';
 
 describe('dynamodb CLI option resolvers', () => {
-  it('dotenvExpandLocal should expand $VAR and ${VAR:default}', () => {
-    const ref = { FOO: 'bar' };
-    expect(dotenvExpandLocal('x$FOO', ref)).toEqual('xbar');
-    expect(dotenvExpandLocal('x${FOO}', ref)).toEqual('xbar');
-    expect(dotenvExpandLocal('x${MISSING:ok}', ref)).toEqual('xok');
-    expect(dotenvExpandLocal('x$MISSING:ok', ref)).toEqual('xok');
+  it('resolvers expand flag strings using dotenv syntax', () => {
+    const cfg: DynamodbPluginConfig = { delete: { tableName: 'CfgName' } };
+    const ref = { __GETDOTENV_TEST_TBL__: 'FromEnv' };
+    const out = resolveDelete(
+      { tableName: '${__GETDOTENV_TEST_TBL__}' },
+      cfg,
+      ref,
+    );
+    expect(out.options.tableNameOverride).toEqual('FromEnv');
   });
 
   it('resolveGenerateAtVersion should merge overlays and expand strings', () => {

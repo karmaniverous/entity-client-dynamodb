@@ -1,7 +1,7 @@
 import type { CreateTableCommandInput } from '@aws-sdk/client-dynamodb';
+import type { Command } from '@commander-js/extra-typings';
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
 import type { PluginWithInstanceHelpers } from '@karmaniverous/get-dotenv/cliHost';
-import type { Command } from 'commander';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
 import { generateTableDefinitionAtVersion } from '../../../services/generate';

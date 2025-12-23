@@ -1,7 +1,10 @@
+import type { Command } from '@commander-js/extra-typings';
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
 import type { PluginWithInstanceHelpers } from '@karmaniverous/get-dotenv/cliHost';
-import { readMergedOptions } from '@karmaniverous/get-dotenv/cliHost';
-import type { Command } from 'commander';
+import {
+  readMergedOptions,
+  shouldCapture,
+} from '@karmaniverous/get-dotenv/cliHost';
 
 import { startLocal, statusLocal, stopLocal } from '../../../services/local';
 import type { DynamodbPluginConfig } from '../../options';
@@ -32,13 +35,12 @@ export function registerLocal(
       ) => {
         try {
           const ctx = cli.getCtx();
-          const envRef = ctx?.dotenv ?? process.env;
+          // Use ctx.dotenv as an overlay; include process.env (aws parent may write to it).
+          const envRef = { ...process.env, ...(ctx?.dotenv ?? {}) };
           const pluginCfg = plugin.readConfig(cli);
           const bag = readMergedOptions(thisCommand) ?? {};
           const shell = (bag as { shell?: string | boolean }).shell;
-          const capture =
-            process.env.GETDOTENV_STDIO === 'pipe' ||
-            (bag as { capture?: boolean }).capture;
+          const capture = shouldCapture((bag as { capture?: boolean }).capture);
 
           const portOverride =
             flags.port !== undefined ? Number(flags.port) : undefined;
@@ -78,13 +80,11 @@ export function registerLocal(
       ) => {
         try {
           const ctx = cli.getCtx();
-          const envRef = ctx?.dotenv ?? process.env;
+          const envRef = { ...process.env, ...(ctx?.dotenv ?? {}) };
           const pluginCfg = plugin.readConfig(cli);
           const bag = readMergedOptions(thisCommand) ?? {};
           const shell = (bag as { shell?: string | boolean }).shell;
-          const capture =
-            process.env.GETDOTENV_STDIO === 'pipe' ||
-            (bag as { capture?: boolean }).capture;
+          const capture = shouldCapture((bag as { capture?: boolean }).capture);
           const portOverride =
             flags.port !== undefined ? Number(flags.port) : undefined;
 
@@ -117,13 +117,11 @@ export function registerLocal(
       ) => {
         try {
           const ctx = cli.getCtx();
-          const envRef = ctx?.dotenv ?? process.env;
+          const envRef = { ...process.env, ...(ctx?.dotenv ?? {}) };
           const pluginCfg = plugin.readConfig(cli);
           const bag = readMergedOptions(thisCommand) ?? {};
           const shell = (bag as { shell?: string | boolean }).shell;
-          const capture =
-            process.env.GETDOTENV_STDIO === 'pipe' ||
-            (bag as { capture?: boolean }).capture;
+          const capture = shouldCapture((bag as { capture?: boolean }).capture);
 
           await stopLocal({
             cfg: pluginCfg.local,

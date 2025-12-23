@@ -1,21 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock execaCommand used by services/local
+// Mock get-dotenv host exec helpers used by services/local
 const h = vi.hoisted(() => ({
-  execaOk: vi.fn(() => Promise.resolve({})),
-  execaFail: vi.fn(() => Promise.reject(new Error('fail'))),
+  runOk: vi.fn(() => Promise.resolve(0)),
+  runFail: vi.fn(() => Promise.reject(new Error('fail'))),
+  runResultOk: vi.fn(() =>
+    Promise.resolve({ exitCode: 0, stdout: '', stderr: '' }),
+  ),
 }));
-vi.mock('execa', () => ({
-  // Keep the mock signature simple to avoid TS2554/TS2556; just signal success/failure.
-  execaCommand: () => h.execaOk(),
+
+vi.mock('@karmaniverous/get-dotenv/cliHost', () => ({
+  runCommand: () => h.runOk(),
+  runCommandResult: () => h.runResultOk(),
 }));
 
 import { deriveEndpoint, statusLocal } from './local';
 
 describe('local services', () => {
   beforeEach(() => {
-    h.execaOk.mockClear();
-    h.execaFail.mockClear();
+    h.runOk.mockClear();
+    h.runFail.mockClear();
+    h.runResultOk.mockClear();
   });
 
   describe('deriveEndpoint', () => {
@@ -48,11 +53,11 @@ describe('local services', () => {
         capture: false,
       });
       expect(ok).toEqual(true);
-      expect(h.execaOk).toHaveBeenCalledTimes(1);
+      expect(h.runOk).toHaveBeenCalledTimes(1);
     });
     it('returns false when execaCommand fails', async () => {
-      // Rewire execa mock to fail for this test
-      h.execaOk.mockImplementationOnce(() => Promise.reject(new Error('fail')));
+      // Rewire runCommand mock to fail for this test
+      h.runOk.mockImplementationOnce(() => Promise.reject(new Error('fail')));
       const ok = await statusLocal({
         cfg: { status: 'exit 1' },
         envRef: {},

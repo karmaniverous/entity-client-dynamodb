@@ -15,19 +15,28 @@ Create a host CLI
 ```ts
 // mycli.ts
 import { createCli } from '@karmaniverous/get-dotenv';
+import { awsPlugin } from '@karmaniverous/get-dotenv/plugins';
 import { dynamodbPlugin } from '@karmaniverous/entity-client-dynamodb/get-dotenv';
 
-await createCli({ alias: 'mycli' })
-  .use(dynamodbPlugin) // namespaced as "dynamodb"
-  .run(process.argv.slice(2));
+const run = createCli({
+  alias: 'mycli',
+  compose: (p) => p.use(awsPlugin().use(dynamodbPlugin())),
+});
+
+await run(process.argv.slice(2));
 ```
 
-Minimal config (getdotenv.config.json)
+Notes
+
+- The expected composition is as a child of the shipped `aws` plugin, so commands live under the `aws dynamodb` path.
+- Plugin config is keyed by realized mount path; when nested under aws, the config key is `"aws/dynamodb"` (not `"dynamodb"`).
+
+Minimal config (getdotenv.config.json; aws parent)
 
 ```json
 {
   "plugins": {
-    "dynamodb": {
+    "aws/dynamodb": {
       "tablesPath": "./tables",
       "tokens": {
         "table": "table",
