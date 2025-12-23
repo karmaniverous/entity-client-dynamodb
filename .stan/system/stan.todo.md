@@ -119,3 +119,6 @@
 - CLI: add aws-pattern dynamic option descriptions for config-derived defaults (layout/tokens, local.port, generate overlays, create/delete waiters, migrate defaults).
 
 - Typecheck: coerce local command `opts.port` to number when passing `portOverride` into services to satisfy strict service typing alongside dynamic option descriptions.
+
+- Tests: add unit coverage for numeric parsers
+  - Added `src/get-dotenv/cli/plugin/parsers.test.ts` to lock `InvalidArgumentError` rejection semantics for `parseFiniteNumber`, `parsePositiveInt`, and `parseNonNegativeInt` independent of Commander.
