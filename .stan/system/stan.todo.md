@@ -11,9 +11,6 @@
   - Introduce a shared, typed plugin instance seam (aws-pattern):
     - Add a single exported alias (e.g., `DynamodbPluginInstance`) which threads `DynamodbPluginConfig` into `PluginWithInstanceHelpers`, and use it in every `register*` signature.
     - Eliminate brittle `PluginReader` intersection typing that can collapse to `unknown`.
-  - Add dynamic option descriptions only where defaults are config-derived (schema defaults / config values):
-    - Use `plugin.createPluginDynamicOption` for `tablesPath`, `tokens.*`, and `local.*` defaults when present in validated config.
-    - Do not claim defaults for env-derived values (e.g., `TABLE_NAME`, derived endpoints).
 
 - DynamoDB get-dotenv plugin: fixtures-first tests (Commander + host)
   - Replace FakeGroup wiring tests with registration smoke tests using a real GetDotenvCli host:
@@ -110,4 +107,6 @@
 
 - Tests: replace flaky local wiring execution test with a command registration smoke test (verify command tree and options without parsing/executing actions).
 
-- Tests: migrate create/delete/migrate/purge/validate wiring tests from FakeGroup to registration smoke tests; add shared commandTestUtils helpers.
+- Tests: migrate create/delete/migrate/purge/validate wiring tests from FakeGroup to registration smoke tests; add shared commandTestUtils helpers.
+
+- CLI: add aws-pattern dynamic option descriptions for config-derived defaults (layout/tokens, local.port, generate overlays, create/delete waiters, migrate defaults).

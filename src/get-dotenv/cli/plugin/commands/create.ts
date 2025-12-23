@@ -13,31 +13,95 @@ export function registerCreate(
   cli: GetDotenvCliPublic,
   group: Command,
 ) {
-  group
+  const cmd = group
     .command('create')
     .description(
       'Create table from tables/NNN/table.yml (validate/refresh as configured)',
     )
-    .option('--version <string>', 'target version (NNN; dotenv-expanded)')
-    .option('--tables-path <string>', 'tables root (dotenv-expanded)')
-    .option('--token-table <string>', 'token (table) filename without ext')
-    .option(
-      '--token-entity-manager <string>',
-      'token (entityManager) filename without ext',
+    .addOption(
+      plugin.createPluginDynamicOption(cli, '--version <string>', (_bag, c) => {
+        const v = c.create?.version;
+        return `target version (NNN; dotenv-expanded)${
+          v ? ` (default: ${JSON.stringify(v)})` : ''
+        }`;
+      }),
     )
-    .option(
-      '--token-transform <string>',
-      'token (transform) filename without ext',
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--tables-path <string>',
+        (_bag, c) => {
+          const p = c.tablesPath;
+          return `tables root (dotenv-expanded)${
+            p ? ` (default: ${JSON.stringify(p)})` : ''
+          }`;
+        },
+      ),
+    )
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--token-table <string>',
+        (_bag, c) => {
+          const t = c.tokens?.table;
+          return `token (table) filename without ext${
+            t ? ` (default: ${JSON.stringify(t)})` : ''
+          }`;
+        },
+      ),
+    )
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--token-entity-manager <string>',
+        (_bag, c) => {
+          const t = c.tokens?.entityManager;
+          return `token (entityManager) filename without ext${
+            t ? ` (default: ${JSON.stringify(t)})` : ''
+          }`;
+        },
+      ),
+    )
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--token-transform <string>',
+        (_bag, c) => {
+          const t = c.tokens?.transform;
+          return `token (transform) filename without ext${
+            t ? ` (default: ${JSON.stringify(t)})` : ''
+          }`;
+        },
+      ),
     )
     .option('--validate', 'validate before create (default true)')
     .option('--refresh-generated', 'refresh generated sections (default false)')
     .option('--force', 'proceed on drift when --validate (default false)')
-    .option(
-      '--max-seconds <number>',
-      'waiter max seconds',
-      parsePositiveInt('maxSeconds'),
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--max-seconds <number>',
+        (_bag, c) => {
+          const s = c.create?.waiter?.maxSeconds;
+          return `waiter max seconds${
+            s !== undefined ? ` (default: ${JSON.stringify(s)})` : ''
+          }`;
+        },
+        parsePositiveInt('maxSeconds'),
+      ),
     )
-    .option('--table-name-override <string>', 'one-off TableName override')
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--table-name-override <string>',
+        (_bag, c) => {
+          const t = c.create?.tableNameOverride;
+          return `one-off TableName override${
+            t ? ` (default: ${JSON.stringify(t)})` : ''
+          }`;
+        },
+      ),
+    )
     .action(async (opts, thisCommand) => {
       void thisCommand;
       const ctx = cli.getCtx();
@@ -80,4 +144,5 @@ export function registerCreate(
       console.info('dynamodb create: ' + waiterStateCreate);
       console.log(JSON.stringify({ waiter: waiterStateCreate }, null, 2));
     });
+  void cmd;
 }

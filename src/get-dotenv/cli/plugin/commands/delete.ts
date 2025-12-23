@@ -18,12 +18,31 @@ export function registerDelete(
     .description(
       'Delete a DynamoDB table (waiter). Use --force to skip confirmation.',
     )
-    .option('--table-name <string>', 'table name (dotenv-expanded)')
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--table-name <string>',
+        (_bag, c) => {
+          const t = c.delete?.tableName;
+          return `table name (dotenv-expanded)${
+            t ? ` (default: ${JSON.stringify(t)})` : ''
+          }`;
+        },
+      ),
+    )
     .option('--version <string>', 'EM version for client wiring (optional)')
-    .option(
-      '--max-seconds <number>',
-      'waiter max seconds',
-      parsePositiveInt('maxSeconds'),
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--max-seconds <number>',
+        (_bag, c) => {
+          const s = c.delete?.waiter?.maxSeconds;
+          return `waiter max seconds${
+            s !== undefined ? ` (default: ${JSON.stringify(s)})` : ''
+          }`;
+        },
+        parsePositiveInt('maxSeconds'),
+      ),
     )
     .option('--force', 'proceed without confirmation')
     .action(async (opts, thisCommand) => {

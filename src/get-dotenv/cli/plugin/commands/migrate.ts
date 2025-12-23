@@ -18,39 +18,153 @@ export function registerMigrate(
     .description(
       'Migrate data across versioned steps with optional per-step transforms',
     )
-    .option('--source-table <string>', 'source table name (dotenv-expanded)')
-    .option('--target-table <string>', 'target table name (dotenv-expanded)')
-    .option('--from-version <string>', 'from version (NNN; exclusive)')
-    .option('--to-version <string>', 'to version (NNN; inclusive)')
-    .option('--tables-path <string>', 'tables root (dotenv-expanded)')
-    .option('--token-table <string>', 'token (table) filename without ext')
-    .option(
-      '--token-entity-manager <string>',
-      'token (entityManager) filename without ext',
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--source-table <string>',
+        (_bag, c) => {
+          const v = c.migrate?.sourceTable;
+          return `source table name (dotenv-expanded)${
+            v ? ` (default: ${JSON.stringify(v)})` : ''
+          }`;
+        },
+      ),
     )
-    .option(
-      '--token-transform <string>',
-      'token (transform) filename without ext',
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--target-table <string>',
+        (_bag, c) => {
+          const v = c.migrate?.targetTable;
+          return `target table name (dotenv-expanded)${
+            v ? ` (default: ${JSON.stringify(v)})` : ''
+          }`;
+        },
+      ),
     )
-    .option(
-      '--page-size <number>',
-      'scan page size (default 100)',
-      parsePositiveInt('pageSize'),
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--from-version <string>',
+        (_bag, c) => {
+          const v = c.migrate?.fromVersion;
+          return `from version (NNN; exclusive)${
+            v ? ` (default: ${JSON.stringify(v)})` : ''
+          }`;
+        },
+      ),
     )
-    .option(
-      '--limit <number>',
-      'max outputs (default Infinity)',
-      parseNonNegativeInt('limit'),
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--to-version <string>',
+        (_bag, c) => {
+          const v = c.migrate?.toVersion;
+          return `to version (NNN; inclusive)${
+            v ? ` (default: ${JSON.stringify(v)})` : ''
+          }`;
+        },
+      ),
     )
-    .option(
-      '--transform-concurrency <number>',
-      'transform concurrency (default 1)',
-      parsePositiveInt('transformConcurrency'),
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--tables-path <string>',
+        (_bag, c) => {
+          const p = c.tablesPath;
+          return `tables root (dotenv-expanded)${
+            p ? ` (default: ${JSON.stringify(p)})` : ''
+          }`;
+        },
+      ),
     )
-    .option(
-      '--progress-interval-ms <number>',
-      'progress tick interval ms (default 2000)',
-      parsePositiveInt('progressIntervalMs'),
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--token-table <string>',
+        (_bag, c) => {
+          const t = c.tokens?.table;
+          return `token (table) filename without ext${
+            t ? ` (default: ${JSON.stringify(t)})` : ''
+          }`;
+        },
+      ),
+    )
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--token-entity-manager <string>',
+        (_bag, c) => {
+          const t = c.tokens?.entityManager;
+          return `token (entityManager) filename without ext${
+            t ? ` (default: ${JSON.stringify(t)})` : ''
+          }`;
+        },
+      ),
+    )
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--token-transform <string>',
+        (_bag, c) => {
+          const t = c.tokens?.transform;
+          return `token (transform) filename without ext${
+            t ? ` (default: ${JSON.stringify(t)})` : ''
+          }`;
+        },
+      ),
+    )
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--page-size <number>',
+        (_bag, c) => {
+          const v = c.migrate?.pageSize;
+          return `scan page size${
+            v !== undefined ? ` (default: ${JSON.stringify(v)})` : ''
+          }`;
+        },
+        parsePositiveInt('pageSize'),
+      ),
+    )
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--limit <number>',
+        (_bag, c) => {
+          const v = c.migrate?.limit;
+          return `max outputs${
+            v !== undefined ? ` (default: ${JSON.stringify(v)})` : ''
+          }`;
+        },
+        parseNonNegativeInt('limit'),
+      ),
+    )
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--transform-concurrency <number>',
+        (_bag, c) => {
+          const v = c.migrate?.transformConcurrency;
+          return `transform concurrency${
+            v !== undefined ? ` (default: ${JSON.stringify(v)})` : ''
+          }`;
+        },
+        parsePositiveInt('transformConcurrency'),
+      ),
+    )
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--progress-interval-ms <number>',
+        (_bag, c) => {
+          const v = c.migrate?.progressIntervalMs;
+          return `progress tick interval ms${
+            v !== undefined ? ` (default: ${JSON.stringify(v)})` : ''
+          }`;
+        },
+        parsePositiveInt('progressIntervalMs'),
+      ),
     )
     .option('--force', 'proceed without confirmation')
     .action(async (opts, thisCommand) => {

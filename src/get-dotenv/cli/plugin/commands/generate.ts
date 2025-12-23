@@ -16,33 +16,120 @@ export function registerGenerate(
   group
     .command('generate')
     .description('Compose or refresh tables/NNN/table.yml (comment-preserving)')
-    .option('--version <string>', 'target version (NNN; dotenv-expanded)')
-    .option('--tables-path <string>', 'tables root (dotenv-expanded)')
-    .option('--token-table <string>', 'token (table) filename without ext')
-    .option(
-      '--token-entity-manager <string>',
-      'token (entityManager) filename without ext',
+    .addOption(
+      plugin.createPluginDynamicOption(cli, '--version <string>', (_bag, c) => {
+        const v = c.generate?.version;
+        return `target version (NNN; dotenv-expanded)${
+          v ? ` (default: ${JSON.stringify(v)})` : ''
+        }`;
+      }),
     )
-    .option(
-      '--token-transform <string>',
-      'token (transform) filename without ext',
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--tables-path <string>',
+        (_bag, c) => {
+          const p = c.tablesPath;
+          return `tables root (dotenv-expanded)${
+            p ? ` (default: ${JSON.stringify(p)})` : ''
+          }`;
+        },
+      ),
     )
-    .option(
-      '--overlay-billing-mode <string>',
-      'BillingMode overlay (e.g., PAY_PER_REQUEST)',
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--token-table <string>',
+        (_bag, c) => {
+          const t = c.tokens?.table;
+          return `token (table) filename without ext${
+            t ? ` (default: ${JSON.stringify(t)})` : ''
+          }`;
+        },
+      ),
     )
-    .option(
-      '--overlay-rcu <number>',
-      'ProvisionedThroughput.ReadCapacityUnits',
-      parsePositiveInt('overlayRcu'),
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--token-entity-manager <string>',
+        (_bag, c) => {
+          const t = c.tokens?.entityManager;
+          return `token (entityManager) filename without ext${
+            t ? ` (default: ${JSON.stringify(t)})` : ''
+          }`;
+        },
+      ),
     )
-    .option(
-      '--overlay-wcu <number>',
-      'ProvisionedThroughput.WriteCapacityUnits',
-      parsePositiveInt('overlayWcu'),
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--token-transform <string>',
+        (_bag, c) => {
+          const t = c.tokens?.transform;
+          return `token (transform) filename without ext${
+            t ? ` (default: ${JSON.stringify(t)})` : ''
+          }`;
+        },
+      ),
     )
-    .option('--overlay-table-name <string>', 'TableName overlay (one-off)')
-    .option('--force', 'force compose even if file exists (else refresh)')
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--overlay-billing-mode <string>',
+        (_bag, c) => {
+          const v = c.generate?.overlays?.billingMode;
+          return `BillingMode overlay (e.g., PAY_PER_REQUEST)${
+            v ? ` (default: ${JSON.stringify(v)})` : ''
+          }`;
+        },
+      ),
+    )
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--overlay-rcu <number>',
+        (_bag, c) => {
+          const v = c.generate?.overlays?.readCapacityUnits;
+          return `ProvisionedThroughput.ReadCapacityUnits${
+            v !== undefined ? ` (default: ${JSON.stringify(v)})` : ''
+          }`;
+        },
+        parsePositiveInt('overlayRcu'),
+      ),
+    )
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--overlay-wcu <number>',
+        (_bag, c) => {
+          const v = c.generate?.overlays?.writeCapacityUnits;
+          return `ProvisionedThroughput.WriteCapacityUnits${
+            v !== undefined ? ` (default: ${JSON.stringify(v)})` : ''
+          }`;
+        },
+        parsePositiveInt('overlayWcu'),
+      ),
+    )
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--overlay-table-name <string>',
+        (_bag, c) => {
+          const v = c.generate?.overlays?.tableName;
+          return `TableName overlay (one-off)${
+            v ? ` (default: ${JSON.stringify(v)})` : ''
+          }`;
+        },
+      ),
+    )
+    .addOption(
+      plugin.createPluginDynamicOption(cli, '--force', (_bag, c) => {
+        const v = c.generate?.force;
+        return `force compose even if file exists (else refresh)${
+          v !== undefined ? ` (default: ${JSON.stringify(v)})` : ''
+        }`;
+      }),
+    )
     .action(async (opts, thisCommand) => {
       void thisCommand;
       const ctx = cli.getCtx();

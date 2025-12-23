@@ -13,16 +13,61 @@ export function registerValidate(
   group
     .command('validate')
     .description('Validate generated YAML sections vs resolved EntityManager')
-    .option('--version <string>', 'target version (NNN; dotenv-expanded)')
-    .option('--tables-path <string>', 'tables root (dotenv-expanded)')
-    .option('--token-table <string>', 'token (table) filename without ext')
-    .option(
-      '--token-entity-manager <string>',
-      'token (entityManager) filename without ext',
+    .addOption(
+      plugin.createPluginDynamicOption(cli, '--version <string>', (_bag, c) => {
+        const v = c.validate?.version;
+        return `target version (NNN; dotenv-expanded)${
+          v ? ` (default: ${JSON.stringify(v)})` : ''
+        }`;
+      }),
     )
-    .option(
-      '--token-transform <string>',
-      'token (transform) filename without ext',
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--tables-path <string>',
+        (_bag, c) => {
+          const p = c.tablesPath;
+          return `tables root (dotenv-expanded)${
+            p ? ` (default: ${JSON.stringify(p)})` : ''
+          }`;
+        },
+      ),
+    )
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--token-table <string>',
+        (_bag, c) => {
+          const t = c.tokens?.table;
+          return `token (table) filename without ext${
+            t ? ` (default: ${JSON.stringify(t)})` : ''
+          }`;
+        },
+      ),
+    )
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--token-entity-manager <string>',
+        (_bag, c) => {
+          const t = c.tokens?.entityManager;
+          return `token (entityManager) filename without ext${
+            t ? ` (default: ${JSON.stringify(t)})` : ''
+          }`;
+        },
+      ),
+    )
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--token-transform <string>',
+        (_bag, c) => {
+          const t = c.tokens?.transform;
+          return `token (transform) filename without ext${
+            t ? ` (default: ${JSON.stringify(t)})` : ''
+          }`;
+        },
+      ),
     )
     .action(async (opts, thisCommand) => {
       void thisCommand;

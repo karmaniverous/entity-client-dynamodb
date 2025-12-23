@@ -17,7 +17,18 @@ export function registerPurge(
     .description(
       'Purge all items from a DynamoDB table. Use --force to skip confirmation.',
     )
-    .option('--table-name <string>', 'table name (dotenv-expanded)')
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--table-name <string>',
+        (_bag, c) => {
+          const t = c.purge?.tableName;
+          return `table name (dotenv-expanded)${
+            t ? ` (default: ${JSON.stringify(t)})` : ''
+          }`;
+        },
+      ),
+    )
     .option('--version <string>', 'EM version for client wiring (optional)')
     .option('--force', 'proceed without confirmation')
     .action(async (opts, thisCommand) => {

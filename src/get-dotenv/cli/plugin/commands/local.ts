@@ -22,10 +22,18 @@ export function registerLocal(
 
   local
     .command('start')
-    .option(
-      '--port <number>',
-      'override port for local endpoint',
-      parsePositiveInt('port'),
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--port <number>',
+        (_bag, c) => {
+          const p = c.local?.port;
+          return `override port for local endpoint${
+            p !== undefined ? ` (default: ${JSON.stringify(p)})` : ''
+          }`;
+        },
+        parsePositiveInt('port'),
+      ),
     )
     .action(async (opts, thisCommand) => {
       try {
@@ -62,10 +70,18 @@ export function registerLocal(
 
   local
     .command('status')
-    .option(
-      '--port <number>',
-      'override port for local endpoint',
-      parsePositiveInt('port'),
+    .addOption(
+      plugin.createPluginDynamicOption(
+        cli,
+        '--port <number>',
+        (_bag, c) => {
+          const p = c.local?.port;
+          return `override port for local endpoint${
+            p !== undefined ? ` (default: ${JSON.stringify(p)})` : ''
+          }`;
+        },
+        parsePositiveInt('port'),
+      ),
     )
     .action(async (opts, thisCommand) => {
       try {
