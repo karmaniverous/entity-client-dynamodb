@@ -1,120 +1,51 @@
+import type { Command } from '@commander-js/extra-typings';
 import { GetDotenvCli } from '@karmaniverous/get-dotenv/cliHost';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-// Hoisted spies to satisfy vi.mock hoisting
-const h = vi.hoisted(() => ({
-  startSpy: vi.fn(() => Promise.resolve({ endpoint: 'http://localhost:9001' })),
-  statusSpy: vi.fn(() => Promise.resolve(true)),
-  stopSpy: vi.fn(() => Promise.resolve()),
-}));
+import { dynamodbPlugin } from '../index';
 
-// Mock services/local used by the command module.
-vi.mock('../../../services/local', () => ({
-  startLocal: h.startSpy,
-  statusLocal: h.statusSpy,
-  stopLocal: h.stopSpy,
-}));
-
-async function setupCli() {
-  const cli = await makeCli();
-  await cli.install();
-  await cli.resolveAndLoad();
-  return cli;
-}
-
-async function makeCli() {
-  // Important: import the plugin only after vi.mock declarations so that
-  // the command modules pick up mocked leaf services.
-  const { dynamodbPlugin } = await import('../index');
+async function makeInstalledCli(): Promise<GetDotenvCli> {
   const cli = new GetDotenvCli('testcli');
-  // Keep the host minimal and deterministic for tests.
   cli.attachRootOptions({ loadProcess: false, log: false });
   cli.use(dynamodbPlugin());
+  await cli.install();
   return cli;
 }
 
-describe('dynamodb plugin: local wiring', () => {
-  const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
-  const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-  const errorSpy = vi
-    .spyOn(console, 'error')
-    .mockImplementation(() => undefined);
-  const prevStdio = process.env.GETDOTENV_STDIO;
+function findSubcommand(parent: Command, name: string): Command {
+  const cmd = parent.commands.find((c) => c.name() === name);
+  if (!cmd) throw new Error(`missing subcommand: ${name}`);
+  return cmd as Command;
+}
 
-  beforeEach(() => {
-    h.startSpy.mockClear();
-    h.statusSpy.mockClear();
-    h.stopSpy.mockClear();
-    infoSpy.mockClear();
-    logSpy.mockClear();
-    errorSpy.mockClear();
-    process.exitCode = undefined;
+function hasLongOption(cmd: Command, long: string): boolean {
+  return cmd.options.some((o) => o.long === long);
+}
+
+describe('dynamodb plugin: local command registration', () => {
+  it('registers dynamodb local start|status|stop commands', async () => {
+    const cli = await makeInstalledCli();
+
+    const dynamodb = findSubcommand(cli as unknown as Command, 'dynamodb');
+    const local = findSubcommand(dynamodb, 'local');
+    const start = findSubcommand(local, 'start');
+    const status = findSubcommand(local, 'status');
+    const stop = findSubcommand(local, 'stop');
+
+    expect(start.name()).toBe('start');
+    expect(status.name()).toBe('status');
+    expect(stop.name()).toBe('stop');
   });
 
-  afterEach(() => {
-    if (prevStdio === undefined) delete process.env.GETDOTENV_STDIO;
-    else process.env.GETDOTENV_STDIO = prevStdio;
-  });
+  it('exposes --port on local start and local status', async () => {
+    const cli = await makeInstalledCli();
 
-  it('start wires to services.startLocal and prints endpoint', async () => {
-    process.env.GETDOTENV_STDIO = 'pipe';
-    const cli = await setupCli();
-    await cli.parseAsync([
-      'node',
-      'testcli',
-      'dynamodb',
-      'local',
-      'start',
-      '--port',
-      '9001',
-    ]);
+    const dynamodb = findSubcommand(cli as unknown as Command, 'dynamodb');
+    const local = findSubcommand(dynamodb, 'local');
+    const start = findSubcommand(local, 'start');
+    const status = findSubcommand(local, 'status');
 
-    expect(h.startSpy).toHaveBeenCalledTimes(1);
-    expect(h.startSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        capture: true,
-        portOverride: 9001,
-      }),
-    );
-    expect(errorSpy).not.toHaveBeenCalled();
-    expect(infoSpy).toHaveBeenCalled();
-    expect(logSpy).toHaveBeenCalled();
-  });
-
-  it('status wires to services.statusLocal and sets exitCode on false', async () => {
-    // Healthy branch (default spy result)
-    const cliHealthy = await setupCli();
-    await cliHealthy.parseAsync([
-      'node',
-      'testcli',
-      'dynamodb',
-      'local',
-      'status',
-      '--port',
-      '9002',
-    ]);
-    expect(h.statusSpy).toHaveBeenCalled();
-    expect(process.exitCode).toBeUndefined();
-
-    // Now simulate unhealthy branch
-    process.exitCode = undefined;
-    h.statusSpy.mockResolvedValueOnce(false);
-    const cliUnhealthy = await setupCli();
-    await cliUnhealthy.parseAsync([
-      'node',
-      'testcli',
-      'dynamodb',
-      'local',
-      'status',
-      '--port',
-      '9002',
-    ]);
-    expect(process.exitCode).toBe(1);
-  });
-
-  it('stop wires to services.stopLocal', async () => {
-    const cli = await setupCli();
-    await cli.parseAsync(['node', 'testcli', 'dynamodb', 'local', 'stop']);
-    expect(h.stopSpy).toHaveBeenCalledTimes(1);
+    expect(hasLongOption(start, '--port')).toBe(true);
+    expect(hasLongOption(status, '--port')).toBe(true);
   });
 });

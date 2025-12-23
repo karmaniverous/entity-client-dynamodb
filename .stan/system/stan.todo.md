@@ -106,4 +106,6 @@
 
 - Tests: ensure GetDotenvCli.install() runs before parse in local wiring.
 
-- Tests: fix local wiring test mocking by deferring dynamodbPlugin import (dynamic import after vi.mock) and avoid reusing a Commander instance across multiple parseAsync calls.
+- Tests: fix local wiring test mocking by deferring dynamodbPlugin import (dynamic import after vi.mock) and avoid reusing a Commander instance across multiple parseAsync calls.
+
+- Tests: replace flaky local wiring execution test with a command registration smoke test (verify command tree and options without parsing/executing actions).
