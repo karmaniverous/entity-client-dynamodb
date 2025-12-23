@@ -2,40 +2,40 @@ stan-core:
   stanPath: .stan
   excludes:
     - CHANGELOG.md
-    - docs
+    - docs/**
     - package-lock.json
   includes:
     - .stan/imports/**
-  imports:
-    # entity-manager:
-    #   - ../entity-manager/.stan/interop/entity-client-dynamodb/**
-    #   - ../entity-manager/dist/index.d.ts
-    #   - ../entity-manager/README.md
-    #   - ../entity-manager-demo/.stan/interop/entity-client-dynamodb/**
-    #   - ../entity-manager-demo/dist/index.d.ts
-    #   - ../entity-manager-demo/README.md
-    # entity-tools:
-    #   - ../entity-tools/.stan/interop/entity-client-dynamodb/**
-    #   - ../entity-tools/dist/index.d.ts
-    #   - ../entity-tools/README.md
-    '@karmaniverous/get-dotenv':
-      - ../get-dotenv/.stan/interop/entity-client-dynamodb/**
-      - ../get-dotenv/guides/authoring/**
-      - ../get-dotenv/guides/shell.md
-      - ../get-dotenv/guides/shipped/aws.md
-      - node_modules/@karmaniverous/get-dotenv/dist/index.d.ts
-      - node_modules/@karmaniverous/get-dotenv/dist/cliHost.d.ts
-      - node_modules/@karmaniverous/get-dotenv/dist/plugins-aws.d.ts
-    # '@karmaniverous/get-dotenv/src/plugins/aws':
-    #   - ../get-dotenv/src/plugins/aws/**/!(*.test).ts
-    # '@commander-js/extra-typings':
-    #   - node_modules/@commander-js/extra-typings/index.d.ts
-    # smoz:
-    #   - ../smoz/.stan/interop/entity-client-dynamodb/**
+  # imports:
+  # entity-manager:
+  #   - ../entity-manager/.stan/interop/entity-client-dynamodb/**
+  #   - ../entity-manager/dist/index.d.ts
+  #   - ../entity-manager/README.md
+  #   - ../entity-manager-demo/.stan/interop/entity-client-dynamodb/**
+  #   - ../entity-manager-demo/dist/index.d.ts
+  #   - ../entity-manager-demo/README.md
+  # entity-tools:
+  #   - ../entity-tools/.stan/interop/entity-client-dynamodb/**
+  #   - ../entity-tools/dist/index.d.ts
+  #   - ../entity-tools/README.md
+  # '@karmaniverous/get-dotenv':
+  #   - ../get-dotenv/.stan/interop/entity-client-dynamodb/**
+  #   - ../get-dotenv/guides/authoring/**
+  #   - ../get-dotenv/guides/shell.md
+  #   - ../get-dotenv/guides/shipped/aws.md
+  #   - node_modules/@karmaniverous/get-dotenv/dist/index.d.ts
+  #   - node_modules/@karmaniverous/get-dotenv/dist/cliHost.d.ts
+  #   - node_modules/@karmaniverous/get-dotenv/dist/plugins-aws.d.ts
+  # '@karmaniverous/get-dotenv/src/plugins/aws':
+  #   - ../get-dotenv/src/plugins/aws/**/!(*.test).ts
+  # '@commander-js/extra-typings':
+  #   - node_modules/@commander-js/extra-typings/index.d.ts
+  # smoz:
+  #   - ../smoz/.stan/interop/entity-client-dynamodb/**
 stan-cli:
   cliDefaults:
     run:
-      facets: true
+      facets: false
       plan: false
       sequential: true
   patchOpenCommand: code -g {file}
