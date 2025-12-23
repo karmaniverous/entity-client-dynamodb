@@ -210,11 +210,12 @@ Goal
 
 Authoritative requirements
 
-- Prefer integration-style tests that:
-  - construct a real get-dotenv CLI host (`createCli` or `GetDotenvCli`),
-  - mount the dynamodb plugin using `.use(dynamodbPlugin())`,
-  - run commands by parsing argv (Commander calls action handlers),
-  - mock only leaf modules that perform IO or AWS calls (services, EM loader, child-process executors).
+- Prefer a two-layer approach for test confidence while avoiding procedurally fragile “execute the action handler” tests:
+  - Unit tests for pure logic (services + option resolvers) are the primary confidence layer.
+  - CLI adapter coverage uses command registration smoke tests:
+    - construct a real get-dotenv CLI host (`createCli` or `GetDotenvCli`),
+    - mount the dynamodb plugin using `.use(dynamodbPlugin())`,
+    - run `install()` and assert the expected command tree and options exist (no `parseAsync`, no `.action()` execution).
 - Avoid FakeGroup/hand-rolled stubs that call action handlers directly with ad-hoc argument shapes; those tests can mask real Commander arity and typing issues.
 
 Mocking guidance (hard rule)

@@ -16,10 +16,10 @@
     - Do not claim defaults for env-derived values (e.g., `TABLE_NAME`, derived endpoints).
 
 - DynamoDB get-dotenv plugin: fixtures-first tests (Commander + host)
-  - Replace FakeGroup wiring tests with integration-style tests that run real Commander dispatch through the get-dotenv host:
+  - Replace FakeGroup wiring tests with registration smoke tests using a real GetDotenvCli host:
     - Construct a real host (e.g., `createCli` / `GetDotenvCli`) and mount `dynamodbPlugin()`.
-    - Execute with argv and assert: resolved service calls, console output, and `process.exitCode` behavior.
-    - Mock only leaf seams (services/local, services/create/delete/generate/migrate/validate, emLoader).
+    - Run `install()` and assert command tree + key options exist (no action execution).
+    - Keep behavior confidence in services/resolvers unit tests (no module mocking required).
   - Avoid partial mocks of `@karmaniverous/get-dotenv/cliHost`; if mocking is unavoidable, spread `vi.importActual` and override only specific exports.
   - Add a lightweight parent fixture plugin when we need to validate realized mount path behavior (e.g., simulating `aws/dynamodb`) without running the real aws plugin.
 
@@ -108,4 +108,6 @@
 
 - Tests: fix local wiring test mocking by deferring dynamodbPlugin import (dynamic import after vi.mock) and avoid reusing a Commander instance across multiple parseAsync calls.
 
-- Tests: replace flaky local wiring execution test with a command registration smoke test (verify command tree and options without parsing/executing actions).
+- Tests: replace flaky local wiring execution test with a command registration smoke test (verify command tree and options without parsing/executing actions).
+
+- Tests: migrate create/delete/migrate/purge/validate wiring tests from FakeGroup to registration smoke tests; add shared commandTestUtils helpers.
