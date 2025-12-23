@@ -8,6 +8,10 @@
     - Replace `Record<string, unknown>` flags with Commander-inferred `opts` types (no casts at call sites).
     - Reject invalid numerics at parse time using `InvalidArgumentError` parsers (maxSeconds, port, pageSize, limit, transformConcurrency, progressIntervalMs, RCU/WCU, etc).
     - Remove `cli.getCtx()?.dotenv` optional chaining; ctx is required at action time.
+    - Keep action handler option types inference-friendly despite `.addOption(plugin.createPluginDynamicOption(...))`:
+      - Minimize casts; normalize only where unavoidable (e.g., `Number(opts.port)` at service boundary).
+      - Ensure action handlers follow the canonical order (bag/capture -> ctx -> plugin.readConfig -> resolvers -> services -> exitCode).
+    - Add remaining dynamic help descriptions only where defaults are config-derived (avoid env-derived/computed “defaults” claims).
   - Introduce a shared, typed plugin instance seam (aws-pattern):
     - Add a single exported alias (e.g., `DynamodbPluginInstance`) which threads `DynamodbPluginConfig` into `PluginWithInstanceHelpers`, and use it in every `register*` signature.
     - Eliminate brittle `PluginReader` intersection typing that can collapse to `unknown`.
@@ -19,6 +23,9 @@
     - Keep behavior confidence in services/resolvers unit tests (no module mocking required).
   - Avoid partial mocks of `@karmaniverous/get-dotenv/cliHost`; if mocking is unavoidable, spread `vi.importActual` and override only specific exports.
   - Add a lightweight parent fixture plugin when we need to validate realized mount path behavior (e.g., simulating `aws/dynamodb`) without running the real aws plugin.
+
+- DynamoDB plugin parsers: lock parse-time rejection semantics
+  - Add unit tests for `parseFiniteNumber`, `parsePositiveInt`, and `parseNonNegativeInt` to pin invalid input rejection semantics independently of Commander.
 
 - Cleanup after typed CLI + fixtures land
   - Re-run and fix: `npm run typecheck`, `npm run lint`, `npm run test`.
