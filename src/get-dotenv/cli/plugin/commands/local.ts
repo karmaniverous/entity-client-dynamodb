@@ -50,7 +50,9 @@ export function registerLocal(
           envRef,
           shell,
           capture,
-          ...(opts.port !== undefined ? { portOverride: opts.port } : {}),
+          ...(opts.port !== undefined
+            ? { portOverride: Number(opts.port) }
+            : {}),
         });
 
         const { endpoint } = out;
@@ -97,7 +99,9 @@ export function registerLocal(
           envRef,
           shell,
           capture,
-          ...(opts.port !== undefined ? { portOverride: opts.port } : {}),
+          ...(opts.port !== undefined
+            ? { portOverride: Number(opts.port) }
+            : {}),
         });
         if (!ok) {
           process.exitCode = 1;

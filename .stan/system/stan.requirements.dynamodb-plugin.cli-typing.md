@@ -181,6 +181,12 @@ Recommended usage in dynamodb plugin
   - table names that are typically env-driven (`TABLE_NAME`, `DYNAMODB_TABLE`)
   - values derived by computation at runtime (e.g., “default endpoint derived from DYNAMODB_LOCAL_PORT”), unless those are explicitly config defaults.
 
+Commander typing caveat (dynamic options)
+
+- Using `plugin.createPluginDynamicOption(...)` and attaching it via `.addOption(...)` does not currently refine the inferred action `opts` type in `@commander-js/extra-typings`, even when a numeric parser is provided.
+- Runtime behavior still applies the parser, but TypeScript may continue to type `opts.someNumber` as `string | undefined`.
+- When passing such values into strictly typed services (e.g., `portOverride?: number`), adapters MUST normalize (e.g., `Number(opts.port)`) after checking presence.
+
 ## Canonical action wiring (aws-pattern; hard rule)
 
 Authoritative structure

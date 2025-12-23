@@ -109,4 +109,6 @@
 
 - Tests: migrate create/delete/migrate/purge/validate wiring tests from FakeGroup to registration smoke tests; add shared commandTestUtils helpers.
 
-- CLI: add aws-pattern dynamic option descriptions for config-derived defaults (layout/tokens, local.port, generate overlays, create/delete waiters, migrate defaults).
+- CLI: add aws-pattern dynamic option descriptions for config-derived defaults (layout/tokens, local.port, generate overlays, create/delete waiters, migrate defaults).
+
+- Typecheck: coerce local command `opts.port` to number when passing `portOverride` into services to satisfy strict service typing alongside dynamic option descriptions.
