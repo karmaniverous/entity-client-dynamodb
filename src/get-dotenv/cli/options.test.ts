@@ -22,20 +22,22 @@ describe('dynamodb CLI option resolvers', () => {
     expect(out.options.tableNameOverride).toEqual('FromEnv');
   });
 
-  it('resolveGenerateAtVersion should merge overlays and expand strings', () => {
+  it('resolveGenerateAtVersion should merge tableProperties and expand strings', () => {
     // Config is assumed to be interpolated by the host already.
     const cfg: DynamodbPluginConfig = {
       tablesPath: './tables',
       generate: {
         version: '001',
-        overlays: {
-          billingMode: 'PAY_PER_REQUEST',
+        tableProperties: {
+          billingMode: 'PROVISIONED',
           tableName: 'CfgTable',
         },
+        clean: false,
       },
     };
     const flags = {
-      overlays: {
+      clean: true,
+      tableProperties: {
         readCapacityUnits: '5',
         writeCapacityUnits: '6',
         tableName: '$NAME',
@@ -45,12 +47,11 @@ describe('dynamodb CLI option resolvers', () => {
     const out = resolveGenerateAtVersion(flags, cfg, ref);
     expect(out.version).toEqual('001');
     expect(out.cfg.tablesPath).toEqual('./tables');
-    expect(out.options.overlays?.BillingMode).toEqual('PAY_PER_REQUEST');
-    expect(out.options.overlays?.TableName).toEqual('MyTable');
-    expect(out.options.overlays?.ProvisionedThroughput).toEqual({
-      ReadCapacityUnits: 5,
-      WriteCapacityUnits: 6,
-    });
+    expect(out.options.clean).toEqual(true);
+    expect(out.options.tableProperties?.billingMode).toEqual('PROVISIONED');
+    expect(out.options.tableProperties?.tableName).toEqual('MyTable');
+    expect(out.options.tableProperties?.readCapacityUnits).toEqual('5');
+    expect(out.options.tableProperties?.writeCapacityUnits).toEqual('6');
   });
 
   it('resolveValidateAtVersion should use flags>config precedence for version', () => {

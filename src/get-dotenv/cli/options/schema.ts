@@ -11,6 +11,7 @@ import { z } from '@karmaniverous/get-dotenv/cliHost';
 export const DynamodbPluginConfigSchema = z
   .object({
     tablesPath: z.string().optional(),
+    minTableVersionWidth: z.union([z.number(), z.string()]).optional(),
     tokens: z
       .object({
         table: z.string().optional(),
@@ -30,7 +31,7 @@ export const DynamodbPluginConfigSchema = z
     generate: z
       .object({
         version: z.string().optional(),
-        overlays: z
+        tableProperties: z
           .object({
             billingMode: z.string().optional(),
             readCapacityUnits: z.union([z.number(), z.string()]).optional(),
@@ -38,7 +39,7 @@ export const DynamodbPluginConfigSchema = z
             tableName: z.string().optional(),
           })
           .optional(),
-        force: z.boolean().optional(),
+        clean: z.boolean().optional(),
       })
       .optional(),
     validate: z.object({ version: z.string().optional() }).optional(),

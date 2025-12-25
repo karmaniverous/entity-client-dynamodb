@@ -58,6 +58,17 @@ export function resolveMigrate(
   const targetTableName =
     dotenvExpand(flags.targetTable, envRef) ?? config?.migrate?.targetTable;
 
+  if (!fromVersion.trim()) {
+    throw new Error(
+      'migrate fromVersion is required (set --from-version or configure plugins["aws/dynamodb"].migrate.fromVersion)',
+    );
+  }
+  if (!toVersion.trim()) {
+    throw new Error(
+      'migrate toVersion is required (set --to-version or configure plugins["aws/dynamodb"].migrate.toVersion)',
+    );
+  }
+
   const pageSizeRaw = firstDefined(flags.pageSize, config?.migrate?.pageSize);
   const pageSizeExpanded =
     typeof pageSizeRaw === 'string'

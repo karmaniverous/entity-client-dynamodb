@@ -1,7 +1,7 @@
 import { dotenvExpand, interpolateDeep } from '@karmaniverous/get-dotenv';
 
 import type { VersionedLayoutConfig } from '../../layout';
-import { firstDefined, num } from './coerce';
+import { firstDefined } from './coerce';
 import { resolveLayoutConfig } from './layout';
 import type { DynamodbPluginConfig, EnvRef, GenerateFlags } from './types';
 
@@ -26,15 +26,13 @@ export function resolveGenerateAtVersion(
   version: string;
   cfg: VersionedLayoutConfig;
   options: {
-    overlays?: {
-      BillingMode?: string;
-      ProvisionedThroughput?: {
-        ReadCapacityUnits: number;
-        WriteCapacityUnits: number;
-      };
-      TableName?: string;
+    clean?: boolean;
+    tableProperties?: {
+      billingMode?: string;
+      readCapacityUnits?: number | string;
+      writeCapacityUnits?: number | string;
+      tableName?: string;
     };
-    force?: boolean;
   };
 } {
   const cfg = resolveLayoutConfig({}, config, ref);
@@ -42,38 +40,26 @@ export function resolveGenerateAtVersion(
   // Host interpolates config strings once; expand flags only.
   const version =
     dotenvExpand(flags.version, envRef) ?? config?.generate?.version ?? '';
+  if (!version.trim()) {
+    throw new Error(
+      'generate version is required (set --version or configure plugins["aws/dynamodb"].generate.version)',
+    );
+  }
 
-  const overlaysExpandedFlags = flags.overlays
-    ? interpolateDeep(flags.overlays, envRef)
+  const flagsTablePropsExpanded = flags.tableProperties
+    ? interpolateDeep(flags.tableProperties, envRef)
     : undefined;
-  const overlaysMerged = {
-    ...(config?.generate?.overlays ?? {}),
-    ...(overlaysExpandedFlags ?? {}),
+  const tableProperties = {
+    ...(config?.generate?.tableProperties ?? {}),
+    ...(flagsTablePropsExpanded ?? {}),
   };
 
-  const BillingMode = overlaysMerged.billingMode;
-  const R = num(overlaysMerged.readCapacityUnits);
-  const W = num(overlaysMerged.writeCapacityUnits);
-  const TableName = overlaysMerged.tableName;
+  const clean = firstDefined(flags.clean, config?.generate?.clean);
+
   const options = {
-    ...(BillingMode || R !== undefined || W !== undefined || TableName
-      ? {
-          overlays: {
-            ...(BillingMode ? { BillingMode } : {}),
-            ...(R !== undefined && W !== undefined
-              ? {
-                  ProvisionedThroughput: {
-                    ReadCapacityUnits: R,
-                    WriteCapacityUnits: W,
-                  },
-                }
-              : {}),
-            ...(TableName ? { TableName } : {}),
-          },
-        }
-      : {}),
-    ...(firstDefined(flags.force, config?.generate?.force)
-      ? { force: true }
+    ...(clean ? { clean: true } : {}),
+    ...(Object.keys(tableProperties).length
+      ? { tableProperties: tableProperties as never }
       : {}),
   };
   return { version, cfg, options };

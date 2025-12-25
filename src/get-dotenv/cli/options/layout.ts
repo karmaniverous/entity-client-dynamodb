@@ -1,6 +1,7 @@
 import { dotenvExpand, interpolateDeep } from '@karmaniverous/get-dotenv';
 
 import type { VersionedLayoutConfig } from '../../layout';
+import { num } from './coerce';
 import type { DynamodbPluginConfig, EnvRef } from './types';
 
 /** Build VersionedLayoutConfig from flags+config with dotenv expansion. */
@@ -28,6 +29,15 @@ export function resolveLayoutConfig(
   const tablesPath =
     dotenvExpand(flags.tablesPath, envRef) ?? config?.tablesPath;
 
+  const minWidthRaw = config?.minTableVersionWidth;
+  const minWidth = num(minWidthRaw);
+  if (
+    minWidth !== undefined &&
+    (!Number.isInteger(minWidth) || minWidth <= 0)
+  ) {
+    throw new Error('minTableVersionWidth must be a positive integer');
+  }
+
   const tokensFromFlags = flags.tokens
     ? (interpolateDeep(flags.tokens, envRef) as DynamodbPluginConfig['tokens'])
     : undefined;
@@ -41,6 +51,7 @@ export function resolveLayoutConfig(
       : undefined;
   return {
     ...(tablesPath ? { tablesPath } : {}),
+    ...(minWidth !== undefined ? { minTableVersionWidth: minWidth } : {}),
     ...(tokens ? { tokens } : {}),
   };
 }

@@ -4,6 +4,7 @@ import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
 import { resolveAndLoadEntityManager } from '../../../emLoader';
 import { createTableAtVersion } from '../../../services/create';
 import { resolveCreateAtVersion, resolveLayoutConfig } from '../../options';
+import { resolveManagedTableProperties } from '../../tableProperties';
 import { buildEntityClient } from '../helpers';
 import { parsePositiveInt } from '../parsers';
 import type { DynamodbPluginInstance } from '../pluginInstance';
@@ -137,6 +138,10 @@ export function registerCreate(
         pluginCfg,
         envRef,
       );
+      const managed = resolveManagedTableProperties(
+        pluginCfg.generate?.tableProperties,
+      );
+      options.managedTableProperties = managed;
       const em = await resolveAndLoadEntityManager(version, cfg);
       const clientTable =
         options.tableNameOverride ??

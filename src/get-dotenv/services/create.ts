@@ -31,6 +31,7 @@ import {
   type GeneratedSections,
   refreshGeneratedSectionsInPlace,
 } from '../tableDefinition';
+import type { ManagedTablePropertiesInfo } from '../tableProperties';
 import { validateGeneratedSections } from '../validate';
 
 export interface CreateOptions {
@@ -39,6 +40,8 @@ export interface CreateOptions {
   waiter?: WaiterConfig; // default { maxWaitTime: 60 }
   /** Allow creating a table at a non-latest version (unsafe by default). */
   allowNonLatest?: boolean;
+  /** Managed table properties to apply/validate (read from plugin config). */
+  managedTableProperties?: ManagedTablePropertiesInfo;
   /** One-off TableName override (does not persist to YAML). */
   tableNameOverride?: string;
   /** Force create on drift (skip validation error). Prefer refreshGenerated when possible. */
@@ -96,9 +99,17 @@ export async function createTableAtVersion<C extends BaseConfigMap>(
 
   if (refresh) {
     const generated: GeneratedSections = computeGeneratedSections(em);
-    await refreshGeneratedSectionsInPlace(abs, generated);
+    await refreshGeneratedSectionsInPlace(
+      abs,
+      generated,
+      options?.managedTableProperties,
+    );
   } else if (validate) {
-    const { equal, diffs } = await validateGeneratedSections(abs, em);
+    const { equal, diffs } = await validateGeneratedSections(
+      abs,
+      em,
+      options?.managedTableProperties,
+    );
     if (!equal && !options?.force) {
       const details = diffs.map((d) => `- ${d.key}`).join('\n');
       throw new Error(

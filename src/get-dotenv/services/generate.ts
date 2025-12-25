@@ -2,8 +2,8 @@
  * Generate/refresh table.yml for a version (comment-preserving).
  *
  * Requirements addressed:
- * - Compose a new file from root baseline + generated nodes, or
- * - Refresh an existing file by replacing only generated nodes.
+ * - Default: refresh existing file by replacing only generated nodes and applying managed table properties.
+ * - `clean`: recompose from baseline + generated nodes + managed table properties.
  */
 
 import { promises as fs } from 'node:fs';
@@ -23,15 +23,16 @@ import {
 import {
   composeNewTableYaml,
   computeGeneratedSections,
-  type OverlayOptions,
   refreshGeneratedSectionsInPlace,
 } from '../tableDefinition';
+import type { TablePropertiesConfig } from '../tableProperties';
+import { resolveManagedTableProperties } from '../tableProperties';
 
 export interface GenerateOptions {
-  /** Overlays for initial composition (optional; ignored on refresh unless caller requests). */
-  overlays?: OverlayOptions;
-  /** When true, refresh even if the file exists (replacing only generated nodes). */
-  force?: boolean;
+  /** When true, recompose from baseline template + generated + managed properties. */
+  clean?: boolean;
+  /** Managed table properties (non-generated keys) to apply deterministically when provided. */
+  tableProperties?: TablePropertiesConfig;
 }
 
 /**
@@ -40,7 +41,7 @@ export interface GenerateOptions {
  * @param em - EntityManager for the target version (or fallback EM).
  * @param version - Version token (NNN).
  * @param cfg - Versioned layout config/tokens.
- * @param options - Generate options (overlays, force).
+ * @param options - Generate options (clean, tableProperties).
  */
 export async function generateTableDefinitionAtVersion<C extends BaseConfigMap>(
   em: EntityManager<C>,
@@ -59,19 +60,22 @@ export async function generateTableDefinitionAtVersion<C extends BaseConfigMap>(
 
   const generated = computeGeneratedSections(em);
   const exists = await fileExists(tableFile);
+  const managed = resolveManagedTableProperties(options?.tableProperties);
+  const clean = options?.clean === true;
 
-  if (exists && !options?.force) {
+  if (exists && !clean) {
     // Refresh in place: replace only generated nodes; preserve comments/other properties.
-    await refreshGeneratedSectionsInPlace(tableFile, generated);
+    await refreshGeneratedSectionsInPlace(tableFile, generated, managed);
     return { path: tableFile, refreshed: true };
   }
 
-  // Compose a new file (from baselineRoot if present) + generated nodes + overlays
+  // Compose a new file (from baselineRoot if present) + generated nodes + managed properties
   await composeNewTableYaml(
     tableFile,
     baselineRootYaml,
     generated,
-    options?.overlays,
+    undefined,
+    managed,
   );
   return { path: tableFile, refreshed: false };
 }

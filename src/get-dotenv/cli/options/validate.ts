@@ -27,5 +27,10 @@ export function resolveValidateAtVersion(
   const envRef = { ...process.env, ...ref };
   const version =
     dotenvExpand(flags.version, envRef) ?? config?.validate?.version ?? '';
+  if (!version.trim()) {
+    throw new Error(
+      'validate version is required (set --version or configure plugins["aws/dynamodb"].validate.version)',
+    );
+  }
   return { version, cfg };
 }

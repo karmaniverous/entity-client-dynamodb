@@ -51,6 +51,11 @@ export function resolveCreateAtVersion(
   // Host interpolates config strings once; expand flags only.
   const version =
     dotenvExpand(flags.version, envRef) ?? config?.create?.version ?? '';
+  if (!version.trim()) {
+    throw new Error(
+      'create version is required (set --version or configure plugins["aws/dynamodb"].create.version)',
+    );
+  }
   const tableNameOverride =
     dotenvExpand(flags.tableNameOverride, envRef) ??
     config?.create?.tableNameOverride;

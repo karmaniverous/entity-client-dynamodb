@@ -3,6 +3,7 @@ import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
 
 import { validateTableDefinitionAtVersion } from '../../../services/validateTable';
 import { resolveLayoutConfig, resolveValidateAtVersion } from '../../options';
+import { resolveManagedTableProperties } from '../../tableProperties';
 import type { DynamodbPluginInstance } from '../pluginInstance';
 
 export function registerValidate(
@@ -91,7 +92,14 @@ export function registerValidate(
         pluginCfg,
         envRef,
       );
-      const result = await validateTableDefinitionAtVersion(version, cfg);
+      const managed = resolveManagedTableProperties(
+        pluginCfg.generate?.tableProperties,
+      );
+      const result = await validateTableDefinitionAtVersion(
+        version,
+        cfg,
+        managed,
+      );
       console.info(
         result.equal
           ? 'dynamodb validate: OK (no drift)'

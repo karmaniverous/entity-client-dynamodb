@@ -5,8 +5,8 @@ export type { DynamodbPluginConfig } from './schema';
 // Flag shapes (re-exported from each resolver module too)
 export interface GenerateFlags {
   version?: string;
-  force?: boolean;
-  overlays?: {
+  clean?: boolean;
+  tableProperties?: {
     billingMode?: string;
     readCapacityUnits?: number | string;
     writeCapacityUnits?: number | string;

@@ -17,6 +17,7 @@ import {
   resolveVersionDir,
   type VersionedLayoutConfig,
 } from '../layout';
+import type { ManagedTablePropertiesInfo } from '../tableProperties';
 import { validateGeneratedSections, type ValidateResult } from '../validate';
 
 /**
@@ -24,12 +25,14 @@ import { validateGeneratedSections, type ValidateResult } from '../validate';
  *
  * @param version - Version token (NNN).
  * @param cfg - Versioned layout config/tokens.
+ * @param managed - Optional managed table properties to validate for drift.
  *
  * @returns ValidateResult plus tablePath for diagnostics.
  */
 export async function validateTableDefinitionAtVersion(
   version: string,
   cfg?: VersionedLayoutConfig,
+  managed?: ManagedTablePropertiesInfo,
 ): Promise<ValidateResult & { tablePath: string }> {
   // Resolve table path and ensure it exists.
   const vd = await resolveVersionDir(version, cfg, { mustExist: false });
@@ -51,6 +54,6 @@ export async function validateTableDefinitionAtVersion(
   const em = await resolveAndLoadEntityManager(version, cfg);
 
   // Validate generated sections; return result with table path for convenience.
-  const result = await validateGeneratedSections(abs, em as never);
+  const result = await validateGeneratedSections(abs, em as never, managed);
   return { ...result, tablePath: abs };
 }

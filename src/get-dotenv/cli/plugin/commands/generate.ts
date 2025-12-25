@@ -1,4 +1,3 @@
-import type { CreateTableCommandInput } from '@aws-sdk/client-dynamodb';
 import type { Command } from '@commander-js/extra-typings';
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
 
@@ -75,10 +74,10 @@ export function registerGenerate(
     .addOption(
       plugin.createPluginDynamicOption(
         cli,
-        '--overlay-billing-mode <string>',
+        '--table-billing-mode <string>',
         (_bag, c) => {
-          const v = c.generate?.overlays?.billingMode;
-          return `BillingMode overlay (e.g., PAY_PER_REQUEST)${
+          const v = c.generate?.tableProperties?.billingMode;
+          return `Managed Properties.BillingMode (e.g., PROVISIONED)${
             v ? ` (default: ${JSON.stringify(v)})` : ''
           }`;
         },
@@ -87,48 +86,44 @@ export function registerGenerate(
     .addOption(
       plugin.createPluginDynamicOption(
         cli,
-        '--overlay-rcu <number>',
+        '--table-rcu <number>',
         (_bag, c) => {
-          const v = c.generate?.overlays?.readCapacityUnits;
-          return `ProvisionedThroughput.ReadCapacityUnits${
+          const v = c.generate?.tableProperties?.readCapacityUnits;
+          return `Managed Properties.ProvisionedThroughput.ReadCapacityUnits${
             v !== undefined ? ` (default: ${JSON.stringify(v)})` : ''
           }`;
         },
-        parsePositiveInt('overlayRcu'),
+        parsePositiveInt('tableRcu'),
       ),
     )
     .addOption(
       plugin.createPluginDynamicOption(
         cli,
-        '--overlay-wcu <number>',
+        '--table-wcu <number>',
         (_bag, c) => {
-          const v = c.generate?.overlays?.writeCapacityUnits;
-          return `ProvisionedThroughput.WriteCapacityUnits${
+          const v = c.generate?.tableProperties?.writeCapacityUnits;
+          return `Managed Properties.ProvisionedThroughput.WriteCapacityUnits${
             v !== undefined ? ` (default: ${JSON.stringify(v)})` : ''
           }`;
         },
-        parsePositiveInt('overlayWcu'),
+        parsePositiveInt('tableWcu'),
       ),
     )
     .addOption(
       plugin.createPluginDynamicOption(
         cli,
-        '--overlay-table-name <string>',
+        '--table-name <string>',
         (_bag, c) => {
-          const v = c.generate?.overlays?.tableName;
-          return `TableName overlay (one-off)${
+          const v = c.generate?.tableProperties?.tableName;
+          return `Managed Properties.TableName${
             v ? ` (default: ${JSON.stringify(v)})` : ''
           }`;
         },
       ),
     )
-    .addOption(
-      plugin.createPluginDynamicOption(cli, '--force', (_bag, c) => {
-        const v = c.generate?.force;
-        return `force compose even if file exists (else refresh)${
-          v !== undefined ? ` (default: ${JSON.stringify(v)})` : ''
-        }`;
-      }),
+    .option(
+      '--clean',
+      'recompose table.yml from baseline + generated + managed props',
     )
     .action(async (opts, thisCommand) => {
       void thisCommand;
@@ -150,40 +145,23 @@ export function registerGenerate(
       const gen = resolveGenerateAtVersion(
         {
           version: opts.version,
-          force: !!opts.force,
-          overlays: {
-            billingMode: opts.overlayBillingMode,
-            readCapacityUnits: opts.overlayRcu,
-            writeCapacityUnits: opts.overlayWcu,
-            tableName: opts.overlayTableName,
+          clean: !!opts.clean,
+          tableProperties: {
+            billingMode: opts.tableBillingMode,
+            readCapacityUnits: opts.tableRcu,
+            writeCapacityUnits: opts.tableWcu,
+            tableName: opts.tableName,
           },
         },
         pluginCfg,
         envRef,
       );
       const em = await resolveAndLoadEntityManager(gen.version, cfg);
-      const overlaysSafe: {
-        BillingMode?: CreateTableCommandInput['BillingMode'];
-        ProvisionedThroughput?: {
-          ReadCapacityUnits: number;
-          WriteCapacityUnits: number;
-        };
-        TableName?: string;
-      } = {};
-      if (gen.options.overlays?.BillingMode) {
-        overlaysSafe.BillingMode = gen.options.overlays
-          .BillingMode as CreateTableCommandInput['BillingMode'];
-      }
-      if (gen.options.overlays?.ProvisionedThroughput) {
-        overlaysSafe.ProvisionedThroughput =
-          gen.options.overlays.ProvisionedThroughput;
-      }
-      if (gen.options.overlays?.TableName) {
-        overlaysSafe.TableName = gen.options.overlays.TableName;
-      }
       const out = await generateTableDefinitionAtVersion(em, gen.version, cfg, {
-        ...(gen.options.force ? { force: true } : {}),
-        ...(Object.keys(overlaysSafe).length ? { overlays: overlaysSafe } : {}),
+        ...(gen.options.clean ? { clean: true } : {}),
+        ...(gen.options.tableProperties
+          ? { tableProperties: gen.options.tableProperties }
+          : {}),
       });
       const action = out.refreshed ? 'refreshed' : 'created';
       console.info(`dynamodb generate: ${action} ${out.path}`);
