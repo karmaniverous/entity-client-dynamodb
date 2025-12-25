@@ -11,6 +11,7 @@ export interface CreateFlags {
   validate?: boolean;
   refreshGenerated?: boolean;
   force?: boolean;
+  allowNonLatest?: boolean;
   tableNameOverride?: string;
   maxSeconds?: number | string;
 }
@@ -39,6 +40,7 @@ export function resolveCreateAtVersion(
     validate?: boolean;
     refreshGenerated?: boolean;
     force?: boolean;
+    allowNonLatest?: boolean;
     waiter?: WaiterConfig;
     tableNameOverride?: string;
   };
@@ -81,6 +83,7 @@ export function resolveCreateAtVersion(
     ...(firstDefined(flags.force, config?.create?.force)
       ? { force: true }
       : {}),
+    ...(flags.allowNonLatest ? { allowNonLatest: true } : {}),
     ...(maxSeconds !== undefined
       ? { waiter: { maxWaitTime: maxSeconds } as WaiterConfig }
       : {}),

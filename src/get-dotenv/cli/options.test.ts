@@ -77,6 +77,7 @@ describe('dynamodb CLI option resolvers', () => {
       tableNameOverride: '$NAME2',
       validate: true,
       refreshGenerated: false,
+      allowNonLatest: true,
       force: true,
     };
     const ref = { NAME: 'FromCfg', NAME2: 'FromFlags' };
@@ -86,6 +87,7 @@ describe('dynamodb CLI option resolvers', () => {
     expect(out.options.waiter?.maxWaitTime).toEqual(15);
     expect(out.options.validate).toEqual(true);
     expect(out.options.refreshGenerated).toEqual(false);
+    expect(out.options.allowNonLatest).toEqual(true);
     expect(out.options.force).toEqual(true);
   });
 

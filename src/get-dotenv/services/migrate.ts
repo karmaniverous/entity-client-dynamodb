@@ -24,6 +24,7 @@ import { resolveAndLoadEntityManager } from '../emLoader';
 import {
   enumerateStepVersions,
   resolveTransformFile,
+  resolveVersionDir,
   type VersionedLayoutConfig,
 } from '../layout';
 
@@ -240,6 +241,10 @@ export async function migrateData<C extends BaseConfigMap>(
     targetTableName = target.tableName,
     onProgress,
   } = options;
+
+  // Version existence guard (never silently no-op).
+  await resolveVersionDir(fromVersion, cfg, { mustExist: true });
+  await resolveVersionDir(toVersion, cfg, { mustExist: true });
 
   // Build step list
   const steps = await enumerateStepVersions(fromVersion, toVersion, cfg);

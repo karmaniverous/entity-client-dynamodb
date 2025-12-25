@@ -76,6 +76,10 @@ export function registerCreate(
     )
     .option('--validate', 'validate before create (default true)')
     .option('--refresh-generated', 'refresh generated sections (default false)')
+    .option(
+      '--allow-non-latest',
+      'allow creating a non-latest version (unsafe)',
+    )
     .option('--force', 'proceed on drift when --validate (default false)')
     .addOption(
       plugin.createPluginDynamicOption(
@@ -125,6 +129,7 @@ export function registerCreate(
           version: opts.version,
           validate: opts.validate,
           refreshGenerated: opts.refreshGenerated,
+          allowNonLatest: opts.allowNonLatest,
           force: opts.force,
           maxSeconds: opts.maxSeconds,
           tableNameOverride: opts.tableNameOverride,

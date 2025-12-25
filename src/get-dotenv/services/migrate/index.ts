@@ -3,6 +3,7 @@ import type { BaseConfigMap } from '@karmaniverous/entity-manager';
 import type { EntityClient } from '../../../EntityClient/EntityClient';
 import {
   enumerateStepVersions,
+  resolveVersionDir,
   type VersionedLayoutConfig,
 } from '../../layout';
 import { applyStepChain } from './chain';
@@ -43,6 +44,10 @@ export async function migrateData<C extends BaseConfigMap>(
     targetTableName = target.tableName,
     onProgress,
   } = options;
+
+  // Version existence guard (never silently no-op).
+  await resolveVersionDir(fromVersion, cfg, { mustExist: true });
+  await resolveVersionDir(toVersion, cfg, { mustExist: true });
 
   // Build step list
   const steps = await enumerateStepVersions(fromVersion, toVersion, cfg);

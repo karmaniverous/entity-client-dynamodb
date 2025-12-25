@@ -21,6 +21,7 @@ import type { EntityClient } from '../../EntityClient/EntityClient';
 import type { WaiterConfig } from '../../EntityClient/WaiterConfig';
 import {
   getVersionedPathsForToken,
+  listVersionDirEntries,
   resolveTableFile,
   resolveVersionDir,
   type VersionedLayoutConfig,
@@ -36,6 +37,8 @@ export interface CreateOptions {
   validate?: boolean; // default true
   refreshGenerated?: boolean; // default false
   waiter?: WaiterConfig; // default { maxWaitTime: 60 }
+  /** Allow creating a table at a non-latest version (unsafe by default). */
+  allowNonLatest?: boolean;
   /** One-off TableName override (does not persist to YAML). */
   tableNameOverride?: string;
   /** Force create on drift (skip validation error). Prefer refreshGenerated when possible. */
@@ -56,7 +59,23 @@ export async function createTableAtVersion<C extends BaseConfigMap>(
   cfg?: VersionedLayoutConfig,
   options?: CreateOptions,
 ) {
-  const vd = await resolveVersionDir(version, cfg, { mustExist: false });
+  const vd = await resolveVersionDir(version, cfg, { mustExist: true });
+
+  // Latest-only create guard (unsafe by default in all environments).
+  const dirs = await listVersionDirEntries(cfg);
+  if (!dirs.length) {
+    throw new Error(
+      `no version directories found under ${cfg?.tablesPath ?? 'tables'}`,
+    );
+  }
+  const latest = dirs[dirs.length - 1];
+  if (vd.value !== latest.value && !options?.allowNonLatest) {
+    throw new Error(
+      `refusing to create non-latest version ${String(vd.value)} (latest is ${String(latest.value)}). ` +
+        `Re-run with --allow-non-latest to override.`,
+    );
+  }
+
   const vp = getVersionedPathsForToken(vd.token, vd.value, cfg);
   const tablePath =
     (await resolveTableFile(version, cfg)) ?? vp.tableFileCandidates[0];
