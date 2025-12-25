@@ -27,17 +27,42 @@ import {
   pickManagedActualFromProperties,
 } from './tableProperties';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isUnknownArray(value: unknown): value is unknown[] {
+  return Array.isArray(value);
+}
+
+function sortableString(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number')
+    return Number.isFinite(value) ? String(value) : '';
+  if (typeof value === 'bigint') return String(value);
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
+  return '';
+}
+
+function toPlain(value: unknown): unknown {
+  // YAML CST nodes (YAMLMap/YAMLSeq) are not plain JS arrays/objects; normalize via stringify/parse.
+  // This is used only for comparison/diff (no mutation of the source file).
+  return YAML.parse(YAML.stringify(value ?? null)) as unknown;
+}
+
 function pickGeneratedFromDoc(doc: YAML.Document): GeneratedSections {
   const props = doc.get('Properties') as YAML.YAMLMap | undefined;
   if (!props || typeof props !== 'object' || !('get' in props)) return {};
   const getKey = (k: string) => props.get(k);
 
-  const attributeDefinitions = getKey(
-    'AttributeDefinitions',
+  const attributeDefinitions = toPlain(
+    getKey('AttributeDefinitions'),
   ) as CreateTableCommandInput['AttributeDefinitions'];
-  const keySchema = getKey('KeySchema') as CreateTableCommandInput['KeySchema'];
-  const globalSecondaryIndexes = getKey(
-    'GlobalSecondaryIndexes',
+  const keySchema = toPlain(
+    getKey('KeySchema'),
+  ) as CreateTableCommandInput['KeySchema'];
+  const globalSecondaryIndexes = toPlain(
+    getKey('GlobalSecondaryIndexes'),
   ) as CreateTableCommandInput['GlobalSecondaryIndexes'];
 
   return {
@@ -71,52 +96,49 @@ interface ProjectionLike {
 }
 
 function canonicalizeAttributeDefinitions(v: unknown): unknown {
-  if (!Array.isArray(v)) return v;
+  if (!isUnknownArray(v)) return v;
   return [...v].sort((a, b) => {
-    const aName =
-      a && typeof a === 'object' ? (a as AttrDefLike).AttributeName : undefined;
-    const bName =
-      b && typeof b === 'object' ? (b as AttrDefLike).AttributeName : undefined;
-    return String(aName ?? '').localeCompare(String(bName ?? ''));
+    const aName = isRecord(a) ? (a as AttrDefLike).AttributeName : undefined;
+    const bName = isRecord(b) ? (b as AttrDefLike).AttributeName : undefined;
+    return sortableString(aName).localeCompare(sortableString(bName));
   });
 }
 
 function canonicalizeKeySchema(v: unknown): unknown {
-  if (!Array.isArray(v)) return v;
+  if (!isUnknownArray(v)) return v;
   const keyTypeOrder = (t: unknown) =>
     t === 'HASH' ? 0 : t === 'RANGE' ? 1 : 2;
   return [...v].sort((a, b) => {
-    const aObj = a && typeof a === 'object' ? (a as KeySchemaLike) : {};
-    const bObj = b && typeof b === 'object' ? (b as KeySchemaLike) : {};
+    const aObj = isRecord(a) ? (a as KeySchemaLike) : {};
+    const bObj = isRecord(b) ? (b as KeySchemaLike) : {};
     const ao = keyTypeOrder(aObj.KeyType);
     const bo = keyTypeOrder(bObj.KeyType);
     if (ao !== bo) return ao - bo;
-    return String(aObj.AttributeName ?? '').localeCompare(
-      String(bObj.AttributeName ?? ''),
+    return sortableString(aObj.AttributeName).localeCompare(
+      sortableString(bObj.AttributeName),
     );
   });
 }
 
 function canonicalizeGsi(v: unknown): unknown {
-  if (!Array.isArray(v)) return v;
+  if (!isUnknownArray(v)) return v;
   return [...v]
     .map((g) => {
-      const gObj: Record<string, unknown> =
-        g && typeof g === 'object' ? (g as Record<string, unknown>) : {};
+      const gObj: Record<string, unknown> = isRecord(g) ? g : {};
 
       const keySchema = canonicalizeKeySchema((gObj as GsiLike).KeySchema);
 
       const projRaw = (gObj as GsiLike).Projection;
-      const projObj =
-        projRaw && typeof projRaw === 'object'
-          ? (projRaw as Record<string, unknown>)
-          : undefined;
+      const projObj = isRecord(projRaw) ? projRaw : undefined;
 
       const nkaRaw = projObj
         ? (projObj as ProjectionLike).NonKeyAttributes
         : undefined;
-      const nkaa = Array.isArray(nkaRaw)
-        ? [...nkaRaw].map((x) => String(x)).sort()
+      const nkaa = isUnknownArray(nkaRaw)
+        ? nkaRaw
+            .map((x) => sortableString(x))
+            .filter((s) => s !== '')
+            .sort()
         : undefined;
 
       return {
@@ -133,8 +155,8 @@ function canonicalizeGsi(v: unknown): unknown {
       };
     })
     .sort((a, b) =>
-      String((a as GsiLike).IndexName ?? '').localeCompare(
-        String((b as GsiLike).IndexName ?? ''),
+      sortableString((a as GsiLike).IndexName).localeCompare(
+        sortableString((b as GsiLike).IndexName),
       ),
     );
 }

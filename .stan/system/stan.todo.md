@@ -17,4 +17,4 @@
 - Enforced migrate boundary existence: both `fromVersion` and `toVersion` must exist as version directories before migrating.
 - Implemented managed table properties config/CLI rename (`generate.tableProperties`, `--table-*`) and `generate --clean` (removed `--force`).
 - Made validation order-insensitive for generated sections and added managed table properties drift validation when configured.
-- Fixed CLI command import paths for tableProperties and stabilized validation diffs against YAML key-order differences.
+- Fixed CLI command import paths for tableProperties and stabilized validation diffs against YAML key-order differences.- Normalized YAML CST nodes to plain JS before drift comparison and fixed validate.ts lint violations.
