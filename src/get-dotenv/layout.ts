@@ -3,6 +3,9 @@
  *
  * Requirements addressed:
  * - Opinionated layout under tablesPath with configurable tokens.
+ * - Version ordering by numeric value (not lexicographic token ordering).
+ * - Duplicate numeric version directory tokens are rejected (e.g., 1 and 001).
+ * - Optional cosmetic padding width via minTableVersionWidth.
  * - Per-step EM resolution for prev/next using fallback (walk backward).
  * - Transform path discovery (optional per version).
  *
@@ -26,19 +29,29 @@ export interface VersionedLayoutTokens {
 export interface VersionedLayoutConfig {
   /** Root path for versioned assets. Default: "tables". */
   tablesPath?: string;
+  /** Minimum width for left-zero padding when formatting version tokens. Default: 3. */
+  minTableVersionWidth?: number;
   /** File tokens (without extensions). */
   tokens?: VersionedLayoutTokens;
+}
+
+export interface VersionDir {
+  token: string;
+  value: number;
 }
 
 export interface VersionedPaths {
   root: string;
   versionDir: string;
+  versionToken: string;
+  versionValue: number;
   tableFileCandidates: string[];
   entityManagerFileCandidates: string[];
   transformFileCandidates: string[];
 }
 
 const DEFAULT_TABLES_PATH = 'tables';
+const DEFAULT_MIN_WIDTH = 3;
 const DEFAULT_TOKENS = {
   table: 'table',
   entityManager: 'entityManager',
@@ -48,37 +61,50 @@ const DEFAULT_TOKENS = {
 const TS_JS = ['.ts', '.js'];
 const YML_YAML = ['.yml', '.yaml'];
 
-/** Zero-pad and validate a version token (e.g., "003"). */
-export function normalizeVersionToken(version: string): string {
+/** Parse a version value from a digit-only token (e.g., "003" or "3"). */
+export function parseVersionValue(version: string): number {
   const trimmed = version.trim();
   if (!/^\d+$/.test(trimmed))
     throw new Error(`invalid version token: ${version}`);
-  // keep original padding; assume directories are already zero-padded in repo
-  return trimmed;
+  const n = Number(trimmed);
+  if (!Number.isSafeInteger(n) || n < 0)
+    throw new Error(`invalid version token (out of range): ${version}`);
+  return n;
+}
+
+/** Format a numeric version value into a token with minimum width padding. */
+export function formatVersionToken(
+  value: number,
+  cfg?: VersionedLayoutConfig,
+): string {
+  const minWidth = cfg?.minTableVersionWidth ?? DEFAULT_MIN_WIDTH;
+  if (!Number.isInteger(minWidth) || minWidth <= 0)
+    throw new Error(`minTableVersionWidth must be a positive integer`);
+  if (!Number.isSafeInteger(value) || value < 0)
+    throw new Error(`version value must be a non-negative safe integer`);
+  return String(value).padStart(minWidth, '0');
 }
 
 /** List version directories (NNN) under tablesPath in ascending numeric order. */
 export async function listVersionDirs(
   tablesPath = DEFAULT_TABLES_PATH,
 ): Promise<string[]> {
-  const root = resolve(tablesPath);
-  const entries = await fs
-    .readdir(root, { withFileTypes: true })
-    .catch(() => []);
-  return entries
-    .filter((e) => e.isDirectory() && /^\d+$/.test(e.name))
-    .map((e) => e.name)
-    .sort((a, b) => Number(a) - Number(b));
+  const dirs = await listVersionDirEntries({ tablesPath });
+  return dirs.map((d) => d.token);
 }
 
 /** Build candidate file paths for a specific version. */
-export function getVersionedPaths(
-  version: string,
+export function getVersionedPathsForToken(
+  versionToken: string,
+  versionValue: number,
   cfg?: VersionedLayoutConfig,
 ): VersionedPaths {
   const root = resolve(cfg?.tablesPath ?? DEFAULT_TABLES_PATH);
+  const versionTokenTrimmed = versionToken.trim();
+  if (!/^\d+$/.test(versionTokenTrimmed))
+    throw new Error(`invalid version directory token: ${versionToken}`);
   const tokens = { ...DEFAULT_TOKENS, ...(cfg?.tokens ?? {}) };
-  const versionDir = join(root, normalizeVersionToken(version));
+  const versionDir = join(root, versionTokenTrimmed);
 
   const tableFileCandidates = YML_YAML.map((ext) =>
     join(versionDir, `${tokens.table}${ext}`),
@@ -95,10 +121,64 @@ export function getVersionedPaths(
   return {
     root,
     versionDir,
+    versionToken: versionTokenTrimmed,
+    versionValue,
     tableFileCandidates,
     entityManagerFileCandidates,
     transformFileCandidates,
   };
+}
+
+export async function listVersionDirEntries(
+  cfg?: VersionedLayoutConfig,
+): Promise<VersionDir[]> {
+  const root = resolve(cfg?.tablesPath ?? DEFAULT_TABLES_PATH);
+  const entries = await fs
+    .readdir(root, { withFileTypes: true })
+    .catch(() => []);
+  const tokens = entries
+    .filter((e) => e.isDirectory() && /^\d+$/.test(e.name))
+    .map((e) => e.name);
+
+  const dirs: VersionDir[] = tokens.map((t) => ({
+    token: t,
+    value: parseVersionValue(t),
+  }));
+
+  // Detect duplicates by numeric value (e.g., "1" and "001").
+  const byValue = new Map<number, string[]>();
+  for (const d of dirs) {
+    const list = byValue.get(d.value) ?? [];
+    list.push(d.token);
+    byValue.set(d.value, list);
+  }
+  for (const [value, toks] of byValue.entries()) {
+    if (toks.length > 1) {
+      throw new Error(
+        `duplicate version directories for value ${String(value)}: ${toks.join(', ')}`,
+      );
+    }
+  }
+
+  return dirs.sort((a, b) => a.value - b.value);
+}
+
+export async function resolveVersionDir(
+  version: string,
+  cfg?: VersionedLayoutConfig,
+  options?: { mustExist?: boolean },
+): Promise<VersionDir> {
+  const value = parseVersionValue(version);
+  const dirs = await listVersionDirEntries(cfg);
+  const found = dirs.find((d) => d.value === value);
+  if (found) return found;
+  if (options?.mustExist) {
+    const known = dirs.map((d) => d.token).join(', ');
+    throw new Error(
+      `version directory not found for ${String(value)} under ${cfg?.tablesPath ?? DEFAULT_TABLES_PATH} (known: ${known || 'none'})`,
+    );
+  }
+  return { token: formatVersionToken(value, cfg), value };
 }
 
 /** Return the first existing path from candidates, or undefined. */
@@ -121,7 +201,8 @@ export async function resolveTableFile(
   version: string,
   cfg?: VersionedLayoutConfig,
 ): Promise<string | undefined> {
-  const vp = getVersionedPaths(version, cfg);
+  const vd = await resolveVersionDir(version, cfg, { mustExist: false });
+  const vp = getVersionedPathsForToken(vd.token, vd.value, cfg);
   return firstExisting(vp.tableFileCandidates);
 }
 
@@ -133,19 +214,14 @@ export async function resolveEntityManagerFileWithFallback(
   version: string,
   cfg?: VersionedLayoutConfig,
 ): Promise<string | undefined> {
-  const versions = await listVersionDirs(
-    cfg?.tablesPath ?? DEFAULT_TABLES_PATH,
-  );
-  const target = normalizeVersionToken(version);
-  if (!versions.includes(target)) versions.push(target);
-  const ordered = Array.from(new Set(versions)).sort(
-    (a, b) => Number(a) - Number(b),
-  );
+  const targetValue = parseVersionValue(version);
+  const dirs = await listVersionDirEntries(cfg);
 
-  // Scan descending from target to the earliest version
-  for (let i = ordered.indexOf(target); i >= 0; i--) {
-    const v = ordered[i];
-    const vp = getVersionedPaths(v, cfg);
+  // Scan descending across directories whose numeric value <= targetValue.
+  for (let i = dirs.length - 1; i >= 0; i--) {
+    const d = dirs[i];
+    if (d.value > targetValue) continue;
+    const vp = getVersionedPathsForToken(d.token, d.value, cfg);
     const found = await firstExisting(vp.entityManagerFileCandidates);
     if (found) return found;
   }
@@ -157,7 +233,8 @@ export async function resolveTransformFile(
   version: string,
   cfg?: VersionedLayoutConfig,
 ): Promise<string | undefined> {
-  const vp = getVersionedPaths(version, cfg);
+  const vd = await resolveVersionDir(version, cfg, { mustExist: false });
+  const vp = getVersionedPathsForToken(vd.token, vd.value, cfg);
   return firstExisting(vp.transformFileCandidates);
 }
 
@@ -170,16 +247,13 @@ export async function enumerateStepVersions(
   toVersion: string,
   cfg?: VersionedLayoutConfig,
 ): Promise<string[]> {
-  const versions = await listVersionDirs(
-    cfg?.tablesPath ?? DEFAULT_TABLES_PATH,
-  );
-  const from = Number(normalizeVersionToken(fromVersion));
-  const to = Number(normalizeVersionToken(toVersion));
+  const from = parseVersionValue(fromVersion);
+  const to = parseVersionValue(toVersion);
   if (!(to > from))
     throw new Error(`toVersion must be greater than fromVersion`);
-  return versions
-    .map((v) => Number(v))
-    .filter((n) => n > from && n <= to)
-    .sort((a, b) => a - b)
-    .map((n) => String(n).padStart(3, '0'));
+
+  const dirs = await listVersionDirEntries(cfg);
+  return dirs
+    .filter((d) => d.value > from && d.value <= to)
+    .map((d) => d.token);
 }

@@ -7,6 +7,10 @@
  *   • Properties.AttributeDefinitions
  *   • Properties.KeySchema
  *   • Properties.GlobalSecondaryIndexes
+ * - Apply managed table properties deterministically when configured:
+ *   • Properties.BillingMode
+ *   • Properties.ProvisionedThroughput
+ *   • Properties.TableName
  * - Compose a new table.yml from baseline when no file exists yet.
  */
 
@@ -21,6 +25,8 @@ import type {
 import YAML, { type Document, type YAMLMap } from 'yaml';
 
 import { generateTableDefinition } from '../Tables/generateTableDefinition';
+import type { ManagedTablePropertiesInfo } from './tableProperties';
+import { assertManagedTablePropertiesInvariants } from './tableProperties';
 
 type TableDoc = Document;
 
@@ -85,6 +91,37 @@ export interface OverlayOptions {
   TableName?: string;
 }
 
+function toPlainPropertiesNode(value: unknown): Record<string, unknown> {
+  // Re-emit via YAML to ensure a plain JS object (handles YAMLMap/Seq)
+  return YAML.parse(YAML.stringify(value ?? {})) as Record<string, unknown>;
+}
+
+function applyManagedTableProperties(
+  doc: TableDoc,
+  info?: ManagedTablePropertiesInfo,
+): void {
+  if (!info) return;
+  const props = getPropsNode(doc);
+  const m = info.managed;
+
+  if (info.manages.billingMode && m.BillingMode !== undefined) {
+    props.set('BillingMode', m.BillingMode);
+  }
+  if (info.manages.provisionedThroughput && m.ProvisionedThroughput) {
+    props.set('ProvisionedThroughput', m.ProvisionedThroughput);
+  }
+  if (info.manages.tableName && m.TableName) {
+    props.set('TableName', m.TableName);
+  }
+
+  // Validate invariants implied by managed props against the effective YAML.
+  const effectiveProps = toPlainPropertiesNode(props);
+  assertManagedTablePropertiesInvariants({
+    info,
+    effectiveProperties: effectiveProps,
+  });
+}
+
 /** Load YAML as a CST-backed Document if file exists; otherwise return undefined. */
 async function loadDoc(filePath: string): Promise<TableDoc | undefined> {
   try {
@@ -111,6 +148,7 @@ export async function composeNewTableYaml(
   baselinePath: string | undefined,
   generated: GeneratedSections,
   overlays?: OverlayOptions,
+  managed?: ManagedTablePropertiesInfo,
 ): Promise<void> {
   const doc =
     (baselinePath ? await loadDoc(baselinePath) : undefined) ??
@@ -138,6 +176,8 @@ export async function composeNewTableYaml(
     setPropsChild(doc, 'ProvisionedThroughput', overlays.ProvisionedThroughput);
   if (overlays?.TableName) setPropsChild(doc, 'TableName', overlays.TableName);
 
+  applyManagedTableProperties(doc, managed);
+
   await saveDoc(outPath, doc);
 }
 
@@ -147,6 +187,7 @@ export async function composeNewTableYaml(
 export async function refreshGeneratedSectionsInPlace(
   tablePath: string,
   generated: GeneratedSections,
+  managed?: ManagedTablePropertiesInfo,
 ): Promise<void> {
   const doc = (await loadDoc(tablePath)) ?? ensureTableDoc();
   doc.set('Type', 'AWS::DynamoDB::Table');
@@ -161,6 +202,8 @@ export async function refreshGeneratedSectionsInPlace(
       'GlobalSecondaryIndexes',
       generated.GlobalSecondaryIndexes,
     );
+
+  applyManagedTableProperties(doc, managed);
 
   await saveDoc(tablePath, doc);
 }

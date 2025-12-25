@@ -7,16 +7,15 @@ import { describe, expect, it } from 'vitest';
 import {
   enumerateStepVersions,
   listVersionDirs,
-  normalizeVersionToken,
+  parseVersionValue,
   type VersionedLayoutConfig,
 } from './layout';
 
 describe('get-dotenv layout helpers', function () {
-  it('normalizeVersionToken should accept numeric tokens and preserve padding', function () {
-    expect(normalizeVersionToken('003')).to.equal('003');
-    expect(() => normalizeVersionToken('a03')).to.throw(
-      /invalid version token/,
-    );
+  it('parseVersionValue should accept numeric tokens (padding ignored)', function () {
+    expect(parseVersionValue('003')).to.equal(3);
+    expect(parseVersionValue('3')).to.equal(3);
+    expect(() => parseVersionValue('a03')).to.throw(/invalid version token/);
   });
 
   it('listVersionDirs should return sorted numeric directory names (NNN) only', async function () {
@@ -28,6 +27,15 @@ describe('get-dotenv layout helpers', function () {
 
     const dirs = await listVersionDirs(root);
     expect(dirs).to.deep.equal(['000', '002', '010']);
+  });
+
+  it('listVersionDirs should error on duplicate numeric values (e.g., 1 and 001)', async function () {
+    const root = await fs.mkdtemp(join(tmpdir(), 'tables-'));
+    await fs.mkdir(join(root, '1'));
+    await fs.mkdir(join(root, '001'));
+    await expect(listVersionDirs(root)).rejects.toThrow(
+      /duplicate version directories/,
+    );
   });
 
   it('enumerateStepVersions should return all versions where from < k <= to', async function () {
