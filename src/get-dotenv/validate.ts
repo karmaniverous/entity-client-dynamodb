@@ -47,47 +47,85 @@ function pickGeneratedFromDoc(doc: YAML.Document): GeneratedSections {
   } as GeneratedSections;
 }
 
-function canonicalizeAttributeDefinitions(
-  v: GeneratedSections['AttributeDefinitions'],
-) {
-  if (!Array.isArray(v)) return v;
-  return [...v].sort((a, b) =>
-    String(a?.AttributeName ?? '').localeCompare(
-      String(b?.AttributeName ?? ''),
-    ),
-  );
+type GeneratedKey =
+  | 'AttributeDefinitions'
+  | 'KeySchema'
+  | 'GlobalSecondaryIndexes';
+
+type CanonicalGenerated = Record<GeneratedKey, unknown>;
+
+interface AttrDefLike {
+  AttributeName?: unknown;
+}
+interface KeySchemaLike {
+  AttributeName?: unknown;
+  KeyType?: unknown;
+}
+interface GsiLike {
+  IndexName?: unknown;
+  KeySchema?: unknown;
+  Projection?: unknown;
+}
+interface ProjectionLike {
+  NonKeyAttributes?: unknown;
 }
 
-function canonicalizeKeySchema(v: GeneratedSections['KeySchema']) {
+function canonicalizeAttributeDefinitions(v: unknown): unknown {
+  if (!Array.isArray(v)) return v;
+  return [...v].sort((a, b) => {
+    const aName =
+      a && typeof a === 'object' ? (a as AttrDefLike).AttributeName : undefined;
+    const bName =
+      b && typeof b === 'object' ? (b as AttrDefLike).AttributeName : undefined;
+    return String(aName ?? '').localeCompare(String(bName ?? ''));
+  });
+}
+
+function canonicalizeKeySchema(v: unknown): unknown {
   if (!Array.isArray(v)) return v;
   const keyTypeOrder = (t: unknown) =>
     t === 'HASH' ? 0 : t === 'RANGE' ? 1 : 2;
   return [...v].sort((a, b) => {
-    const ao = keyTypeOrder(a?.KeyType);
-    const bo = keyTypeOrder(b?.KeyType);
+    const aObj = a && typeof a === 'object' ? (a as KeySchemaLike) : {};
+    const bObj = b && typeof b === 'object' ? (b as KeySchemaLike) : {};
+    const ao = keyTypeOrder(aObj.KeyType);
+    const bo = keyTypeOrder(bObj.KeyType);
     if (ao !== bo) return ao - bo;
-    return String(a?.AttributeName ?? '').localeCompare(
-      String(b?.AttributeName ?? ''),
+    return String(aObj.AttributeName ?? '').localeCompare(
+      String(bObj.AttributeName ?? ''),
     );
   });
 }
 
-function canonicalizeGsi(v: GeneratedSections['GlobalSecondaryIndexes']) {
+function canonicalizeGsi(v: unknown): unknown {
   if (!Array.isArray(v)) return v;
   return [...v]
     .map((g) => {
-      const keySchema = canonicalizeKeySchema(g?.KeySchema as never);
-      const proj = g?.Projection as Record<string, unknown> | undefined;
-      const nkaa = Array.isArray(proj?.NonKeyAttributes)
-        ? [...(proj?.NonKeyAttributes as unknown[])].map(String).sort()
+      const gObj: Record<string, unknown> =
+        g && typeof g === 'object' ? (g as Record<string, unknown>) : {};
+
+      const keySchema = canonicalizeKeySchema((gObj as GsiLike).KeySchema);
+
+      const projRaw = (gObj as GsiLike).Projection;
+      const projObj =
+        projRaw && typeof projRaw === 'object'
+          ? (projRaw as Record<string, unknown>)
+          : undefined;
+
+      const nkaRaw = projObj
+        ? (projObj as ProjectionLike).NonKeyAttributes
         : undefined;
+      const nkaa = Array.isArray(nkaRaw)
+        ? [...nkaRaw].map((x) => String(x)).sort()
+        : undefined;
+
       return {
-        ...g,
-        ...(keySchema ? { KeySchema: keySchema } : {}),
-        ...(proj
+        ...gObj,
+        ...(keySchema !== undefined ? { KeySchema: keySchema } : {}),
+        ...(projObj
           ? {
               Projection: {
-                ...proj,
+                ...projObj,
                 ...(nkaa ? { NonKeyAttributes: nkaa } : {}),
               },
             }
@@ -95,22 +133,49 @@ function canonicalizeGsi(v: GeneratedSections['GlobalSecondaryIndexes']) {
       };
     })
     .sort((a, b) =>
-      String(a?.IndexName ?? '').localeCompare(String(b?.IndexName ?? '')),
+      String((a as GsiLike).IndexName ?? '').localeCompare(
+        String((b as GsiLike).IndexName ?? ''),
+      ),
     );
 }
 
-function canonicalizeGenerated(sections: GeneratedSections): GeneratedSections {
+function canonicalizeGenerated(
+  sections: GeneratedSections,
+): CanonicalGenerated {
   return {
     AttributeDefinitions: canonicalizeAttributeDefinitions(
-      sections.AttributeDefinitions,
+      sections.AttributeDefinitions as unknown,
     ),
-    KeySchema: canonicalizeKeySchema(sections.KeySchema),
-    GlobalSecondaryIndexes: canonicalizeGsi(sections.GlobalSecondaryIndexes),
+    KeySchema: canonicalizeKeySchema(sections.KeySchema as unknown),
+    GlobalSecondaryIndexes: canonicalizeGsi(
+      sections.GlobalSecondaryIndexes as unknown,
+    ),
   };
 }
 
 function stableStringify(value: unknown): string {
-  return JSON.stringify(value ?? null);
+  const seen = new WeakSet();
+
+  const normalize = (v: unknown, inArray: boolean): unknown => {
+    if (v === undefined) return inArray ? null : undefined;
+    if (v === null || typeof v !== 'object') return v;
+
+    if (seen.has(v)) return '[Circular]';
+    seen.add(v);
+
+    if (Array.isArray(v)) return v.map((x) => normalize(x, true));
+
+    const obj = v as Record<string, unknown>;
+    const out: Record<string, unknown> = {};
+    for (const k of Object.keys(obj).sort()) {
+      const nv = normalize(obj[k], false);
+      if (nv !== undefined) out[k] = nv;
+    }
+    return out;
+  };
+
+  const normalized = normalize(value, true);
+  return JSON.stringify(normalized ?? null);
 }
 
 export interface GeneratedDiff {
@@ -147,8 +212,8 @@ export async function validateGeneratedSections<C extends BaseConfigMap>(
   (
     ['AttributeDefinitions', 'KeySchema', 'GlobalSecondaryIndexes'] as const
   ).forEach((k) => {
-    const exp = (expected as Record<string, unknown>)[k];
-    const act = (actual as Record<string, unknown>)[k];
+    const exp = expected[k];
+    const act = actual[k];
     if (stableStringify(exp) !== stableStringify(act)) {
       diffs.push({ key: k, expected: exp, actual: act });
     }

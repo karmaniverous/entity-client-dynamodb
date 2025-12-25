@@ -2,24 +2,8 @@
 
 ## Next up (priority order)
 
-- Implement version handling overhaul:
-  - Add config key `minTableVersionWidth` (default 3).
-  - Discover version dirs by `^\d+$`, order by numeric value, and error on duplicate numeric values (e.g., `1` and `001`).
-  - Require explicit version values after interpolation (no implicit default-to-latest) for versioned commands.
-  - Enforce `migrate`: both `fromVersion` and `toVersion` must exist as version dirs.
-- Implement managed table properties:
-  - Rename `generate.overlays` to `generate.tableProperties`.
-  - Rename generate CLI flags to `--table-*` (billing mode / rcu / wcu / table name).
-  - Apply managed table properties deterministically on generate/refresh; preserve all other non-generated keys.
-  - Add validations: PROVISIONED requires ProvisionedThroughput; throughput management requires explicit BillingMode=PROVISIONED.
-- Implement `generate` UX fixes:
-  - Remove `generate --force`.
-  - Add `generate --clean` (recompose from baseline + generated + managed props).
-- Implement `create` safety gate:
-  - Reject non-latest version creates by default in all environments; allow override via `--allow-non-latest`.
-  - Ensure `create --refresh-generated` refreshes generated sections and applies managed table properties.
-- Make validation order-insensitive (DynamoDB-aware canonicalization) and include managed table properties drift when configured.
 - Update CLI docs to assume `aws dynamodb ...` and `plugins["aws/dynamodb"]` and to reflect new `generate`/managed properties semantics.
+- Audit for any remaining references to old overlay/force semantics in code/docs and remove.
 
 ## Completed
 
@@ -33,3 +17,4 @@
 - Enforced migrate boundary existence: both `fromVersion` and `toVersion` must exist as version directories before migrating.
 - Implemented managed table properties config/CLI rename (`generate.tableProperties`, `--table-*`) and `generate --clean` (removed `--force`).
 - Made validation order-insensitive for generated sections and added managed table properties drift validation when configured.
+- Fixed CLI command import paths for tableProperties and stabilized validation diffs against YAML key-order differences.

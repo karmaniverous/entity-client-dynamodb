@@ -3,8 +3,8 @@ import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
 import { createTableAtVersion } from '../../../services/create';
+import { resolveManagedTableProperties } from '../../../tableProperties';
 import { resolveCreateAtVersion, resolveLayoutConfig } from '../../options';
-import { resolveManagedTableProperties } from '../../tableProperties';
 import { buildEntityClient } from '../helpers';
 import { parsePositiveInt } from '../parsers';
 import type { DynamodbPluginInstance } from '../pluginInstance';
@@ -141,7 +141,6 @@ export function registerCreate(
       const managed = resolveManagedTableProperties(
         pluginCfg.generate?.tableProperties,
       );
-      options.managedTableProperties = managed;
       const em = await resolveAndLoadEntityManager(version, cfg);
       const clientTable =
         options.tableNameOverride ??
@@ -149,7 +148,10 @@ export function registerCreate(
         env.DYNAMODB_TABLE ??
         'DynamoDBTable';
       const client = buildEntityClient(em, clientTable, envRef);
-      const out = await createTableAtVersion(client, em, version, cfg, options);
+      const out = await createTableAtVersion(client, em, version, cfg, {
+        ...options,
+        managedTableProperties: managed,
+      });
       const waiterStateCreate = out.waiterResult.state;
       console.info('dynamodb create: ' + waiterStateCreate);
       console.log(JSON.stringify({ waiter: waiterStateCreate }, null, 2));
