@@ -4,7 +4,7 @@ title: Table Lifecycle
 
 # Table Lifecycle
 
-Commands (namespaced under `dynamodb`)
+Commands (when mounted under `aws`: `aws dynamodb ...`)
 
 - `generate` – compose or refresh `tables/NNN/table.yml` (comment-preserving)
 - `validate` – compare generated sections against the resolved EM
@@ -15,25 +15,43 @@ Commands (namespaced under `dynamodb`)
 Generate (from root baseline if present)
 
 ```bash
-mycli dynamodb generate --version 001
+mycli aws dynamodb generate --version 001
+```
+
+Regenerate from baseline (`--clean`)
+
+```bash
+mycli aws dynamodb generate --version 001 --clean
+```
+
+Managed table properties (optional)
+
+When you want tooling to deterministically manage selected non-generated `Properties` keys in `table.yml`, pass `--table-*` flags (or configure `plugins["aws/dynamodb"].generate.tableProperties`).
+
+```bash
+mycli aws dynamodb generate --version 001 \
+  --table-name '$DDB_TABLE' \
+  --table-billing-mode PROVISIONED \
+  --table-rcu 5 \
+  --table-wcu 5
 ```
 
 Validate drift
 
 ```bash
-mycli dynamodb validate --version 001
+mycli aws dynamodb validate --version 001
 ```
 
 Create (validate by default)
 
 ```bash
-mycli dynamodb create --version 001 --max-seconds 60
+mycli aws dynamodb create --version 001 --max-seconds 60
 ```
 
 Create with refresh and TableName override
 
 ```bash
-mycli dynamodb create --version 001 \
+mycli aws dynamodb create --version 001 \
   --refresh-generated \
   --table-name-override MyTable \
   --max-seconds 120
@@ -42,8 +60,8 @@ mycli dynamodb create --version 001 \
 Delete and purge (confirmation required; CI use `--force`)
 
 ```bash
-mycli dynamodb delete --table-name MyTable --version 001 --max-seconds 30 --force
-mycli dynamodb purge  --table-name MyTable --version 001 --force
+mycli aws dynamodb delete --table-name MyTable --version 001 --max-seconds 30 --force
+mycli aws dynamodb purge  --table-name MyTable --version 001 --force
 ```
 
 Comment-preserving YAML

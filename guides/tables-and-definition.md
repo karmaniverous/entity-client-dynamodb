@@ -39,6 +39,15 @@ import {
 // defaultTranscodeAttributeTypeMap maps numeric-like transcodes to 'N'
 ```
 
+CLI Plugin
+
+If you’re using the get-dotenv DynamoDB CLI plugin (recommended as a child of the shipped aws plugin), commands are invoked as `aws dynamodb ...` and config is keyed under `plugins["aws/dynamodb"]`.
+
+```bash
+mycli aws dynamodb generate --version 001
+mycli aws dynamodb validate --version 001
+```
+
 Related
 
 - [CLI Plugin – Table lifecycle](./cli/table-lifecycle.md) for YAML composition, validation, and create/delete/purge flows.

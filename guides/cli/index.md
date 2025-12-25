@@ -14,6 +14,8 @@ children:
 
 # CLI Plugin
 
+These guides assume the DynamoDB plugin is mounted under the shipped `aws` plugin, so commands are invoked as `aws dynamodb ...` and configuration lives under `plugins["aws/dynamodb"]`.
+
 - [Install & Host Integration](./install-and-host.md) - Add the plugin to a get-dotenv host and wire createCli/use().
 - [Versioned Layout & Tokens](./versioned-layout.md) - Opinionated tables/NNN layout and file tokens with fallback EM resolution.
 - [Table Lifecycle](./table-lifecycle.md) - generate, validate, create, delete, and purge flows with comment-preserving YAML.

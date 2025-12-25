@@ -9,7 +9,7 @@ Stream data across version steps with optional per-step transforms.
 Basic usage
 
 ```bash
-mycli dynamodb migrate \
+mycli aws dynamodb migrate \
   --source-table Source \
   --target-table Target \
   --from-version 001 \

@@ -27,13 +27,13 @@ Notes
 - Compose or refresh the generated YAML via:
 
 ```bash
-mycli dynamodb generate --version 001
+mycli aws dynamodb generate --version 001
 ```
 
 - Validate drift against the EntityManager:
 
 ```bash
-mycli dynamodb validate --version 001
+mycli aws dynamodb validate --version 001
 ```
 
 Related

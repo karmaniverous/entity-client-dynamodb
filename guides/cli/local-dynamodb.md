@@ -6,9 +6,9 @@ title: Local DynamoDB
 
 Configure and control a local DynamoDB instance under the plugin namespace. Commands:
 
-- dynamodb local start [--port <n>]
-- dynamodb local stop
-- dynamodb local status
+- aws dynamodb local start [--port <n>]
+- aws dynamodb local stop
+- aws dynamodb local status
 
 Behavior (config-first with embedded fallback)
 
@@ -47,7 +47,7 @@ Config slice
 ```json
 {
   "plugins": {
-    "dynamodb": {
+    "aws/dynamodb": {
       "local": {
         "port": 8000,
         "endpoint": "http://localhost:8000",
