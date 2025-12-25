@@ -12,8 +12,9 @@ import { resolve } from 'node:path';
 
 import { resolveAndLoadEntityManager } from '../emLoader';
 import {
-  getVersionedPaths,
+  getVersionedPathsForToken,
   resolveTableFile,
+  resolveVersionDir,
   type VersionedLayoutConfig,
 } from '../layout';
 import { validateGeneratedSections, type ValidateResult } from '../validate';
@@ -31,7 +32,8 @@ export async function validateTableDefinitionAtVersion(
   cfg?: VersionedLayoutConfig,
 ): Promise<ValidateResult & { tablePath: string }> {
   // Resolve table path and ensure it exists.
-  const vp = getVersionedPaths(version, cfg);
+  const vd = await resolveVersionDir(version, cfg, { mustExist: false });
+  const vp = getVersionedPathsForToken(vd.token, vd.value, cfg);
   const tablePath =
     (await resolveTableFile(version, cfg)) ?? vp.tableFileCandidates[0];
   const abs = resolve(tablePath);

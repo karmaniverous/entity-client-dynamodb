@@ -24,4 +24,7 @@
 ## Completed
 
 **CRITICAL: Append-only list. Add new completed items at the end. Prune old completed entries from the top. Do not edit existing entries.**
-- Updated requirements to unify DynamoDB CLI semantics: numeric version ordering with `minTableVersionWidth`, managed table properties (`generate.tableProperties` + `--table-*` flags), `generate --clean` (no `--force`), `create` latest-only guard with `--allow-non-latest`, and order-insensitive drift validation including managed properties.- Implemented managed table properties application/invariant checks in YAML writer utilities (compose/refresh) via `src/get-dotenv/tableDefinition.ts`.
+
+- Updated requirements to unify DynamoDB CLI semantics: numeric version ordering with `minTableVersionWidth`, managed table properties (`generate.tableProperties` + `--table-*` flags), `generate --clean` (no `--force`), `create` latest-only guard with `--allow-non-latest`, and order-insensitive drift validation including managed properties.
+- Implemented managed table properties application/invariant checks in YAML writer utilities (compose/refresh) via `src/get-dotenv/tableDefinition.ts`.
+- Fixed get-dotenv services to use the new numeric version layout API (replace removed getVersionedPaths with resolveVersionDir + getVersionedPathsForToken) and cleaned up tableProperties lint.

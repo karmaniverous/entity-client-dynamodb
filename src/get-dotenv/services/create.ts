@@ -20,8 +20,9 @@ import YAML from 'yaml';
 import type { EntityClient } from '../../EntityClient/EntityClient';
 import type { WaiterConfig } from '../../EntityClient/WaiterConfig';
 import {
-  getVersionedPaths,
+  getVersionedPathsForToken,
   resolveTableFile,
+  resolveVersionDir,
   type VersionedLayoutConfig,
 } from '../layout';
 import {
@@ -55,7 +56,8 @@ export async function createTableAtVersion<C extends BaseConfigMap>(
   cfg?: VersionedLayoutConfig,
   options?: CreateOptions,
 ) {
-  const vp = getVersionedPaths(version, cfg);
+  const vd = await resolveVersionDir(version, cfg, { mustExist: false });
+  const vp = getVersionedPathsForToken(vd.token, vd.value, cfg);
   const tablePath =
     (await resolveTableFile(version, cfg)) ?? vp.tableFileCandidates[0];
   const abs = resolve(tablePath);

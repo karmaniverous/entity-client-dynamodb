@@ -14,7 +14,11 @@ import type {
   EntityManager,
 } from '@karmaniverous/entity-manager';
 
-import { getVersionedPaths, type VersionedLayoutConfig } from '../layout';
+import {
+  getVersionedPathsForToken,
+  resolveVersionDir,
+  type VersionedLayoutConfig,
+} from '../layout';
 import {
   composeNewTableYaml,
   computeGeneratedSections,
@@ -43,7 +47,8 @@ export async function generateTableDefinitionAtVersion<C extends BaseConfigMap>(
   cfg?: VersionedLayoutConfig,
   options?: GenerateOptions,
 ): Promise<{ path: string; refreshed: boolean }> {
-  const vp = getVersionedPaths(version, cfg);
+  const vd = await resolveVersionDir(version, cfg, { mustExist: false });
+  const vp = getVersionedPathsForToken(vd.token, vd.value, cfg);
   const tableFile = resolve(
     await ensureDir(vp.versionDir),
     resolveTableFilePath(vp),
