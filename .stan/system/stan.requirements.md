@@ -186,23 +186,23 @@ Versioned layout (opinionated; configurable tokens)
 - Per‑version directory “NNN/” (zero‑padded):
   - entityManager.ts — value‑first EM config for that version (typed; optional, see resolution below).
   - table.yml — full AWS::DynamoDB::Table resource including Type and Properties (required for create‑table).
-  - transform.ts — optional, per‑entity transform handlers from previous→this version.
+  - transform.ts — optional, per‑step transforms from previous→this version.
 - Root baseline template (optional): tables/table.template.yml for non‑generated Properties (billing, TTL, PITR, Streams, SSE, tags, etc.).
 - Configurable tokens (plugin config):
   - tablesPath (default "tables")
+  - minTableVersionWidth (default 3; minimum zero-padding width when formatting version tokens; tokens may exceed this width, e.g., width=2 permits 99 then 100)
+  - Version comparisons and step ordering MUST be by numeric value, not lexicographic directory token ordering.
+  - Duplicate numeric values across directory tokens (e.g., 1 and 001) MUST error with guidance to remove/rename one directory.
   - tokens.table (default "table" → table.yml)
   - tokens.entityManager (default "entityManager" → entityManager.ts/.js)
   - tokens.transform (default "transform" → transform.ts/.js)
-- File resolution supports .yml/.yaml and .ts/.js.
+- File resolution supports .ts and .js for EM/transform modules.
 
 EntityManager resolution per step (prev → next)
 
 - For a chain step V, resolve both “prev EM” and “next EM”:
   - Try V/entityManager.(ts|js); if absent, walk backward to the nearest lower version that defines entityManager.(ts|js).
-  - If none found across ancestry for a role (prev/next), error with guidance to add an EM file or set an earlier floor version.
-- Rationale:
-  - Default transform behavior requires prev.removeKeys and next.addKeys.
-  - Allows next EM to be optional when only non‑updatable properties changed (e.g., TableName) because fallback applies.
+  - If none found across ancestry for a role (prev/next), error with guidance.
 
 Table definition generation and refresh (comment‑preserving)
 
@@ -223,21 +223,34 @@ Table definition generation and refresh (comment‑preserving)
     - Update only the three generated child nodes under Properties; keep all comments/anchors/order elsewhere.
   - Warning banner (YAML comment at top of file):
     - “Generated sections (AttributeDefinitions, KeySchema, GlobalSecondaryIndexes) are overwritten by tooling. Edit baseline/template‑only. Use validate‑table‑definition to check drift.”
-  - Optional overlays at generation time (applied once):
-    - BillingMode, ProvisionedThroughput (RCU/WCU), TableName.
-  - No per‑version template; only a root baseline template (tables/table.template.yml).
+  - Managed table properties (NOT dotenv overlays):
+    - generate.tableProperties may optionally declare non-generated table Properties keys as tooling-managed:
+      - BillingMode
+      - ProvisionedThroughput (RCU/WCU)
+      - TableName
+    - When provided, these managed table properties MUST be applied on every generate/refresh run.
+    - When not provided, these keys MUST be preserved (no mutation).
+    - If ProvisionedThroughput is managed, BillingMode MUST also be explicitly managed and MUST be PROVISIONED (no implicit behavior).
+    - If BillingMode is managed as PROVISIONED, ProvisionedThroughput MUST be present and complete (RCU+WCU) or generation MUST error.
+  - generate CLI UX:
+    - Remove generate --force.
+    - Add generate --clean to recompose from baseline + generated + managed properties; no confirmation required.
 
 Validation and create‑table policy
 
 - validate‑table‑definition:
-  - Recompute the generated sections from resolved EM and compare to table.yml.
+  - Recompute the generated sections from resolved EM and compare to table.yml (order-insensitive).
+  - When managed table properties are configured, validate MUST also enforce drift detection for those managed keys.
   - Exit non‑zero on drift (CI‑friendly).
 - create‑table:
   - Reads tables/NNN/table.yml (required; errors if missing).
   - Defaults: validate=true, refreshGenerated=false.
   - Behavior:
-    - If refreshGenerated: update generated nodes in place then create.
+    - If refreshGenerated: update generated nodes AND apply managed table properties in place then create.
     - Else if validate=true: error on drift unless --force is provided.
+  - Non-latest create guard:
+    - Creating a table at a non-latest version is unsafe by default and MUST be rejected in all environments.
+    - The CLI MUST support an explicit override flag --allow-non-latest to permit creating a non-latest version.
   - TableName override:
     - Optional flag allows a one‑off override (merged into Properties at runtime only).
   - Waiter: maxSeconds configurable (default 60).
@@ -252,103 +265,47 @@ Delete and purge
 Data migration (version‑aware chain; streaming; progress)
 
 - migrate‑data:
-  - Inputs:
-    - sourceTable, targetTable (dotenv‑expanded).
-    - fromVersion, toVersion (zero‑padded).
-    - tablesPath and tokens for versioned layout.
-    - pageSize (default 100), limit (default Infinity).
-    - transformConcurrency (default 1).
-    - progressIntervalMs (default 2000).
+  - Version existence guard:
+    - Both fromVersion and toVersion MUST correspond to existing version directories under tablesPath (numeric value match).
+    - If either boundary does not exist, migration MUST error with guidance (never silently no-op).
   - Discovery:
-    - Build step list K = { k | fromVersion < k ≤ toVersion } in ascending order.
-    - For each k, resolve prev EM and next EM (fallback rules above).
-    - Load transform.ts if present; normalize to TransformMap (see below).
-  - Default chain (mandatory):
-    - Missing transform.ts ⇒ default step for all entities:
-      - item = prev.removeKeys(entityToken, record) // storage → domain
-      - record’ = next.addKeys(entityToken, item) // domain → storage
-      - return record’
-  - Transform authoring (typed; async OK):
-    - Handlers receive (record, ctx) where:
-      - record: EntityRecord<PrevCM, ET>
-      - ctx: { prev: EntityManager<PrevCM>; next: EntityManager<NextCM>; entityToken: ET }
-    - Return values:
-      - undefined → drop (no migration for this input record)
-      - Single value → item/record for the same ET:
-        - EntityItem<NextCM, ET>
-        - EntityRecord<NextCM, ET>
-      - Array of item/record → fan‑out for the same ET:
-        - (EntityItem<NextCM, ET> | EntityRecord<NextCM, ET>)[]
-    - Side effects permitted (async); transformConcurrency controls parallelism (default 1).
-  - Streaming and batching:
-    - Scan pages from source with Limit=pageSize and ExclusiveStartKey.
-    - For each page:
-      - Determine entityToken from the source record’s global hashKey string prefix (entity + shardKeyDelimiter from EM config).
-      - Apply transform chain; normalize items to storage records (call next.addKeys if item returned).
-      - Batch write to target via EntityClient.putItems(items, { tableName: targetTable }).
-    - No whole‑table accumulation; memory bounded by page + in‑flight batches; unprocessed items retried via EntityClient utils.
-  - Progress output:
-    - Pages processed, items processed, items written, rolling items/sec rate emitted every progressIntervalMs.
-
-Transform typing patterns (DX)
-
-- Each version’s transform.ts imports types from its local EM to be step‑accurate:
-  - import type { ConfigMap as PrevCM } from '../NNN-1/entityManager'
-  - import type { ConfigMap as NextCM } from './entityManager'
-  - export default defineTransformMap<PrevCM, NextCM>({ …handlers… })
-- Identity helper: defineTransformMap preserves inference while keeping signatures concise.
-- Cross‑entity fan‑out is not supported in v1; all outputs are interpreted for the same ET.
-
-EntityClient posture (pure) and IDE guidance
-
-- EntityClient remains pure; it requires an EntityManager at construction and does not perform dynamic versioned resolution internally.
-- Application code:
-  - Choose the “current” EM once (usually latest) and pass it into new EntityClient({ entityManager, … }).
-  - Downstream, import only entityClient; refer to entityClient.entityManager when needed.
-- The plugin/utilities handle dynamic EM resolution at runtime for migrations/Lifecycle tasks.
+    - Build step list K = { k | fromVersion < k ≤ toVersion } in ascending order (numeric).
+    - For each k, resolve prev and next EntityManagers with fallback.
+    - Load optional transform.ts; otherwise use default chain.
+  - Default chain:
+    - prev.removeKeys(entityToken, record) -> next.addKeys(entityToken, item)
+  - Transform semantics:
+    - undefined → drop
+    - single → migrate one
+    - array → fan-out
+  - Progress ticks and concurrency knobs as documented.
 
 get‑dotenv integration (config, env tokens, precedence)
 
 - Plugin reads once‑per‑invocation context from host (ctx = getCtx()).
-- Every string option supports $VAR or ${VAR[:default]} and is expanded via dotenvExpand(value, ctx.dotenv).
 - Resolution precedence for any option:
   1. CLI flag (dotenv‑expanded)
   2. getdotenv.config.\* under plugins.dynamodb (dotenv‑expanded)
   3. documented defaults
-- Plugin config shape (getdotenv.config.\* → plugins.dynamodb):
-  - tablesPath, tokens.{table,entityManager,transform}
-  - generate: { version, overlays.{billingMode, readCapacityUnits, writeCapacityUnits, tableName}, force? }
-  - validate: { version }
-  - create: { version, validate, refreshGenerated, force, waiter.maxSeconds, tableNameOverride }
-  - delete: { tableName, waiter.maxSeconds }
-  - purge: { tableName }
-  - migrate: {
-    sourceTable, targetTable, fromVersion, toVersion,
-    pageSize, limit, transformConcurrency, progressIntervalMs
-    }
-  - local: {
-    port?, endpoint?, start?, stop?, status?
-    }
+- Version flag strictness:
+  - Commands that operate on a version (generate, validate, create, migrate) MUST require an explicit version value after host/config interpolation; missing/empty/non-numeric versions MUST error with guidance.
 
-YAML safety and formatting
+Plugin config shape (getdotenv.config.\* → plugins.dynamodb):
 
-- Use the yaml Document API with CST to:
-  - Update only the generated nodes (Properties.AttributeDefinitions, Properties.KeySchema, Properties.GlobalSecondaryIndexes).
-  - Preserve all other nodes, order, and comments.
-- New files (no table.yml):
-  - Compose from root baseline (if present) + generated nodes + comment banner.
-- validate‑table‑definition compares generated sections normalized for stable order.
-
-Errors and confirmations
-
-- Destructive ops (purge/delete/migrate) prompt for confirm unless --force is provided.
-- EM resolution failures produce actionable errors (list probed paths); instruct adding entityManager.ts at V or a lower version.
-- Drift validation errors suggest running “generate‑table‑definition --force” or “create‑table --refresh‑generated”.
-
-Performance limits and safety
-
-- pageSize default 100; transformConcurrency default 1 to make side effects safe by default.
-- No unbounded buffering; rely on DocumentClient batch write retry semantics for unprocessed items.
+- tablesPath, tokens.{table,entityManager,transform}
+- minTableVersionWidth
+- generate: { version, tableProperties.{billingMode, readCapacityUnits, writeCapacityUnits, tableName} }
+- validate: { version }
+- create: { version, validate, refreshGenerated, force, waiter.maxSeconds, tableNameOverride }
+- delete: { tableName, waiter.maxSeconds }
+- purge: { tableName }
+- migrate: {
+  sourceTable, targetTable, fromVersion, toVersion,
+  pageSize, limit, transformConcurrency, progressIntervalMs
+  }
+- local: {
+  port?, endpoint?, start?, stop?, status?
+  }
 
 Local DynamoDB orchestration (config‑first with embedded fallback)
 
@@ -361,55 +318,11 @@ Commands
 Behavior and precedence
 
 1. Config‑driven path (preferred when configured)
-   - Execute verbatim command strings from `plugins.dynamodb.local.*` in get‑dotenv’s composed environment.
-   - For start: after the configured start command returns, perform a readiness probe before returning success.
-   - For status: when a status command is configured, return its exit code verbatim (0 = running/healthy).
-   - For stop: execute and return non‑zero on operational failure.
+   - Execute verbatim command strings from plugins.dynamodb.local.\* in get‑dotenv’s composed environment.
+   - start waits for readiness before returning.
+   - status returns exit code (0 = healthy).
+   - stop returns non-zero on failure.
 
 2. Embedded fallback (only when no config command is set)
-   - If `@karmaniverous/dynamodb-local` is installed (optional peer):
-     - start: setupDynamoDbLocal(port) then dynamoDbLocalReady(client)
-     - stop: teardownDynamoDbLocal()
-     - status: AWS SDK health probe (ListTables) against derived endpoint
-   - Otherwise, emit concise guidance and return non‑zero when invoked.
-
-Endpoint & environment
-
-- derive endpoint with this precedence:
-  1. plugins.dynamodb.local.endpoint
-  2. plugins.dynamodb.local.port → http://localhost:{port}
-  3. DYNAMODB_LOCAL_ENDPOINT (env)
-  4. Fallback: http://localhost:${DYNAMODB_LOCAL_PORT ?? '8000'}
-- On successful start, print:
-  - local dynamodb: endpoint <url>
-  - Hint: export DYNAMODB_LOCAL_ENDPOINT=<url> so app code targets Local.
-
-Shell/env/capture
-
-- Compose env for children via buildSpawnEnv(process.env, ctx.dotenv).
-- Honor host root options for shell selection (POSIX /bin/bash; Windows powershell.exe), and for capture (`GETDOTENV_STDIO=pipe` or `--capture`).
-
-Acceptance criteria (DynamoDB plugin)
-
-- Versioned layout respected; utilities resolve prev/next EM and transforms per step with documented fallback.
-- generate‑table‑definition preserves comments and all non‑generated Properties across refresh; overwrites only generated sections; optional root baseline honored; header banner present.
-- validate‑table‑definition detects drift in generated sections and exits non‑zero.
-- create‑table validates by default; supports refresh‑generated; waiter supported; optional TableName override at runtime only.
-- migrate‑data streams end‑to‑end with mandatory chain semantics:
-  - Missing transform ⇒ default prev.removeKeys / next.addKeys.
-  - TransformMap with async handling; returns undefined to drop; array to fan‑out; normalized to next records as required.
-  - Progress printed at interval; performance flags respected.
-- EntityClient usage remains pure and type‑safe in application code; dynamic versioned resolution is provided via plugin/utilities only.
-- Local DynamoDB orchestration commands function per precedence; start waits for readiness; endpoint derivation and export hint printed.
-
----
-
-## Adapter/Interop Notes (summarized alignment to by‑token model)
-
-- Replace any legacy type names in downstream code (examples, docs, or templates) with:
-  - EntityItem / EntityItemPartial (for domain)
-  - EntityRecord / EntityRecordPartial (for DB)
-- Token‑aware read APIs (recommended):
-  - getItem(entityToken, key [, attributes as const])
-  - getItems(entityToken, keys [, attributes as const])
-- When K (projection) is present in QueryBuilder, ensure uniqueProperty and explicit sort keys are auto‑included at runtime; document this invariant alongside projected typing.
+   - If @karmaniverous/dynamodb-local is installed (optional peer), use setup/teardown/ready helpers.
+   - Otherwise, emit guidance and exit non-zero.
