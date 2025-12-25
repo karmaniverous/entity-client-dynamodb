@@ -41,6 +41,10 @@ Example
 }
 ```
 
+Managed table properties invariants
+
+- If you set `readCapacityUnits`/`writeCapacityUnits`, you must also set `billingMode: "PROVISIONED"`, and you must provide both RCU and WCU together.
+
 Precedence
 
 1. CLI flags (dotenv-expanded)

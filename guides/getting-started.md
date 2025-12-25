@@ -21,7 +21,7 @@ import {
 } from '@karmaniverous/entity-client-dynamodb';
 import { EntityManager } from '@karmaniverous/entity-manager';
 
-// Assume you have a value-first EntityManager; see "Type inference mental model"
+// Assume you have a values-first (config-literal) EntityManager; see "Type inference mental model"
 declare const entityManager: EntityManager<any>;
 
 const client = new EntityClient({
@@ -47,7 +47,7 @@ Put / Get
 // Put a record (storage-facing shape)
 await client.putItem({ hashKey2: 'h', rangeKey: 'r', a: 1 });
 
-// Get a record (storage; token-aware)
+// Get a record (storage record; token-aware)
 const out = await client.getItem('user', { hashKey2: 'h', rangeKey: 'r' });
 
 // Convert to domain (strip keys)

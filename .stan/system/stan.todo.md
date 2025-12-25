@@ -19,3 +19,4 @@
 - Fixed CLI command import paths for tableProperties and stabilized validation diffs against YAML key-order differences.
 - Normalized YAML CST nodes to plain JS before drift comparison and fixed validate.ts lint violations.
 - Updated CLI docs to assume `aws dynamodb ...` and `plugins["aws/dynamodb"]`, and documented `generate --clean` and managed table properties flags (`--table-*`).
+- Aligned README and guides with current implementation details (aws/dynamodb config namespace, create latest-only guard, managed table properties invariants, version token semantics, projection wording).

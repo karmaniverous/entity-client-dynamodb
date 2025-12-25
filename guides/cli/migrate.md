@@ -23,6 +23,7 @@ mycli aws dynamodb migrate \
 
 How it works
 
+- Both `fromVersion` and `toVersion` must exist as version directories under `tablesPath` (migration errors if either boundary is missing; it never silently no-ops).
 - Step discovery: enumerate all versions where `from < k <= to` (ascending).
 - For each step:
   - Resolve prev and next EntityManagers with fallback.
@@ -38,6 +39,7 @@ prev.removeKeys(entityToken, record) -> next.addKeys(entityToken, item)
 
 Notes
 
+- `--force` is required to proceed (non-interactive confirmation guard).
 - Limit is enforced across outputs; fan-out counts toward the limit.
 - `sourceTable` and `targetTable` can be provided via flags, config, or env (dotenv expansion supported).
 

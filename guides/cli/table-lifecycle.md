@@ -28,10 +28,11 @@ Managed table properties (optional)
 
 When you want tooling to deterministically manage selected non-generated `Properties` keys in `table.yml`, pass `--table-*` flags (or configure `plugins["aws/dynamodb"].generate.tableProperties`).
 
+Invariants enforced by the implementation: Provisioned throughput management requires `--table-billing-mode PROVISIONED` and both `--table-rcu` and `--table-wcu` together; `PAY_PER_REQUEST` is incompatible with `ProvisionedThroughput` in `table.yml`.
+
 ```bash
 mycli aws dynamodb generate --version 001 \
-  --table-name '$DDB_TABLE' \
-  --table-billing-mode PROVISIONED \
+  --table-name '$DDB_TABLE' \  --table-billing-mode PROVISIONED \
   --table-rcu 5 \
   --table-wcu 5
 ```
@@ -48,6 +49,10 @@ Create (validate by default)
 mycli aws dynamodb create --version 001 --max-seconds 60
 ```
 
+Create latest-only guard (default behavior)
+
+- By default, `create` refuses to create a non-latest version directory (unsafe). Use `--allow-non-latest` to override explicitly.
+
 Create with refresh and TableName override
 
 ```bash
@@ -63,6 +68,10 @@ Delete and purge (confirmation required; CI use `--force`)
 mycli aws dynamodb delete --table-name MyTable --version 001 --max-seconds 30 --force
 mycli aws dynamodb purge  --table-name MyTable --version 001 --force
 ```
+
+Notes
+
+- For `create`, `--force` only affects drift handling when `--validate` is enabled (it is not a confirmation flag).
 
 Comment-preserving YAML
 

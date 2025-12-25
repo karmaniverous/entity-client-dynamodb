@@ -56,7 +56,8 @@ Config‑first (Docker Compose) — add to getdotenv config:
     "aws/dynamodb": {
       "local": {
         "port": 8000,
-        "endpoint": "http://localhost:8000",        "start": "docker compose up -d dynamodb",
+        "endpoint": "http://localhost:8000",
+        "start": "docker compose up -d dynamodb",
         "stop": "docker compose stop dynamodb",
         "status": "docker ps --format '{{.Names}}' | grep -q dynamodb"
       }
@@ -90,4 +91,4 @@ mycli aws dynamodb local start
 Notes
 
 - start blocks until Local is healthy; there is no separate “ready” command.
-- Endpoint is derived in this order: config endpoint > config port > $DYNAMODB_LOCAL_ENDPOINT > $DYNAMODB_LOCAL_PORT (default 8000).
+- Endpoint is derived in this order: config endpoint > config port > `DYNAMODB_LOCAL_ENDPOINT` > `DYNAMODB_LOCAL_PORT` (default 8000).

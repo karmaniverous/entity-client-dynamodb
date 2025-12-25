@@ -30,8 +30,9 @@ Fallback EntityManager resolution
 
 Notes
 
-- Version directories are zero-padded (e.g., `001`, `002`).
-- File resolution supports .ts and .js for EM/transform modules.
+- Version directories are digit-only (for example `001/` or `1/`); ordering is by numeric value, and duplicates by numeric value (for example `1/` and `001/`) are rejected.
+- `minTableVersionWidth` controls how tooling formats version tokens when it needs to emit a canonical token; it does not restrict existing directory tokens.
+- File resolution supports `.ts` and `.js` for EM/transform modules, but in plain Node.js runtime you should prefer `.js` unless your host supports TS execution (for example via tsx/ts-node) or you precompile the modules.
 
 Related
 

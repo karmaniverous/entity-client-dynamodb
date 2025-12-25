@@ -11,16 +11,16 @@ Factory and conditions
 ```ts
 import { createQueryBuilder } from '@karmaniverous/entity-client-dynamodb';
 
-// Infer ET from entityToken; ITS defaults to string
+// Infer ET from entityToken; ITS defaults to `string` unless the client carries a config literal type (CF).
 const qb = createQueryBuilder({
   entityClient: client,
   entityToken: 'user',
   hashKeyToken: 'hashKey2',
 });
 
-// Automatic index inference:
-// If your EntityClient was built from createEntityManager(config as const),
-// index tokens (ITS) and per-index page keys are inferred automatically (no cf needed).
+// Automatic index/page-key inference:
+// If your EntityClient carries a config literal type (CF), index tokens (ITS) and per-index page keys are inferred automatically.
+// Otherwise, ITS falls back to `string`.
 
 // Add a range key condition
 qb.addRangeKeyCondition('created', {
@@ -52,10 +52,10 @@ Projections (K channel)
 // Per-index projection; narrows K at the type level
 const withProj = qb.setProjection('created', ['created'] as const);
 
-// Uniform projection across indices
-const withAll = qb.setProjectionAll(['created'] as const, ['created'] as const);
+// Uniform projection across indices (first arg is the index token list)
+const withAll = qb.setProjectionAll(['created', 'updated'] as const, ['created'] as const);
 
-// Clear projections (widen back to full shape)
+// Clear projections (widen K back to `unknown`, returning the default unprojected item shape)
 const resetOne = withAll.resetProjection('created');
 const resetAll = withAll.resetAllProjections();
 ```
@@ -69,7 +69,7 @@ qb.setScanIndexForward('created', false); // reverse chronological
 Notes
 
 - When any projection is present, the adapter auto-includes the entity uniqueProperty and any explicit sort keys at runtime to preserve dedupe/sort invariants.
-- When your EntityClient is constructed from `createEntityManager(config as const)`, index tokens (ITS) and per-index page keys are inferred automatically.
+- When your EntityClient carries a config literal type (CF), index tokens (ITS) and per-index page keys are inferred automatically.
 
 Related
 

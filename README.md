@@ -33,7 +33,7 @@ await client.createTable({
   ...generateTableDefinition(entityManager),
 });
 
-// Put / Get (records; strip keys to get domain)
+// Put / Get (storage records; strip keys for domain)
 await client.putItem({ hashKey2: 'h', rangeKey: 'r', a: 1 });
 const out = await client.getItem('user', { hashKey2: 'h', rangeKey: 'r' });
 const item = out.Item && client.entityManager.removeKeys('user', out.Item);
@@ -56,9 +56,9 @@ API Reference
 
 - [TypeDoc API](https://docs.karmanivero.us/entity-client-dynamodb) - Full API surface generated from the source.
 
-License
+CLI Plugin (get-dotenv)
 
-BSD-3-Clause
+- [CLI Plugin](./guides/cli/index.md) - get-dotenv plugin (subpath export `@karmaniverous/entity-client-dynamodb/get-dotenv`) for versioned table lifecycle, transforms, migration, config overlays, Local DynamoDB, and recipes.
 
 ---
 
