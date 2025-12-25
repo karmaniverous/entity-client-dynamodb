@@ -18,6 +18,7 @@ import {
   getVersionedPathsForToken,
   resolveVersionDir,
   type VersionedLayoutConfig,
+  type VersionedPaths,
 } from '../layout';
 import {
   composeNewTableYaml,
@@ -98,9 +99,7 @@ async function fileExists(path: string): Promise<boolean> {
   }
 }
 
-function resolveTableFilePath(
-  vp: ReturnType<typeof getVersionedPaths>,
-): string {
+function resolveTableFilePath(vp: VersionedPaths): string {
   // first candidate with .yml; if not present use .yaml
   return vp.tableFileCandidates[0];
 }

@@ -80,12 +80,12 @@ export function resolveManagedTableProperties(
 
   const managed: ManagedTableProperties = {};
 
-  if (managesBillingMode) {
+  if (billingModeRaw !== undefined) {
     managed.BillingMode = parseBillingMode(billingModeRaw);
   }
 
-  if (managesTableName) {
-    const tn = (tableNameRaw ?? '').trim();
+  if (tableNameRaw !== undefined) {
+    const tn = tableNameRaw.trim();
     if (!tn) throw new Error('tableProperties.tableName must be non-empty');
     managed.TableName = tn;
   }
