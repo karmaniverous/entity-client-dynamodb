@@ -29,6 +29,16 @@ export interface DeleteResolvedOptions {
 }
 
 /**
+ * Result returned by {@link resolveDelete | `resolveDelete`}.
+ *
+ * @category get-dotenv
+ */
+export type ResolveDeleteResult = {
+  /** Resolved options for delete-table. */
+  options: DeleteResolvedOptions;
+};
+
+/**
  * Resolve CLI flags + plugin config into delete-table options.
  *
  * Expansion policy:
@@ -45,7 +55,7 @@ export function resolveDelete(
   flags: DeleteFlags,
   config?: DynamodbPluginConfig,
   ref: EnvRef = process.env,
-): { options: DeleteResolvedOptions } {
+): ResolveDeleteResult {
   const envRef = { ...process.env, ...ref };
   // Host interpolates config strings once; expand flags only.
   const tableNameOverride =

@@ -23,6 +23,16 @@ export interface PurgeResolvedOptions {
 }
 
 /**
+ * Result returned by {@link resolvePurge | `resolvePurge`}.
+ *
+ * @category get-dotenv
+ */
+export type ResolvePurgeResult = {
+  /** Resolved options for purge-table. */
+  options: PurgeResolvedOptions;
+};
+
+/**
  * Resolve CLI flags + plugin config into purge-table options.
  *
  * Expansion policy:
@@ -39,7 +49,7 @@ export function resolvePurge(
   flags: PurgeFlags,
   config?: DynamodbPluginConfig,
   ref: EnvRef = process.env,
-): { options: PurgeResolvedOptions } {
+): ResolvePurgeResult {
   // Host interpolates config strings once; expand flags only.
   const envRef = { ...process.env, ...ref };
   const tableNameOverride =

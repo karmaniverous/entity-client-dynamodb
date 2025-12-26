@@ -6,6 +6,7 @@
  */
 export * from './cli/options';
 export * from './cli/plugin';
+export type { DynamodbPluginInstance } from './cli/plugin/pluginInstance';
 export * from './emLoader';
 export * from './layout';
 export * from './services';

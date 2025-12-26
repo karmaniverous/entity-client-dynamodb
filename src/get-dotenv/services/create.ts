@@ -34,12 +34,17 @@ import {
 import type { ManagedTablePropertiesInfo } from '../tableProperties';
 import { validateGeneratedSections } from '../validate';
 
+/**
+ * Options for {@link createTableAtVersion | `createTableAtVersion`}.
+ *
+ * @category get-dotenv
+ */
 export interface CreateOptions {
   /** Validate drift before create (default true). */
   validate?: boolean; // default true
   /** Refresh generated YAML sections in-place before create (default false). */
   refreshGenerated?: boolean; // default false
-  /** Waiter config (default \{ maxWaitTime: 60 \}). */
+  /** Waiter config (default maxWaitTime is 60 seconds). */
   waiter?: WaiterConfig; // default { maxWaitTime: 60 }
   /** Allow creating a table at a non-latest version (unsafe by default). */
   allowNonLatest?: boolean;
