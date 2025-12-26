@@ -159,6 +159,8 @@ export class EntityClient<
    *
    * @param options - CreateTableCommandInput; TableName defaults to this.tableName.
    * @param waiterConfig - Waiter configuration (default maxWaitTime 60s).
+   *
+   * @returns CreateTableCommand output and waiter result.
    */
   async createTable(
     options: MakeOptional<CreateTableCommandInput, 'TableName'>,
@@ -172,6 +174,8 @@ export class EntityClient<
    *
    * @param options - DeleteTableCommandInput; TableName defaults to this.tableName.
    * @param waiterConfig - Waiter configuration (default maxWaitTime 60s).
+   *
+   * @returns DeleteTableCommand output and waiter result.
    */
   async deleteTable(
     options: MakeOptional<DeleteTableCommandInput, 'TableName'> = {},
@@ -186,6 +190,8 @@ export class EntityClient<
    * @param item - EntityRecord object (storage-facing).
    * @param options - PutCommandInput with Item omitted; TableName optional.
    *
+   * @returns DynamoDB {@link PutCommandOutput | `PutCommandOutput`}.
+   *
    * @overload
    */
   async putItem(
@@ -196,6 +202,8 @@ export class EntityClient<
    * Puts an item to a DynamoDB table.
    *
    * @param options - PutCommandInput; TableName optional.
+   *
+   * @returns DynamoDB {@link PutCommandOutput | `PutCommandOutput`}.
    *
    * @overload
    */
@@ -227,6 +235,8 @@ export class EntityClient<
    * @param key - EntityKey object.
    * @param options - DeleteCommandInput with Key omitted; TableName optional.
    *
+   * @returns DynamoDB {@link DeleteCommandOutput | `DeleteCommandOutput`}.
+   *
    * @overload
    */
   async deleteItem(
@@ -237,6 +247,8 @@ export class EntityClient<
    * Deletes an item from a DynamoDB table.
    *
    * @param options - DeleteCommandInput; TableName optional.
+   *
+   * @returns DynamoDB {@link DeleteCommandOutput | `DeleteCommandOutput`}.
    *
    * @overload
    */
@@ -263,6 +275,8 @@ export class EntityClient<
    *
    * @param items - Array of EntityRecord.
    * @param options - BatchWriteOptions.
+   *
+   * @returns BatchWrite outputs (including any retry attempts).
    */
   async putItems(
     items: EMEntityRecord<C, EntityToken<C>>[],
@@ -276,6 +290,8 @@ export class EntityClient<
    *
    * @param keys - Array of EntityKey.
    * @param options - BatchWriteOptions.
+   *
+   * @returns BatchWrite outputs (including any retry attempts).
    */
   async deleteItems(
     keys: EntityKey<C>[],
@@ -299,6 +315,7 @@ export class EntityClient<
    * Puts multiple items as a single transaction.
    *
    * @param items - Array of EntityRecord.
+   * @returns DynamoDB {@link TransactWriteCommandOutput | `TransactWriteCommandOutput`}.
    */
   async transactPutItems(
     items: EMEntityRecord<C, EntityToken<C>>[],
@@ -310,6 +327,7 @@ export class EntityClient<
    * Deletes multiple items as a single transaction.
    *
    * @param keys - Array of EntityKey.
+   * @returns DynamoDB {@link TransactWriteCommandOutput | `TransactWriteCommandOutput`}.
    */
   async transactDeleteItems(
     keys: EntityKey<C>[],

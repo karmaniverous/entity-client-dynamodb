@@ -2,6 +2,7 @@
 
 ## Next up (priority order)
 
+- Audit exported symbols (entrypoints `src/index.ts`, `src/get-dotenv/index.ts`) and ensure every exported symbol has a clear, concise, complete TypeDoc comment (even if TypeDoc emits 0 warnings).
 - Re-run `npm run lint`, `npm run typecheck`, and `npm run docs` and confirm all pass with 0 TypeDoc warnings (expect 0).
 - If `src/EntityClient/EntityClient.ts` is still >300 LOC, continue decomposition (keep API inference intact; prefer small helpers/modules).
 
@@ -24,4 +25,7 @@
 - Continued doc pass: de-duplicated README CLI plugin section, restored License section, and normalized stray CR characters in touched guides for reliable copy/paste.
 - Performed TypeDoc pass for exported API: filled missing property docs, added type params/params/returns where needed, and ensured exported types are not hidden via `@protected`.
 - Fixed remaining tsdoc warnings by extracting `CreateQueryBuilderOptions`, escaping `-\>` in `IndexParams`, and correcting the `generateTableDefinition` example.
-- Fixed TypeDoc missing-symbol warnings by exporting get-dotenv tableProperties and completed EntityClient/migrate decomposition work to keep long modules variance-friendly.- Fixed getItem/getItems option narrowing to satisfy TS/ESLint after readonly projection support.- Fixed readonly array narrowing for BatchGetOptions vs projections (unblocks tsc/typedoc).- Exported EntityClient GetItemOutput/GetItemsOutput so TypeDoc can include referenced return types (0 warnings goal).
+- Fixed TypeDoc missing-symbol warnings by exporting get-dotenv tableProperties and completed EntityClient/migrate decomposition work to keep long modules variance-friendly.
+- Fixed getItem/getItems option narrowing to satisfy TS/ESLint after readonly projection support.
+- Fixed readonly array narrowing for BatchGetOptions vs projections (unblocks tsc/typedoc).
+- Exported EntityClient GetItemOutput/GetItemsOutput so TypeDoc can include referenced return types (0 warnings goal).
