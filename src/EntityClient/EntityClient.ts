@@ -52,6 +52,9 @@ import type { WaiterConfig } from './WaiterConfig';
  *
  * For query operations, use the {@link QueryBuilder | QueryBuilder} class.
  *
+ * @typeParam C - Entity-manager config map.
+ * @typeParam CF - Values-first config literal type carried by {@link EntityManager | `EntityManager`}.
+ *
  * @category EntityClient
  */
 export class EntityClient<
@@ -262,9 +265,17 @@ export class EntityClient<
   }
 
   /**
-   * Token-aware getItem overloads (records). Strip keys in handlers when needed via entityManager.removeKeys.
+   * Get an item by primary key (token-aware).
    *
-   * Token-aware with tuple projection (attributes as const) -\> projected DB record
+   * @typeParam ET - Entity token (use a literal to narrow the return type).
+   * @typeParam A - Projection tuple (use `as const` to narrow the projected shape).
+   *
+   * @param entityToken - Entity token used to narrow the record type.
+   * @param key - Primary key for the item.
+   * @param attributes - Optional projection attribute list.
+   * @param options - Additional DocumentClient get options.
+   *
+   * @returns DynamoDB get output where `Item` (when present) is typed based on the token and projection.
    */
   async getItem<ET extends EntityToken<C>, A extends readonly string[]>(
     entityToken: ET,
@@ -395,11 +406,16 @@ export class EntityClient<
   }
 
   /**
-   * Gets multiple items from a DynamoDB table in batches (records). Token-aware; strip keys in handlers when needed via entityManager.removeKeys.
+   * Batch-get multiple items by primary key (token-aware).
    *
-   * @param keys - Array of EntityKey.
-   * @param attributes - Optional list of attributes to project.
-   * @param options - BatchGetOptions.
+   * @typeParam ET - Entity token (use a literal to narrow the return type).
+   * @typeParam A - Projection tuple (use `as const` to narrow the projected shape).
+   *
+   * @param entityToken - Entity token used to narrow the record type.
+   * @param keys - Primary keys to fetch.
+   * @param attributes - Optional projection attribute list.
+   * @param options - {@link BatchGetOptions | `BatchGetOptions`} to control batching and request options.
+   * @returns Items and raw batch outputs (including retry attempts).
    */
   // Token-aware with tuple projection
   async getItems<ET extends EntityToken<C>, A extends readonly string[]>(

@@ -8,6 +8,8 @@ import type {
 /**
  * Maps non-string transcodes to a DynamoDB {@link ScalarAttributeType | `ScalarAttributeType`}.
  *
+ * @typeParam T - Transcode registry type.
+ *
  * @category Tables
  */
 export type TranscodeAttributeTypeMap<T extends TranscodeRegistry> = {

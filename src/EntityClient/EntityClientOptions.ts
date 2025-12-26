@@ -12,6 +12,9 @@ import {
  * - `entityManager` - {@link EntityManager | `EntityManager`} instance.
  * - `tableName` - Table name.
  *
+ * @typeParam C - Entity-manager config map.
+ * @typeParam CF - Values-first config literal type carried by {@link EntityManager | `EntityManager`} and threaded through {@link BaseEntityClientOptions | `BaseEntityClientOptions`}.
+ *
  * @category EntityClient
  */
 export interface EntityClientOptions<C extends BaseConfigMap, CF = unknown>

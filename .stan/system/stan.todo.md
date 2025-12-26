@@ -2,8 +2,7 @@
 
 ## Next up (priority order)
 
-- Continue docs pass: remove remaining CR artifacts in guides and keep copy/paste-safe examples.
-- Re-check README/guide wording for any over-claims (especially “automatic inference” caveats).
+- Run `npm run docs` and confirm no TypeDoc warnings for exported surface.
 
 ## Completed
 
@@ -22,3 +21,4 @@
 - Updated CLI docs to assume `aws dynamodb ...` and `plugins["aws/dynamodb"]`, and documented `generate --clean` and managed table properties flags (`--table-*`).
 - Aligned README and guides with current implementation details (aws/dynamodb config namespace, create latest-only guard, managed table properties invariants, version token semantics, projection wording).
 - Continued doc pass: de-duplicated README CLI plugin section, restored License section, and normalized stray CR characters in touched guides for reliable copy/paste.
+- Performed TypeDoc pass for exported API: filled missing property docs, added type params/params/returns where needed, and ensured exported types are not hidden via `@protected`.

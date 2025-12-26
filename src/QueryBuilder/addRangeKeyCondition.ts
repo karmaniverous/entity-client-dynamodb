@@ -29,7 +29,6 @@ import type {
  * For more info, see the DynamoDB [key condition expression documentation](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.KeyConditionExpressions.html).
  *
  * @category QueryBuilder
- * @protected
  */
 export type RangeKeyCondition =
   | QueryConditionBeginsWith
@@ -39,9 +38,18 @@ export type RangeKeyCondition =
 /**
  * Add range key condition to builder.
  *
+ * @typeParam C - Entity-manager config map.
+ * @typeParam Client - Entity client type.
+ * @typeParam ET - Entity token type.
+ * @typeParam ITS - Index token type.
+ * @typeParam CF - Values-first config literal type.
+ * @typeParam K - Projection tuple type.
+ *
  * @param builder - {@link QueryBuilder | `QueryBuilder`} instance.
  * @param indexToken - Index token in {@link QueryBuilder | `QueryBuilder`} `indexParamsMap`.
  * @param condition - {@link RangeKeyCondition | `RangeKeyCondition`} object.
+ *
+ * @category QueryBuilder
  */
 export const addRangeKeyCondition = <
   C extends BaseConfigMap,

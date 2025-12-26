@@ -31,6 +31,8 @@ import type {
 /**
  * Passed as `condition` argument to {@link QueryBuilder.addFilterCondition | `QueryBuilder.addFilterCondition`}.
  *
+ * @typeParam C - Entity-manager config map.
+ *
  * @remarks
  * The `operator` property determines the condition type. Operators map to conditions as follows:
  * - `begins_with` - {@link QueryConditionBeginsWith | `QueryConditionBeginsWith`}
@@ -47,7 +49,6 @@ import type {
  * For more info, see the DynamoDB [filter expression documentation](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.FilterExpression.html).
  *
  * @category QueryBuilder
- * @protected
  */
 export type FilterCondition<C extends BaseConfigMap> =
   | QueryConditionBeginsWith
@@ -62,9 +63,18 @@ export type FilterCondition<C extends BaseConfigMap> =
 /**
  * Add filter condition to builder.
  *
+ * @typeParam C - Entity-manager config map.
+ * @typeParam Client - Entity client type.
+ * @typeParam ET - Entity token type.
+ * @typeParam ITS - Index token type.
+ * @typeParam CF - Values-first config literal type.
+ * @typeParam K - Projection tuple type.
+ *
  * @param builder - BaseQueryBuilder-like instance (variance-friendly).
  * @param indexToken - Index token in `indexParamsMap`.
  * @param condition - `FilterCondition` object.
+ *
+ * @category QueryBuilder
  */
 export const addFilterCondition = <
   C extends BaseConfigMap,

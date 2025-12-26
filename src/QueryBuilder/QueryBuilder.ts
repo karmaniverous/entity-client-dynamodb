@@ -29,6 +29,12 @@ import type { IndexParams } from './IndexParams';
 /**
  * Provides a fluent API for building a {@link ShardQueryMap | `ShardQueryMap`} using a DynamoDB Document client.
  *
+ * @typeParam C - Entity-manager config map.
+ * @typeParam ET - Entity token type.
+ * @typeParam ITS - Index token type.
+ * @typeParam CF - Values-first config literal type carried by the client.
+ * @typeParam K - Projection tuple type (type-only channel).
+ *
  * @category QueryBuilder
  */
 export class QueryBuilder<
@@ -114,6 +120,10 @@ export class QueryBuilder<
 
   /**
    * Set scan direction for an index.
+   *
+   * @param indexToken - Index token to set scan direction for.
+   * @param value - Direction (`true` = forward, `false` = reverse).
+   * @returns The same builder instance.
    */
   setScanIndexForward(indexToken: ITS, value: boolean): this {
     if (!(indexToken in this.indexParamsMap)) {
@@ -129,6 +139,9 @@ export class QueryBuilder<
 
   /**
    * Reset projection attributes for a single index. Widens K back to unknown.
+   *
+   * @param indexToken - Index token to clear projection for.
+   * @returns A new builder type where `K` is widened back to `unknown`.
    */
   resetProjection(indexToken: ITS): QueryBuilder<C, ET, ITS, CF> {
     if (!(indexToken in this.indexParamsMap)) {
@@ -144,6 +157,8 @@ export class QueryBuilder<
 
   /**
    * Reset projections for all indices. Widens K back to unknown.
+   *
+   * @returns A new builder type where `K` is widened back to `unknown`.
    */
   resetAllProjections(): QueryBuilder<C, ET, ITS, CF> {
     for (const key of Object.keys(this.indexParamsMap) as ITS[]) {
@@ -154,6 +169,10 @@ export class QueryBuilder<
 
   /**
    * Set a projection (attributes) for an index token.
+   *
+   * @typeParam KAttr - Projection tuple type.
+   * @param indexToken - Index token to set projection for.
+   * @param attributes - Attributes to include in `ProjectionExpression`.
    * - Type-only: narrows K when called with a const tuple.
    * - Runtime: populates ProjectionExpression for the index.
    *
@@ -185,6 +204,11 @@ export class QueryBuilder<
   /**
    * Apply the same projection across the supplied indices.
    * Narrows K to KAttr.
+   *
+   * @typeParam KAttr - Projection tuple type.
+   * @param indices - Index tokens to apply the projection to.
+   * @param attributes - Attributes to include in `ProjectionExpression`.
+   * @returns A new builder type whose `K` is narrowed to `KAttr`.
    */
   setProjectionAll<KAttr extends readonly string[]>(
     indices: ITS[] | readonly ITS[],

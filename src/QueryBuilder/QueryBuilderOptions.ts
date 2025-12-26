@@ -8,11 +8,14 @@ import { EntityClient } from '../EntityClient';
 /**
  * {@link QueryBuilder | `QueryBuilder`} constructor options.
  *
+ * This is a specialization of {@link BaseQueryBuilderOptions | `BaseQueryBuilderOptions`} for {@link EntityClient | `EntityClient`}.
+ *
+ * @typeParam C - Entity-manager config map.
+ * @typeParam CF - Values-first config literal type carried by {@link EntityClient | `EntityClient`}.
+ *
  * @category QueryBuilder
  */
-export interface QueryBuilderOptions<
+export type QueryBuilderOptions<
   C extends BaseConfigMap,
-> extends BaseQueryBuilderOptions<C, EntityClient<C>> {
-  /** Table name. */
-  tableName: string;
-}
+  CF = unknown,
+> = BaseQueryBuilderOptions<C, EntityClient<C, CF>>;

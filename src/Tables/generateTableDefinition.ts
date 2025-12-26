@@ -15,7 +15,7 @@ import {
  * - `KeySchema`
  *
  * @param entityManager - {@link EntityManager | `EntityManager`} instance.
- * @param transcodeAtttributeTypeMap - {@link TranscodeAttributeTypeMap | `TranscodeAttributeTypeMap`} object linking non-string transcodes to a DynamoDB {@link ScalarAttributeType | `ScalarAttributeType`}. Defaults to {@link defaultTranscodeAttributeTypeMap | `defaultTranscodeAttributeTypeMap`}.
+ * @param transcodeAttributeTypeMap - {@link TranscodeAttributeTypeMap | `TranscodeAttributeTypeMap`} object linking non-string transcodes to a DynamoDB {@link ScalarAttributeType | `ScalarAttributeType`}. Defaults to {@link defaultTranscodeAttributeTypeMap | `defaultTranscodeAttributeTypeMap`}.
  *
  * @returns Partial DynamoDB CreateTableCommandInput object.
  *
@@ -32,7 +32,7 @@ import {
  */
 export const generateTableDefinition = <C extends BaseConfigMap>(
   entityManager: EntityManager<C>,
-  transcodeAtttributeTypeMap: TranscodeAttributeTypeMap<
+  transcodeAttributeTypeMap: TranscodeAttributeTypeMap<
     C['TranscodeRegistry']
   > = defaultTranscodeAttributeTypeMap,
 ): Pick<
@@ -67,14 +67,14 @@ export const generateTableDefinition = <C extends BaseConfigMap>(
             continue;
 
           // All generated properties are strings. Properties whose transcodes
-          // are not included in the transcodeAtttributeTypeMap are assumed to
+          // are not included in the transcodeAttributeTypeMap are assumed to
           // be strings.
           attributeDefinitions.push({
             AttributeName: component,
             AttributeType:
               component in sharded || component in unsharded
                 ? 'S'
-                : (transcodeAtttributeTypeMap[
+                : (transcodeAttributeTypeMap[
                     propertyTranscodes[
                       component
                     ] as keyof TranscodeAttributeTypeMap<C['TranscodeRegistry']>

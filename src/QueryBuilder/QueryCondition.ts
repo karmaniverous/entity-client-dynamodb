@@ -6,7 +6,6 @@ import type { IndexParams } from './IndexParams';
  * Eliminates object types from the `NativeScalarAttributeValue` type.
  *
  * @category QueryBuilder
- * @protected
  */
 export type ActuallyScalarAttributeValue = Exclude<
   NativeScalarAttributeValue,
@@ -18,9 +17,9 @@ export type ActuallyScalarAttributeValue = Exclude<
  * Each specific condition extends this with its own type constraints.
  *
  * @category QueryBuilder
- * @protected
  */
 export interface QueryCondition {
+  /** Operator discriminator used to select the condition type. */
   operator: string;
 }
 
@@ -28,11 +27,13 @@ export interface QueryCondition {
  * Query condition for the `begins_with` operator.
  *
  * @category QueryBuilder
- * @protected
  */
 export interface QueryConditionBeginsWith extends QueryCondition {
+  /** Attribute/property name in the DynamoDB item. */
   property: string;
+  /** Operator discriminator. */
   operator: 'begins_with';
+  /** Value passed to `begins_with(...)`. Omitted/empty values result in no condition being added. */
   value?: string | undefined;
 }
 
@@ -41,13 +42,15 @@ export interface QueryConditionBeginsWith extends QueryCondition {
  * Ensures that both `from` and `to` are of the same type.
  *
  * @category QueryBuilder
- * @protected
  */
 export interface QueryConditionBetween<
   V extends ActuallyScalarAttributeValue,
 > extends QueryCondition {
+  /** Attribute/property name in the DynamoDB item. */
   property: string;
+  /** Operator discriminator. */
   operator: 'between';
+  /** Inclusive bounds. If both are missing, no condition is added. */
   value: { from?: V | undefined; to?: V | undefined };
 }
 
@@ -55,13 +58,15 @@ export interface QueryConditionBetween<
  * Query condition for comparison operators.
  *
  * @category QueryBuilder
- * @protected
  */
 export interface QueryConditionComparison<
   V extends ActuallyScalarAttributeValue,
 > extends QueryCondition {
+  /** Attribute/property name in the DynamoDB item. */
   property: string;
+  /** Operator discriminator. */
   operator: '<' | '<=' | '<>' | '=' | '>' | '>=';
+  /** Value to compare against. Missing values result in no condition being added. */
   value?: V | undefined;
 }
 
@@ -69,13 +74,15 @@ export interface QueryConditionComparison<
  * Query condition for contains operator.
  *
  * @category QueryBuilder
- * @protected
  */
 export interface QueryConditionContains<
   V extends Exclude<NativeScalarAttributeValue, object>,
 > extends QueryCondition {
+  /** Attribute/property name in the DynamoDB item. */
   property: string;
+  /** Operator discriminator. */
   operator: 'contains';
+  /** Value passed to `contains(...)`. Missing values result in no condition being added. */
   value?: V | undefined;
 }
 
@@ -83,10 +90,11 @@ export interface QueryConditionContains<
  * Query condition for attribute existence checks.
  *
  * @category QueryBuilder
- * @protected
  */
 export interface QueryConditionExists extends QueryCondition {
+  /** Attribute/property name in the DynamoDB item. */
   property: string;
+  /** Operator discriminator. */
   operator: 'attribute_exists' | 'attribute_not_exists';
 }
 
@@ -95,13 +103,15 @@ export interface QueryConditionExists extends QueryCondition {
  * Ensures that all elements in the array or set are of the same type.
  *
  * @category QueryBuilder
- * @protected
  */
 export interface QueryConditionIn<
   V extends NativeScalarAttributeValue,
 > extends QueryCondition {
+  /** Attribute/property name in the DynamoDB item. */
   property: string;
+  /** Operator discriminator. */
   operator: 'in';
+  /** Values for the IN list. Missing/empty values result in no condition being added. */
   value?: V[] | Set<V> | undefined;
 }
 
@@ -110,10 +120,11 @@ export interface QueryConditionIn<
  * Allows for nesting of conditions.
  *
  * @category QueryBuilder
- * @protected
  */
 export interface QueryConditionGroup<C extends QueryCondition> {
+  /** Operator discriminator. */
   operator: 'and' | 'or';
+  /** Child conditions to join. */
   conditions: C[];
 }
 
@@ -121,10 +132,11 @@ export interface QueryConditionGroup<C extends QueryCondition> {
  * Negation of a single filter condition.
  *
  * @category QueryBuilder
- * @protected
  */
 export interface QueryConditionNot<C extends QueryCondition> {
+  /** Operator discriminator. */
   operator: 'not';
+  /** Condition to negate. */
   condition: C;
 }
 
@@ -134,10 +146,20 @@ export interface QueryConditionNot<C extends QueryCondition> {
  * - entityClient.logger: debug/error logging
  */
 export interface MinimalBuilder {
+  /** Per-index mutable query parameters used to build expressions. */
   indexParamsMap: Record<string, IndexParams>;
+  /** Logger used by helper functions (debug/error). */
   entityClient: { logger: Pick<Console, 'debug' | 'error'> };
 }
 
+/**
+ * Function signature for composing a condition string and mutating the builder’s expression maps.
+ *
+ * @typeParam B - Builder type.
+ * @typeParam Q - Condition type.
+ *
+ * @category QueryBuilder
+ */
 export type ComposeCondition<B, Q extends QueryCondition> = (
   builder: B,
   indexToken: string,
