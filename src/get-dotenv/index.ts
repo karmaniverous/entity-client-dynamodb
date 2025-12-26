@@ -10,5 +10,6 @@ export * from './emLoader';
 export * from './layout';
 export * from './services';
 export * from './tableDefinition';
+export * from './tableProperties';
 export * from './types';
 export * from './validate';

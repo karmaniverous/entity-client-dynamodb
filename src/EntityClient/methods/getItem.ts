@@ -13,11 +13,14 @@ import type { EntityClient } from '../EntityClient';
 /**
  * Helper implementation for EntityClient.getItem.
  */
-export async function getItem<C extends BaseConfigMap>(
+export async function getItem<
+  C extends BaseConfigMap,
+  ET extends EntityToken<C> = EntityToken<C>,
+>(
   client: EntityClient<C>,
   keyOrOptions: EntityKey<C> | MakeOptional<GetCommandInput, 'TableName'>,
   attributesOrOptions?:
-    | string[]
+    | readonly string[]
     | MakeOptional<Omit<GetCommandInput, 'Key'>, 'TableName'>,
   options?: MakeOptional<
     Omit<
@@ -30,11 +33,7 @@ export async function getItem<C extends BaseConfigMap>(
     'TableName'
   >,
 ): Promise<
-  ReplaceKey<
-    GetCommandOutput,
-    'Item',
-    EMEntityRecord<C, EntityToken<C>> | undefined
-  >
+  ReplaceKey<GetCommandOutput, 'Item', EMEntityRecord<C, ET> | undefined>
 > {
   // Resolve options.
   const { hashKey, rangeKey } = client.entityManager.config;
@@ -45,7 +44,7 @@ export async function getItem<C extends BaseConfigMap>(
       ? { Key: keyOrOptions as EntityKey<C> }
       : keyOrOptions),
     ...(Array.isArray(attributesOrOptions)
-      ? { AttributesToGet: attributesOrOptions }
+      ? { AttributesToGet: Array.from(attributesOrOptions) }
       : attributesOrOptions),
     ...options,
   } as ReplaceKey<GetCommandInput, 'Key', EntityKey<C>>;
@@ -69,7 +68,7 @@ export async function getItem<C extends BaseConfigMap>(
     const output = (await client.doc.get(input)) as ReplaceKey<
       GetCommandOutput,
       'Item',
-      EMEntityRecord<C, EntityToken<C>> | undefined
+      EMEntityRecord<C, ET> | undefined
     >;
 
     client.logger.debug('got item from table', {

@@ -45,6 +45,37 @@ import { transactDeleteItems as transactDeleteItemsFn } from './methods/transact
 import { transactPutItems as transactPutItemsFn } from './methods/transactPutItems';
 import type { WaiterConfig } from './WaiterConfig';
 
+type IsTuple<T extends readonly unknown[]> = number extends T['length']
+  ? false
+  : true;
+
+type ProjectedRecord<
+  C extends BaseConfigMap,
+  ET extends EntityToken<C>,
+  A extends readonly string[] | undefined,
+> = A extends readonly string[]
+  ? IsTuple<A> extends true
+    ? EMEntityRecordPartial<C, ET, A>
+    : EMEntityRecord<C, ET>
+  : EMEntityRecord<C, ET>;
+
+type GetItemOutput<
+  C extends BaseConfigMap,
+  ET extends EntityToken<C>,
+  A extends readonly string[] | undefined,
+> = Omit<GetCommandOutput, 'Item'> & {
+  Item?: ProjectedRecord<C, ET, A> | undefined;
+};
+
+interface GetItemsOutput<
+  C extends BaseConfigMap,
+  ET extends EntityToken<C>,
+  A extends readonly string[] | undefined,
+> {
+  items: ProjectedRecord<C, ET, A>[];
+  outputs: BatchGetCommandOutput[];
+}
+
 /**
  * Convenience wrapper around the AWS DynamoDB SDK in addition to
  * {@link BaseEntityClient | BaseEntityClient} functionality.
@@ -269,20 +300,25 @@ export class EntityClient<
   /**
    * Get an item by primary key (token-aware).
    *
-   * @typeParam ET - Entity token (use a literal to narrow the return type).
-   * @typeParam A - Projection tuple (use `as const` to narrow the projected shape).
+   * @typeParam ET - Entity token (use a literal to narrow the record type).
+   * @typeParam A - Optional projection tuple (use `as const` to narrow the projected shape).
    *
-   * @param entityToken - Entity token used to narrow the record type.
-   * @param key - Primary key for the item.
-   * @param attributes - Optional projection attribute list.
-   * @param options - Additional DocumentClient get options.
+   * @param entityToken - Entity token used for type narrowing (no runtime effect).
+   * @param keyOrOptions - Primary key OR a {@link GetCommandInput | `GetCommandInput`}-like options object.
+   * @param attributesOrOptions - Projection attributes OR an options object.
+   * @param options - Additional {@link GetCommandInput | `GetCommandInput`} options (TableName optional).
    *
-   * @returns DynamoDB get output where `Item` (when present) is typed based on the token and projection.
+   * @returns DynamoDB get output where `Item` (when present) is narrowed by token and projection tuple.
    */
-  async getItem<ET extends EntityToken<C>, A extends readonly string[]>(
+  async getItem<
+    ET extends EntityToken<C>,
+    A extends readonly string[] | undefined = undefined,
+  >(
     entityToken: ET,
-    key: EntityKey<C>,
-    attributes: A,
+    keyOrOptions: EntityKey<C> | MakeOptional<GetCommandInput, 'TableName'>,
+    attributesOrOptions?:
+      | A
+      | MakeOptional<Omit<GetCommandInput, 'Key'>, 'TableName'>,
     options?: MakeOptional<
       Omit<
         GetCommandInput,
@@ -293,193 +329,49 @@ export class EntityClient<
       >,
       'TableName'
     >,
-  ): Promise<
-    Omit<GetCommandOutput, 'Item'> & {
-      Item?: EMEntityRecordPartial<C, ET, A> | undefined;
-    }
-  >;
-  // Token-aware with attributes string[] -> cannot narrow at type level, return full DB record
-  async getItem<ET extends EntityToken<C>>(
-    entityToken: ET,
-    key: EntityKey<C>,
-    attributes: string[],
-    options?: MakeOptional<
-      Omit<
-        GetCommandInput,
-        | 'AttributesToGet'
-        | 'ExpressionAttributeNames'
-        | 'Key'
-        | 'ProjectionExpression'
-      >,
-      'TableName'
-    >,
-  ): Promise<
-    Omit<GetCommandOutput, 'Item'> & {
-      Item?: EMEntityRecord<C, ET> | undefined;
-    }
-  >;
-  // Token-aware without attributes (records) -> full DB record
-  async getItem<ET extends EntityToken<C>>(
-    entityToken: ET,
-    key: EntityKey<C>,
-    options?: MakeOptional<
-      Omit<
-        GetCommandInput,
-        | 'AttributesToGet'
-        | 'ExpressionAttributeNames'
-        | 'Key'
-        | 'ProjectionExpression'
-      >,
-      'TableName'
-    >,
-  ): Promise<
-    Omit<GetCommandOutput, 'Item'> & {
-      Item?: EMEntityRecord<C, ET> | undefined;
-    }
-  >;
-  // Token-aware variant accepting a TableName-bearing GetCommandInput
-  async getItem<ET extends EntityToken<C>>(
-    entityToken: ET,
-    options: MakeOptional<GetCommandInput, 'TableName'>,
-  ): Promise<
-    Omit<GetCommandOutput, 'Item'> & {
-      Item?: EMEntityRecord<C, ET> | undefined;
-    }
-  >;
-  async getItem(...args: unknown[]): Promise<unknown> {
-    // Normalize to: (token?), keyOrOptions, attributesOrOptions, options
-    let keyOrOptions: EntityKey<C> | MakeOptional<GetCommandInput, 'TableName'>;
-    let attributesOrOptions:
-      | string[]
-      | MakeOptional<Omit<GetCommandInput, 'Key'>, 'TableName'>
-      | undefined;
-    let options:
-      | MakeOptional<
-          Omit<
-            GetCommandInput,
-            | 'AttributesToGet'
-            | 'ExpressionAttributeNames'
-            | 'Key'
-            | 'ProjectionExpression'
-          >,
-          'TableName'
-        >
-      | undefined;
+  ): Promise<GetItemOutput<C, ET, A>> {
+    // Token is type-only; the helper resolves key shape at runtime from the args.
+    void entityToken;
 
-    if (typeof args[0] === 'string') {
-      // getItem(entityToken, key, attributes?, options?) OR getItem(entityToken, options)
-      if (Array.isArray(args[2])) {
-        keyOrOptions = args[1] as EntityKey<C>;
-        attributesOrOptions = args[2] as string[];
-        options = args[3] as typeof options;
-      } else {
-        // key + options OR options only
-        if (args[1] && typeof args[1] === 'object' && 'TableName' in args[1]) {
-          keyOrOptions = args[1] as MakeOptional<GetCommandInput, 'TableName'>;
-          attributesOrOptions = undefined;
-          options = undefined;
-        } else {
-          keyOrOptions = args[1] as EntityKey<C>;
-          attributesOrOptions = undefined;
-          options = args[2] as typeof options;
-        }
-      }
-    } else {
-      // Fallback not used (tokenless reads removed) - retain normalization for internal call paths.
-      keyOrOptions = args[0] as
-        | EntityKey<C>
-        | MakeOptional<GetCommandInput, 'TableName'>;
-      attributesOrOptions = Array.isArray(args[1])
-        ? (args[1] as string[])
-        : (args[1] as never);
-      options = (Array.isArray(args[1]) ? args[2] : args[1]) as typeof options;
-    }
-
-    const output = (await getItemFn(
+    const output = await getItemFn<C, ET>(
       this,
       keyOrOptions as never,
       attributesOrOptions as never,
       options as never,
-    )) as unknown as Omit<GetCommandOutput, 'Item'> & {
-      Item?: Record<string, unknown> | undefined;
-    };
+    );
 
-    return output;
+    return output as unknown as GetItemOutput<C, ET, A>;
   }
 
   /**
    * Batch-get multiple items by primary key (token-aware).
    *
-   * @typeParam ET - Entity token (use a literal to narrow the return type).
-   * @typeParam A - Projection tuple (use `as const` to narrow the projected shape).
+   * @typeParam ET - Entity token (use a literal to narrow the record type).
+   * @typeParam A - Optional projection tuple (use `as const` to narrow the projected shape).
    *
-   * @param entityToken - Entity token used to narrow the record type.
+   * @param entityToken - Entity token used for type narrowing (no runtime effect).
    * @param keys - Primary keys to fetch.
-   * @param attributes - Optional projection attribute list.
-   * @param options - {@link BatchGetOptions | `BatchGetOptions`} to control batching and request options.
+   * @param attributesOrOptions - Projection attributes OR {@link BatchGetOptions | `BatchGetOptions`}.
+   * @param options - {@link BatchGetOptions | `BatchGetOptions`} when projection attributes are provided.
+   *
    * @returns Items and raw batch outputs (including retry attempts).
    */
-  // Token-aware with tuple projection
-  async getItems<ET extends EntityToken<C>, A extends readonly string[]>(
+  async getItems<
+    ET extends EntityToken<C>,
+    A extends readonly string[] | undefined = undefined,
+  >(
     entityToken: ET,
     keys: EntityKey<C>[],
-    attributes: A,
+    attributesOrOptions?: A | BatchGetOptions,
     options?: BatchGetOptions,
-  ): Promise<{
-    items: EMEntityRecordPartial<C, ET, A>[];
-    outputs: BatchGetCommandOutput[];
-  }>;
-  // Token-aware with attributes string[]
-  async getItems<ET extends EntityToken<C>>(
-    entityToken: ET,
-    keys: EntityKey<C>[],
-    attributes: string[],
-    options?: BatchGetOptions,
-  ): Promise<{
-    items: EMEntityRecord<C, ET>[];
-    outputs: BatchGetCommandOutput[];
-  }>;
-  // Token-aware without attributes
-  async getItems<ET extends EntityToken<C>>(
-    entityToken: ET,
-    keys: EntityKey<C>[],
-    options?: BatchGetOptions,
-  ): Promise<{
-    items: EMEntityRecord<C, ET>[];
-    outputs: BatchGetCommandOutput[];
-  }>;
-  async getItems(...args: unknown[]): Promise<unknown> {
-    // Normalize to: keys, attributesOrOptions, options
-    let keys: EntityKey<C>[];
-    let attributesOrOptions: string[] | BatchGetOptions | undefined;
-    let options: BatchGetOptions | undefined;
-
-    if (Array.isArray(args[0])) {
-      // Fallback (not normally used; token-aware overloads preferred)
-      keys = args[0] as EntityKey<C>[];
-      if (Array.isArray(args[1])) {
-        attributesOrOptions = args[1] as string[];
-        options = args[2] as BatchGetOptions | undefined;
-      } else {
-        attributesOrOptions = args[1] as BatchGetOptions | undefined;
-        options = args[2] as BatchGetOptions | undefined;
-      }
-    } else {
-      // getItems(entityToken, keys, attributes?, options?)
-      keys = args[1] as EntityKey<C>[];
-      if (Array.isArray(args[2])) {
-        attributesOrOptions = args[2] as string[];
-        options = args[3] as BatchGetOptions | undefined;
-      } else {
-        attributesOrOptions = args[2] as BatchGetOptions | undefined;
-        options = args[3] as BatchGetOptions | undefined;
-      }
-    }
+  ): Promise<GetItemsOutput<C, ET, A>> {
+    // Token is type-only; the helper is key-driven at runtime.
+    void entityToken;
 
     const result = Array.isArray(attributesOrOptions)
-      ? await getItemsFn(this, keys, attributesOrOptions, options ?? {})
-      : await getItemsFn(this, keys, attributesOrOptions ?? {});
+      ? await getItemsFn<C, ET>(this, keys, attributesOrOptions, options ?? {})
+      : await getItemsFn<C, ET>(this, keys, attributesOrOptions ?? {});
 
-    return result;
+    return result as unknown as GetItemsOutput<C, ET, A>;
   }
 }

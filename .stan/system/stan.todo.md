@@ -2,8 +2,8 @@
 
 ## Next up (priority order)
 
-- Run `npm run docs` and confirm no TypeDoc warnings for exported surface.
-- Decompose `src/EntityClient/EntityClient.ts` before further edits (long file; keep changes variance-friendly via smaller modules).
+- Run `npm run docs` and confirm no TypeDoc warnings for exported surface (expect 0 warnings).
+- If `src/EntityClient/EntityClient.ts` is still >300 LOC, continue decomposition (keep API inference intact; prefer small helpers/modules).
 
 ## Completed
 
@@ -24,3 +24,4 @@
 - Continued doc pass: de-duplicated README CLI plugin section, restored License section, and normalized stray CR characters in touched guides for reliable copy/paste.
 - Performed TypeDoc pass for exported API: filled missing property docs, added type params/params/returns where needed, and ensured exported types are not hidden via `@protected`.
 - Fixed remaining tsdoc warnings by extracting `CreateQueryBuilderOptions`, escaping `-\>` in `IndexParams`, and correcting the `generateTableDefinition` example.
+- Fixed TypeDoc missing-symbol warnings by exporting get-dotenv tableProperties and completed EntityClient/migrate decomposition work to keep long modules variance-friendly.

@@ -13,17 +13,24 @@ import type { EntityClient } from '../EntityClient';
 /**
  * Helper implementation for EntityClient.getItems.
  */
-export async function getItems<C extends BaseConfigMap>(
+export async function getItems<
+  C extends BaseConfigMap,
+  ET extends EntityToken<C> = EntityToken<C>,
+>(
   client: EntityClient<C>,
   keys: EntityKey<C>[],
-  attributesOrOptions?: string[] | import('../BatchGetOptions').BatchGetOptions,
+  attributesOrOptions?:
+    | readonly string[]
+    | import('../BatchGetOptions').BatchGetOptions,
   maybeOptions?: import('../BatchGetOptions').BatchGetOptions,
 ): Promise<{
-  items: EMEntityRecord<C, EntityToken<C>>[];
+  items: EMEntityRecord<C, ET>[];
   outputs: BatchGetCommandOutput[];
 }> {
   const hasAttributes = Array.isArray(attributesOrOptions);
-  const attributes = hasAttributes ? attributesOrOptions : undefined;
+  const attributes = hasAttributes
+    ? Array.from(attributesOrOptions)
+    : undefined;
 
   const resolvedOptions: import('../BatchGetOptions').BatchGetOptions =
     hasAttributes ? (maybeOptions ?? {}) : (attributesOrOptions ?? {});
@@ -86,7 +93,7 @@ export async function getItems<C extends BaseConfigMap>(
     return {
       items: outputs.flatMap(
         (output) => output.Responses?.[tableNameKey] ?? [],
-      ) as EMEntityRecord<C, EntityToken<C>>[],
+      ) as EMEntityRecord<C, ET>[],
       outputs,
     };
   } catch (error) {
