@@ -45,20 +45,6 @@ import { transactDeleteItems as transactDeleteItemsFn } from './methods/transact
 import { transactPutItems as transactPutItemsFn } from './methods/transactPutItems';
 import type { WaiterConfig } from './WaiterConfig';
 
-type IsTuple<T extends readonly unknown[]> = number extends T['length']
-  ? false
-  : true;
-
-type ProjectedRecord<
-  C extends BaseConfigMap,
-  ET extends EntityToken<C>,
-  A extends readonly string[] | undefined,
-> = A extends readonly string[]
-  ? IsTuple<A> extends true
-    ? EMEntityRecordPartial<C, ET, A>
-    : EMEntityRecord<C, ET>
-  : EMEntityRecord<C, ET>;
-
 /**
  * Return type helper for {@link EntityClient.getItem | `EntityClient.getItem`}.
  *
@@ -75,7 +61,13 @@ export type GetItemOutput<
   ET extends EntityToken<C>,
   A extends readonly string[] | undefined,
 > = Omit<GetCommandOutput, 'Item'> & {
-  Item?: ProjectedRecord<C, ET, A> | undefined;
+  Item?:
+    | (A extends readonly string[]
+        ? number extends A['length']
+          ? EMEntityRecord<C, ET>
+          : EMEntityRecordPartial<C, ET, A>
+        : EMEntityRecord<C, ET>)
+    | undefined;
 };
 
 /**
@@ -95,7 +87,11 @@ export interface GetItemsOutput<
   A extends readonly string[] | undefined,
 > {
   /** Items returned from DynamoDB, typed by token and projection tuple. */
-  items: ProjectedRecord<C, ET, A>[];
+  items: (A extends readonly string[]
+    ? number extends A['length']
+      ? EMEntityRecord<C, ET>
+      : EMEntityRecordPartial<C, ET, A>
+    : EMEntityRecord<C, ET>)[];
   /** Raw batch outputs (including retries). */
   outputs: BatchGetCommandOutput[];
 }
