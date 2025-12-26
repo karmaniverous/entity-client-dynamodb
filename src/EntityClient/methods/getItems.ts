@@ -8,6 +8,7 @@ import type {
 } from '@karmaniverous/entity-manager';
 import { zipToObject } from 'radash';
 
+import type { BatchGetOptions } from '../BatchGetOptions';
 import type { EntityClient } from '../EntityClient';
 
 /**
@@ -19,26 +20,26 @@ export async function getItems<
 >(
   client: EntityClient<C>,
   keys: EntityKey<C>[],
-  attributesOrOptions?:
-    | readonly string[]
-    | import('../BatchGetOptions').BatchGetOptions,
-  maybeOptions?: import('../BatchGetOptions').BatchGetOptions,
+  attributesOrOptions?: readonly string[] | BatchGetOptions,
+  maybeOptions?: BatchGetOptions,
 ): Promise<{
   items: EMEntityRecord<C, ET>[];
   outputs: BatchGetCommandOutput[];
 }> {
-  const hasAttributes = Array.isArray(attributesOrOptions);
-  const attributes = hasAttributes
-    ? Array.from(attributesOrOptions)
-    : undefined;
-
-  const resolvedOptions: import('../BatchGetOptions').BatchGetOptions =
-    hasAttributes ? (maybeOptions ?? {}) : (attributesOrOptions ?? {});
+  let attributes: string[] | undefined;
+  let resolvedOptions: BatchGetOptions;
+  if (Array.isArray(attributesOrOptions)) {
+    attributes = Array.from(attributesOrOptions);
+    resolvedOptions = maybeOptions ?? {};
+  } else {
+    attributes = undefined;
+    resolvedOptions = attributesOrOptions ?? {};
+  }
 
   const { tableName, batchProcessOptions, ...input } = {
     tableName: client.tableName,
     ...resolvedOptions,
-  } as import('../BatchGetOptions').BatchGetOptions;
+  } as BatchGetOptions;
   // Effective table name for downstream lookups and request keys
   const tableNameKey = tableName ?? client.tableName;
 

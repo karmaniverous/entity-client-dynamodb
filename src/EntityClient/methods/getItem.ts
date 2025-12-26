@@ -38,16 +38,25 @@ export async function getItem<
   // Resolve options.
   const { hashKey, rangeKey } = client.entityManager.config;
 
-  const { AttributesToGet: attributes, ...resolvedOptions } = {
+  const extraOptions =
+    !Array.isArray(attributesOrOptions) && attributesOrOptions
+      ? attributesOrOptions
+      : undefined;
+
+  const mergedOptions = {
     TableName: client.tableName,
     ...(hashKey in keyOrOptions && rangeKey in keyOrOptions
       ? { Key: keyOrOptions as EntityKey<C> }
       : keyOrOptions),
-    ...(Array.isArray(attributesOrOptions)
-      ? { AttributesToGet: Array.from(attributesOrOptions) }
-      : attributesOrOptions),
-    ...options,
+    ...(extraOptions ?? {}),
+    ...(options ?? {}),
   } as ReplaceKey<GetCommandInput, 'Key', EntityKey<C>>;
+
+  const { AttributesToGet: attrsFromObject, ...resolvedOptions } =
+    mergedOptions;
+  const attributes = Array.isArray(attributesOrOptions)
+    ? Array.from(attributesOrOptions)
+    : attrsFromObject;
 
   const attributeExpressions = attributes?.map((a) => `#${a}`);
 
