@@ -5,6 +5,44 @@ import { firstDefined } from './coerce';
 import { resolveLayoutConfig } from './layout';
 import type { DynamodbPluginConfig, EnvRef, GenerateFlags } from './types';
 
+/** Managed table properties flags (generate). */
+export interface GenerateTablePropertiesFlags {
+  /** Billing mode (e.g. `PAY_PER_REQUEST` or `PROVISIONED`). */
+  billingMode?: string;
+  /** Provisioned RCU (requires billingMode=PROVISIONED). */
+  readCapacityUnits?: number | string;
+  /** Provisioned WCU (requires billingMode=PROVISIONED). */
+  writeCapacityUnits?: number | string;
+  /** Managed `Properties.TableName`. */
+  tableName?: string;
+}
+
+/**
+ * Resolved options for {@link generateTableDefinitionAtVersion | `generateTableDefinitionAtVersion`}.
+ *
+ * @category get-dotenv
+ */
+export interface GenerateAtVersionOptions {
+  /** When true, recompose from baseline template + generated + managed properties. */
+  clean?: boolean;
+  /** Optional managed table properties to apply on generate/refresh. */
+  tableProperties?: GenerateTablePropertiesFlags;
+}
+
+/**
+ * Fully resolved inputs for a `generate` operation at a specific version.
+ *
+ * @category get-dotenv
+ */
+export interface ResolvedGenerateAtVersion {
+  /** Target version token (NNN). */
+  version: string;
+  /** Versioned layout config. */
+  cfg: VersionedLayoutConfig;
+  /** Generate options (clean/tableProperties). */
+  options: GenerateAtVersionOptions;
+}
+
 /**
  * Resolve CLI flags + plugin config into generate-table-definition inputs.
  *
@@ -22,19 +60,7 @@ export function resolveGenerateAtVersion(
   flags: GenerateFlags,
   config?: DynamodbPluginConfig,
   ref: EnvRef = process.env,
-): {
-  version: string;
-  cfg: VersionedLayoutConfig;
-  options: {
-    clean?: boolean;
-    tableProperties?: {
-      billingMode?: string;
-      readCapacityUnits?: number | string;
-      writeCapacityUnits?: number | string;
-      tableName?: string;
-    };
-  };
-} {
+): ResolvedGenerateAtVersion {
   const cfg = resolveLayoutConfig({}, config, ref);
   const envRef = { ...process.env, ...ref };
   // Host interpolates config strings once; expand flags only.
@@ -49,14 +75,14 @@ export function resolveGenerateAtVersion(
   const flagsTablePropsExpanded = flags.tableProperties
     ? interpolateDeep(flags.tableProperties, envRef)
     : undefined;
-  const tableProperties = {
+  const tableProperties: GenerateTablePropertiesFlags = {
     ...(config?.generate?.tableProperties ?? {}),
     ...(flagsTablePropsExpanded ?? {}),
   };
 
   const clean = firstDefined(flags.clean, config?.generate?.clean);
 
-  const options = {
+  const options: GenerateAtVersionOptions = {
     ...(clean ? { clean: true } : {}),
     ...(Object.keys(tableProperties).length
       ? { tableProperties: tableProperties as never }

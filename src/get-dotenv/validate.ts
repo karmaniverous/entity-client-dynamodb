@@ -200,14 +200,29 @@ function stableStringify(value: unknown): string {
   return JSON.stringify(normalized ?? null);
 }
 
+/**
+ * Structured diff for a single generated/managed key.
+ *
+ * @category get-dotenv
+ */
 export interface GeneratedDiff {
+  /** Key name (e.g. `KeySchema`, `BillingMode`). */
   key: string;
+  /** Expected canonical value. */
   expected: unknown;
+  /** Actual canonical value (from YAML). */
   actual: unknown;
 }
 
+/**
+ * Validation result for a table.yml drift check.
+ *
+ * @category get-dotenv
+ */
 export interface ValidateResult {
+  /** True when no diffs were detected. */
   equal: boolean;
+  /** List of diffs (empty when equal is true). */
   diffs: GeneratedDiff[];
 }
 

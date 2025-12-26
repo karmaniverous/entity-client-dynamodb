@@ -2,8 +2,24 @@ import { dotenvExpand } from '@karmaniverous/get-dotenv';
 
 import type { DynamodbPluginConfig, EnvRef } from './types';
 
+/**
+ * Raw CLI flags for `purge` (before merge/expansion).
+ *
+ * @category get-dotenv
+ */
 export interface PurgeFlags {
+  /** Table name (dotenv expanded). */
   tableName?: string;
+}
+
+/**
+ * Resolved options for {@link purgeTable | `purgeTable`}.
+ *
+ * @category get-dotenv
+ */
+export interface PurgeResolvedOptions {
+  /** Optional one-off TableName override. */
+  tableNameOverride?: string;
 }
 
 /**
@@ -23,10 +39,12 @@ export function resolvePurge(
   flags: PurgeFlags,
   config?: DynamodbPluginConfig,
   ref: EnvRef = process.env,
-): { options: { tableNameOverride?: string } } {
+): { options: PurgeResolvedOptions } {
   // Host interpolates config strings once; expand flags only.
   const envRef = { ...process.env, ...ref };
   const tableNameOverride =
     dotenvExpand(flags.tableName, envRef) ?? config?.purge?.tableName;
-  return { options: { ...(tableNameOverride ? { tableNameOverride } : {}) } };
+  return {
+    options: { ...(tableNameOverride ? { tableNameOverride } : {}) },
+  };
 }

@@ -5,6 +5,18 @@ import { resolveLayoutConfig } from './layout';
 import type { DynamodbPluginConfig, EnvRef, ValidateFlags } from './types';
 
 /**
+ * Fully resolved inputs for a `validate` operation at a specific version.
+ *
+ * @category get-dotenv
+ */
+export interface ResolvedValidateAtVersion {
+  /** Target version token (NNN). */
+  version: string;
+  /** Versioned layout config. */
+  cfg: VersionedLayoutConfig;
+}
+
+/**
  * Resolve CLI flags + plugin config into validate-table-definition inputs.
  *
  * Expansion policy:
@@ -21,7 +33,7 @@ export function resolveValidateAtVersion(
   flags: ValidateFlags,
   config?: DynamodbPluginConfig,
   ref: EnvRef = process.env,
-): { version: string; cfg: VersionedLayoutConfig } {
+): ResolvedValidateAtVersion {
   const cfg = resolveLayoutConfig({}, config, ref);
   // Host interpolates config strings once; expand flags only.
   const envRef = { ...process.env, ...ref };

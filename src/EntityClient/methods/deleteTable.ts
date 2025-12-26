@@ -1,6 +1,7 @@
 import {
   DeleteTableCommand,
   type DeleteTableCommandInput,
+  type DeleteTableCommandOutput,
   waitUntilTableNotExists,
 } from '@aws-sdk/client-dynamodb';
 import type { BaseConfigMap } from '@karmaniverous/entity-manager';
@@ -10,13 +11,25 @@ import type { EntityClient } from '../EntityClient';
 import type { WaiterConfig } from '../WaiterConfig';
 
 /**
+ * Result returned by {@link EntityClient.deleteTable | `EntityClient.deleteTable`}.
+ *
+ * @category EntityClient
+ */
+export interface DeleteTableResult {
+  /** Raw AWS SDK {@link DeleteTableCommandOutput | `DeleteTableCommandOutput`} response. */
+  deleteTableCommandOutput: DeleteTableCommandOutput;
+  /** Waiter result from {@link waitUntilTableNotExists | `waitUntilTableNotExists`}. */
+  waiterResult: Awaited<ReturnType<typeof waitUntilTableNotExists>>;
+}
+
+/**
  * Helper implementation for EntityClient.deleteTable.
  */
 export async function deleteTable<C extends BaseConfigMap>(
   client: EntityClient<C>,
   options: MakeOptional<DeleteTableCommandInput, 'TableName'> = {},
   waiterConfig: WaiterConfig = { maxWaitTime: 60 },
-) {
+): Promise<DeleteTableResult> {
   try {
     // Resolve options.
     const resolvedOptions: DeleteTableCommandInput = {

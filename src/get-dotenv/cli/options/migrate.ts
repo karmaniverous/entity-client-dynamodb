@@ -5,15 +5,54 @@ import { firstDefined, num } from './coerce';
 import { resolveLayoutConfig } from './layout';
 import type { DynamodbPluginConfig, EnvRef } from './types';
 
+/**
+ * Raw CLI flags for `migrate` (before merge/expansion/coercion).
+ *
+ * @category get-dotenv
+ */
 export interface MigrateFlags {
+  /** Source table name (dotenv expanded). */
   sourceTable?: string;
+  /** Target table name (dotenv expanded). */
   targetTable?: string;
+  /** From version token (NNN; exclusive). */
   fromVersion?: string;
+  /** To version token (NNN; inclusive). */
   toVersion?: string;
+  /** Scan page size (number or string; dotenv expanded). */
   pageSize?: number | string;
+  /** Max outputs to write (number or string; dotenv expanded). */
   limit?: number | string;
+  /** Transform concurrency (number or string; dotenv expanded). */
   transformConcurrency?: number | string;
+  /** Progress tick interval ms (number or string; dotenv expanded). */
   progressIntervalMs?: number | string;
+}
+
+/**
+ * Resolved migrate settings.
+ *
+ * @category get-dotenv
+ */
+export interface ResolvedMigrate {
+  /** Versioned layout config. */
+  cfg: VersionedLayoutConfig;
+  /** From version token (exclusive). */
+  fromVersion: string;
+  /** To version token (inclusive). */
+  toVersion: string;
+  /** Optional resolved source table name override. */
+  sourceTableName?: string;
+  /** Optional resolved target table name override. */
+  targetTableName?: string;
+  /** Optional scan page size. */
+  pageSize?: number;
+  /** Optional max outputs to write. */
+  limit?: number;
+  /** Optional transform concurrency. */
+  transformConcurrency?: number;
+  /** Optional progress tick interval ms. */
+  progressIntervalMs?: number;
 }
 
 /**
@@ -33,17 +72,7 @@ export function resolveMigrate(
   flags: MigrateFlags,
   config?: DynamodbPluginConfig,
   ref: EnvRef = process.env,
-): {
-  cfg: VersionedLayoutConfig;
-  fromVersion: string;
-  toVersion: string;
-  sourceTableName?: string;
-  targetTableName?: string;
-  pageSize?: number;
-  limit?: number;
-  transformConcurrency?: number;
-  progressIntervalMs?: number;
-} {
+): ResolvedMigrate {
   const cfg = resolveLayoutConfig({}, config, ref);
   const envRef = { ...process.env, ...ref };
   // Host interpolates config strings once; expand flags only.

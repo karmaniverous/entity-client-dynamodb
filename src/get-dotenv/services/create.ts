@@ -35,8 +35,11 @@ import type { ManagedTablePropertiesInfo } from '../tableProperties';
 import { validateGeneratedSections } from '../validate';
 
 export interface CreateOptions {
+  /** Validate drift before create (default true). */
   validate?: boolean; // default true
+  /** Refresh generated YAML sections in-place before create (default false). */
   refreshGenerated?: boolean; // default false
+  /** Waiter config (default \{ maxWaitTime: 60 \}). */
   waiter?: WaiterConfig; // default { maxWaitTime: 60 }
   /** Allow creating a table at a non-latest version (unsafe by default). */
   allowNonLatest?: boolean;
@@ -55,6 +58,19 @@ function extractProperties(doc: YAML.Document): Record<string, unknown> {
   return YAML.parse(YAML.stringify(props ?? {})) as Record<string, unknown>;
 }
 
+/**
+ * Create a DynamoDB table for a specific version directory (tables/NNN) from table.yml.
+ *
+ * @typeParam C - Entity-manager config map.
+ *
+ * @param client - Target {@link EntityClient | `EntityClient`} (used to create the table).
+ * @param em - EntityManager resolved for this version (used for drift/refresh).
+ * @param version - Version token (NNN).
+ * @param cfg - Versioned layout config.
+ * @param options - Create options (validate/refresh/waiter, etc.).
+ *
+ * @category get-dotenv
+ */
 export async function createTableAtVersion<C extends BaseConfigMap>(
   client: EntityClient<C>,
   em: EntityManager<C>,

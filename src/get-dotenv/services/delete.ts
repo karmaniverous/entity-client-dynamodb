@@ -13,6 +13,11 @@ import type { BatchWriteOptions } from '../../EntityClient/BatchWriteOptions';
 import type { EntityClient } from '../../EntityClient/EntityClient';
 import type { WaiterConfig } from '../../EntityClient/WaiterConfig';
 
+/**
+ * Options for {@link deleteTable | `deleteTable`}.
+ *
+ * @category get-dotenv
+ */
 export interface DeleteTableOptions {
   /** Optional waiter configuration (maxWaitTime, etc.). */
   waiter?: WaiterConfig;
@@ -33,6 +38,11 @@ export async function deleteTable<C extends BaseConfigMap>(
   return client.deleteTable(tableInput as never, options?.waiter);
 }
 
+/**
+ * Options for {@link purgeTable | `purgeTable`}.
+ *
+ * @category get-dotenv
+ */
 export interface PurgeTableOptions extends Omit<
   BatchWriteOptions,
   'tableName'

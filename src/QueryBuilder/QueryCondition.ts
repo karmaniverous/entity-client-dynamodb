@@ -51,7 +51,12 @@ export interface QueryConditionBetween<
   /** Operator discriminator. */
   operator: 'between';
   /** Inclusive bounds. If both are missing, no condition is added. */
-  value: { from?: V | undefined; to?: V | undefined };
+  value: {
+    /** Inclusive lower bound. */
+    from?: V | undefined;
+    /** Inclusive upper bound. */
+    to?: V | undefined;
+  };
 }
 
 /**
@@ -149,7 +154,10 @@ export interface MinimalBuilder {
   /** Per-index mutable query parameters used to build expressions. */
   indexParamsMap: Record<string, IndexParams>;
   /** Logger used by helper functions (debug/error). */
-  entityClient: { logger: Pick<Console, 'debug' | 'error'> };
+  entityClient: {
+    /** Logger used by helpers (debug/error). */
+    logger: Pick<Console, 'debug' | 'error'>;
+  };
 }
 
 /**

@@ -61,6 +61,7 @@ export type GetItemOutput<
   ET extends EntityToken<C>,
   A extends readonly string[] | undefined,
 > = Omit<GetCommandOutput, 'Item'> & {
+  /** Returned item (storage record); `undefined` when not found. */
   Item?:
     | (A extends readonly string[]
         ? number extends A['length']

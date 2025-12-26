@@ -8,6 +8,11 @@ import { z } from '@karmaniverous/get-dotenv/cliHost';
  * - We accept number-or-string for numeric fields because interpolated values may
  *   arrive as strings when authored via env expansion.
  */
+/**
+ * Zod schema for the DynamoDB plugin config slice.
+ *
+ * @internal
+ */
 export const DynamodbPluginConfigSchema = z
   .object({
     tablesPath: z.string().optional(),
@@ -79,4 +84,9 @@ export const DynamodbPluginConfigSchema = z
   })
   .strip();
 
+/**
+ * DynamoDB plugin config slice (validated by {@link DynamodbPluginConfigSchema | `DynamodbPluginConfigSchema`}).
+ *
+ * @category get-dotenv
+ */
 export type DynamodbPluginConfig = z.infer<typeof DynamodbPluginConfigSchema>;

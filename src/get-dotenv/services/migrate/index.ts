@@ -11,6 +11,25 @@ import { loadStepContext } from './load';
 import { runLimited } from './pool';
 import type { StepContext } from './types';
 
+/**
+ * Result returned by {@link migrateData | `migrateData`}.
+ *
+ * @category get-dotenv
+ */
+export interface MigrateDataResult {
+  /** Number of scan pages processed. */
+  pages: number;
+  /** Number of source items processed. */
+  items: number;
+  /** Number of output records written to the target table. */
+  outputs: number;
+}
+
+/**
+ * Migrate data across versioned steps with optional per-step transforms.
+ *
+ * @category get-dotenv
+ */
 export async function migrateData<C extends BaseConfigMap>(
   source: EntityClient<C>,
   target: EntityClient<C>,
@@ -31,7 +50,7 @@ export async function migrateData<C extends BaseConfigMap>(
       ratePerSec: number;
     }) => void;
   },
-): Promise<{ pages: number; items: number; outputs: number }> {
+): Promise<MigrateDataResult> {
   const {
     fromVersion,
     toVersion,

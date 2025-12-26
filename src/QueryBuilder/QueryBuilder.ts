@@ -44,6 +44,16 @@ export class QueryBuilder<
   CF = unknown,
   K = unknown,
 > extends BaseQueryBuilder<C, EntityClient<C>, IndexParams, ET, ITS, CF, K> {
+  /**
+   * Build a shard query function for a specific index token.
+   *
+   * The returned function matches the {@link ShardQueryFunction | `ShardQueryFunction`} contract expected by {@link ShardQueryMap | `ShardQueryMap`}.
+   *
+   * @param indexToken - Index token to query.
+   * @returns A function that queries DynamoDB for a single shard/hash key and returns a typed shard result.
+   *
+   * @category QueryBuilder
+   */
   getShardQueryFunction(
     indexToken: ITS,
   ): ShardQueryFunction<C, ET, ITS, CF, K> {

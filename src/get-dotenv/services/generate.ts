@@ -28,11 +28,28 @@ import {
 import type { TablePropertiesConfig } from '../tableProperties';
 import { resolveManagedTableProperties } from '../tableProperties';
 
+/**
+ * Options for {@link generateTableDefinitionAtVersion | `generateTableDefinitionAtVersion`}.
+ *
+ * @category get-dotenv
+ */
 export interface GenerateOptions {
   /** When true, recompose from baseline template + generated + managed properties. */
   clean?: boolean;
   /** Managed table properties (non-generated keys) to apply deterministically when provided. */
   tableProperties?: TablePropertiesConfig;
+}
+
+/**
+ * Result returned by {@link generateTableDefinitionAtVersion | `generateTableDefinitionAtVersion`}.
+ *
+ * @category get-dotenv
+ */
+export interface GenerateTableDefinitionAtVersionResult {
+  /** Path to the generated/refreshed table.yml. */
+  path: string;
+  /** True when an existing file was refreshed in-place; false when created new. */
+  refreshed: boolean;
 }
 
 /**
@@ -48,7 +65,7 @@ export async function generateTableDefinitionAtVersion<C extends BaseConfigMap>(
   version: string,
   cfg?: VersionedLayoutConfig,
   options?: GenerateOptions,
-): Promise<{ path: string; refreshed: boolean }> {
+): Promise<GenerateTableDefinitionAtVersionResult> {
   const vd = await resolveVersionDir(version, cfg, { mustExist: false });
   const vp = getVersionedPathsForToken(vd.token, vd.value, cfg);
   const tableFile = resolve(

@@ -12,6 +12,11 @@
  */
 import type { CreateTableCommandInput } from '@aws-sdk/client-dynamodb';
 
+/**
+ * Config shape for managed table properties (non-generated keys).
+ *
+ * @category get-dotenv
+ */
 export interface TablePropertiesConfig {
   /** Billing mode (e.g., `PAY_PER_REQUEST` or `PROVISIONED`). */
   billingMode?: string | undefined;
@@ -23,17 +28,35 @@ export interface TablePropertiesConfig {
   tableName?: string | undefined;
 }
 
+/**
+ * DynamoDB table Properties keys managed deterministically by tooling.
+ *
+ * @category get-dotenv
+ */
 export interface ManagedTableProperties {
+  /** Managed BillingMode. */
   BillingMode?: CreateTableCommandInput['BillingMode'];
+  /** Managed ProvisionedThroughput. */
   ProvisionedThroughput?: CreateTableCommandInput['ProvisionedThroughput'];
+  /** Managed TableName. */
   TableName?: string;
 }
 
+/**
+ * Managed properties value plus booleans indicating which keys are managed.
+ *
+ * @category get-dotenv
+ */
 export interface ManagedTablePropertiesInfo {
+  /** Values to apply/validate when managed. */
   managed: ManagedTableProperties;
+  /** Flags describing which keys are managed. */
   manages: {
+    /** True when BillingMode is managed. */
     billingMode: boolean;
+    /** True when ProvisionedThroughput is managed. */
     provisionedThroughput: boolean;
+    /** True when TableName is managed. */
     tableName: boolean;
   };
 }
@@ -123,6 +146,16 @@ export function resolveManagedTableProperties(
   };
 }
 
+/**
+ * Pick the subset of managed table properties from a parsed `Properties` object.
+ *
+ * This is used for drift validation (compare expected managed values vs YAML).
+ *
+ * @param props - Parsed table `Properties` object.
+ * @returns Extracted managed table properties present in the YAML.
+ *
+ * @category get-dotenv
+ */
 export function pickManagedActualFromProperties(
   props: Record<string, unknown>,
 ): ManagedTableProperties {

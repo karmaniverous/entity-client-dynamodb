@@ -17,6 +17,11 @@
 import { promises as fs } from 'node:fs';
 import { join, resolve } from 'node:path';
 
+/**
+ * Filename tokens (without extensions) used by the versioned layout.
+ *
+ * @category get-dotenv
+ */
 export interface VersionedLayoutTokens {
   /** Table definition token (filename without extension). Default: "table". */
   table?: string;
@@ -26,6 +31,11 @@ export interface VersionedLayoutTokens {
   transform?: string;
 }
 
+/**
+ * Configuration for versioned tables layout resolution.
+ *
+ * @category get-dotenv
+ */
 export interface VersionedLayoutConfig {
   /** Root path for versioned assets. Default: "tables". */
   tablesPath?: string;
@@ -35,18 +45,37 @@ export interface VersionedLayoutConfig {
   tokens?: VersionedLayoutTokens;
 }
 
+/**
+ * A discovered version directory under tablesPath.
+ *
+ * @category get-dotenv
+ */
 export interface VersionDir {
+  /** Directory token (digit-only, as found on disk). */
   token: string;
+  /** Parsed numeric value of the token. */
   value: number;
 }
 
+/**
+ * Resolved candidate paths for a specific version token/value.
+ *
+ * @category get-dotenv
+ */
 export interface VersionedPaths {
+  /** Absolute resolved tables root path. */
   root: string;
+  /** Absolute version directory path. */
   versionDir: string;
+  /** Version directory token (digit-only). */
   versionToken: string;
+  /** Parsed numeric value of the version token. */
   versionValue: number;
+  /** Candidate table file paths (yml/yaml) in precedence order. */
   tableFileCandidates: string[];
+  /** Candidate EntityManager module paths (ts/js) in precedence order. */
   entityManagerFileCandidates: string[];
+  /** Candidate transform module paths (ts/js) in precedence order. */
   transformFileCandidates: string[];
 }
 
@@ -129,6 +158,14 @@ export function getVersionedPathsForToken(
   };
 }
 
+/**
+ * List version directory entries under `tablesPath` and return them sorted by numeric value.
+ *
+ * @param cfg - Versioned layout config.
+ * @returns Version directories (token + numeric value), sorted ascending.
+ *
+ * @category get-dotenv
+ */
 export async function listVersionDirEntries(
   cfg?: VersionedLayoutConfig,
 ): Promise<VersionDir[]> {
@@ -163,6 +200,16 @@ export async function listVersionDirEntries(
   return dirs.sort((a, b) => a.value - b.value);
 }
 
+/**
+ * Resolve a version directory token/value pair for a requested version.
+ *
+ * @param version - Version token string (digit-only; padding allowed).
+ * @param cfg - Versioned layout config.
+ * @param options - Resolution options.
+ * @returns Resolved version directory token/value.
+ *
+ * @category get-dotenv
+ */
 export async function resolveVersionDir(
   version: string,
   cfg?: VersionedLayoutConfig,

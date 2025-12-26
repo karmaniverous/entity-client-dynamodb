@@ -30,4 +30,4 @@
 - Fixed getItem/getItems option narrowing to satisfy TS/ESLint after readonly projection support.
 - Fixed readonly array narrowing for BatchGetOptions vs projections (unblocks tsc/typedoc).
 - Exported EntityClient GetItemOutput/GetItemsOutput so TypeDoc can include referenced return types (0 warnings goal).
-- Enabled TypeDoc `validation.notDocumented` to enforce complete API docs.
+- Enabled TypeDoc `validation.notDocumented` to enforce complete API docs.- Added missing TypeDoc comments and named result types to clear notDocumented warnings across exported surfaces.

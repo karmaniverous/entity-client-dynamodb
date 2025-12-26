@@ -76,12 +76,25 @@ function setPropsChild(doc: TableDoc, key: string, value: unknown) {
   props.set(key, value);
 }
 
+/**
+ * Generated table-definition sections (subset of DynamoDB CreateTableCommandInput).
+ *
+ * @category get-dotenv
+ */
 export interface GeneratedSections {
+  /** Generated `Properties.AttributeDefinitions`. */
   AttributeDefinitions?: CreateTableCommandInput['AttributeDefinitions'];
+  /** Generated `Properties.KeySchema`. */
   KeySchema?: CreateTableCommandInput['KeySchema'];
+  /** Generated `Properties.GlobalSecondaryIndexes`. */
   GlobalSecondaryIndexes?: CreateTableCommandInput['GlobalSecondaryIndexes'];
 }
 
+/**
+ * Optional overlays applied when composing a new table.yml (creation-time helper).
+ *
+ * @category get-dotenv
+ */
 export interface OverlayOptions {
   /** Optional BillingMode for initial composition (no-op on refresh unless caller wants to change it). */
   BillingMode?: CreateTableCommandInput['BillingMode'];

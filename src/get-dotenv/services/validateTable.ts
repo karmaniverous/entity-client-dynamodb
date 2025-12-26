@@ -21,6 +21,16 @@ import type { ManagedTablePropertiesInfo } from '../tableProperties';
 import { validateGeneratedSections, type ValidateResult } from '../validate';
 
 /**
+ * Result returned by {@link validateTableDefinitionAtVersion | `validateTableDefinitionAtVersion`}.
+ *
+ * @category get-dotenv
+ */
+export interface ValidateTableDefinitionAtVersionResult extends ValidateResult {
+  /** Absolute path to the validated table.yml (for diagnostics/UX). */
+  tablePath: string;
+}
+
+/**
  * Validate generated sections in tables/NNN/table.yml against the resolved EntityManager.
  *
  * @param version - Version token (NNN).
@@ -33,7 +43,7 @@ export async function validateTableDefinitionAtVersion(
   version: string,
   cfg?: VersionedLayoutConfig,
   managed?: ManagedTablePropertiesInfo,
-): Promise<ValidateResult & { tablePath: string }> {
+): Promise<ValidateTableDefinitionAtVersionResult> {
   // Resolve table path and ensure it exists.
   const vd = await resolveVersionDir(version, cfg, { mustExist: false });
   const vp = getVersionedPathsForToken(vd.token, vd.value, cfg);

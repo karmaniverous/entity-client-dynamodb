@@ -4,9 +4,28 @@ import type { WaiterConfig } from '../../../EntityClient/WaiterConfig';
 import { firstDefined, num } from './coerce';
 import type { DynamodbPluginConfig, EnvRef } from './types';
 
+/**
+ * Raw CLI flags for `delete` (before merge/expansion/coercion).
+ *
+ * @category get-dotenv
+ */
 export interface DeleteFlags {
+  /** Table name (dotenv expanded). */
   tableName?: string;
+  /** Waiter max seconds override (number or string; dotenv expanded). */
   maxSeconds?: number | string;
+}
+
+/**
+ * Resolved options for {@link deleteTable | `deleteTable`}.
+ *
+ * @category get-dotenv
+ */
+export interface DeleteResolvedOptions {
+  /** Optional waiter config. */
+  waiter?: WaiterConfig;
+  /** Optional one-off TableName override. */
+  tableNameOverride?: string;
 }
 
 /**
@@ -26,7 +45,7 @@ export function resolveDelete(
   flags: DeleteFlags,
   config?: DynamodbPluginConfig,
   ref: EnvRef = process.env,
-): { options: { waiter?: WaiterConfig; tableNameOverride?: string } } {
+): { options: DeleteResolvedOptions } {
   const envRef = { ...process.env, ...ref };
   // Host interpolates config strings once; expand flags only.
   const tableNameOverride =
@@ -42,7 +61,7 @@ export function resolveDelete(
       : maxSecondsRaw;
   const maxSeconds = num(maxSecondsExpanded);
 
-  const options = {
+  const options: DeleteResolvedOptions = {
     ...(tableNameOverride ? { tableNameOverride } : {}),
     ...(maxSeconds !== undefined
       ? { waiter: { maxWaitTime: maxSeconds } as WaiterConfig }

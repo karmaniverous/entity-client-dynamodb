@@ -8,8 +8,19 @@ import { registerLocal } from './commands/local';
 import { registerMigrate } from './commands/migrate';
 import { registerPurge } from './commands/purge';
 import { registerValidate } from './commands/validate';
+import type { DynamodbPluginInstance } from './pluginInstance';
 
-export const dynamodbPlugin = () => {
+/**
+ * Create the DynamoDB get-dotenv CLI plugin.
+ *
+ * When mounted under the shipped `aws` plugin, commands are invoked as `aws dynamodb ...`
+ * and config is keyed under `plugins["aws/dynamodb"]`.
+ *
+ * @returns A configured DynamoDB plugin instance.
+ *
+ * @category get-dotenv
+ */
+export const dynamodbPlugin = (): DynamodbPluginInstance => {
   const plugin = definePlugin({
     ns: 'dynamodb',
     configSchema: DynamodbPluginConfigSchema,
