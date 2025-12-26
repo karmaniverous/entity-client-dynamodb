@@ -8,6 +8,9 @@ import type {
 } from '@karmaniverous/entity-manager';
 import { zipToObject } from 'radash';
 
+const isReadonlyStringArray = (v: unknown): v is readonly string[] =>
+  Array.isArray(v);
+
 import type { BatchGetOptions } from '../BatchGetOptions';
 import type { EntityClient } from '../EntityClient';
 
@@ -28,7 +31,7 @@ export async function getItems<
 }> {
   let attributes: string[] | undefined;
   let resolvedOptions: BatchGetOptions;
-  if (Array.isArray(attributesOrOptions)) {
+  if (isReadonlyStringArray(attributesOrOptions)) {
     attributes = Array.from(attributesOrOptions);
     resolvedOptions = maybeOptions ?? {};
   } else {

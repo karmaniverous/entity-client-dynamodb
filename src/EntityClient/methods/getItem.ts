@@ -10,6 +10,9 @@ import { zipToObject } from 'radash';
 
 import type { EntityClient } from '../EntityClient';
 
+const isReadonlyStringArray = (v: unknown): v is readonly string[] =>
+  Array.isArray(v);
+
 /**
  * Helper implementation for EntityClient.getItem.
  */
@@ -39,7 +42,7 @@ export async function getItem<
   const { hashKey, rangeKey } = client.entityManager.config;
 
   const extraOptions =
-    !Array.isArray(attributesOrOptions) && attributesOrOptions
+    !isReadonlyStringArray(attributesOrOptions) && attributesOrOptions
       ? attributesOrOptions
       : undefined;
 
@@ -54,7 +57,9 @@ export async function getItem<
 
   const { AttributesToGet: attrsFromObject, ...resolvedOptions } =
     mergedOptions;
-  const attributes = Array.isArray(attributesOrOptions)
+  const attributes: string[] | undefined = isReadonlyStringArray(
+    attributesOrOptions,
+  )
     ? Array.from(attributesOrOptions)
     : attrsFromObject;
 
