@@ -59,7 +59,18 @@ type ProjectedRecord<
     : EMEntityRecord<C, ET>
   : EMEntityRecord<C, ET>;
 
-type GetItemOutput<
+/**
+ * Return type helper for {@link EntityClient.getItem | `EntityClient.getItem`}.
+ *
+ * TypeDoc requires this to be exported when it appears in an exported method signature.
+ *
+ * @typeParam C - Entity-manager config map.
+ * @typeParam ET - Entity token.
+ * @typeParam A - Optional projection tuple. If a const tuple is provided, `Item` is narrowed to the projected shape; otherwise it falls back to the full storage record shape.
+ *
+ * @category EntityClient
+ */
+export type GetItemOutput<
   C extends BaseConfigMap,
   ET extends EntityToken<C>,
   A extends readonly string[] | undefined,
@@ -67,12 +78,25 @@ type GetItemOutput<
   Item?: ProjectedRecord<C, ET, A> | undefined;
 };
 
-interface GetItemsOutput<
+/**
+ * Return type helper for {@link EntityClient.getItems | `EntityClient.getItems`}.
+ *
+ * TypeDoc requires this to be exported when it appears in an exported method signature.
+ *
+ * @typeParam C - Entity-manager config map.
+ * @typeParam ET - Entity token.
+ * @typeParam A - Optional projection tuple. If a const tuple is provided, `items` are narrowed to the projected shape; otherwise they fall back to full storage record shapes.
+ *
+ * @category EntityClient
+ */
+export interface GetItemsOutput<
   C extends BaseConfigMap,
   ET extends EntityToken<C>,
   A extends readonly string[] | undefined,
 > {
+  /** Items returned from DynamoDB, typed by token and projection tuple. */
   items: ProjectedRecord<C, ET, A>[];
+  /** Raw batch outputs (including retries). */
   outputs: BatchGetCommandOutput[];
 }
 
