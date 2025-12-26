@@ -22,10 +22,17 @@ import {
  * @example
  * ```ts
  * const entityManager = new EntityManager(config);
- * const entityClient = new EntityClient({region: 'us-east-1});
- * const tableDefinition = generateTableDefinition(entityManager);
+ * const entityClient = new EntityClient({
+ *   entityManager,
+ *   tableName: 'UserTable',
+ *   region: 'us-east-1',
+ * });
  *
- * await entityClient.createTable({...tableDefinition, TableName: 'user'});
+ * const tableDefinition = generateTableDefinition(entityManager);
+ * await entityClient.createTable({
+ *   BillingMode: 'PAY_PER_REQUEST',
+ *   ...tableDefinition,
+ * });
  * ```
  *
  * @category Tables

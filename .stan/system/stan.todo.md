@@ -21,4 +21,4 @@
 - Updated CLI docs to assume `aws dynamodb ...` and `plugins["aws/dynamodb"]`, and documented `generate --clean` and managed table properties flags (`--table-*`).
 - Aligned README and guides with current implementation details (aws/dynamodb config namespace, create latest-only guard, managed table properties invariants, version token semantics, projection wording).
 - Continued doc pass: de-duplicated README CLI plugin section, restored License section, and normalized stray CR characters in touched guides for reliable copy/paste.
-- Performed TypeDoc pass for exported API: filled missing property docs, added type params/params/returns where needed, and ensured exported types are not hidden via `@protected`.
+- Performed TypeDoc pass for exported API: filled missing property docs, added type params/params/returns where needed, and ensured exported types are not hidden via `@protected`.- Fixed remaining tsdoc warnings by extracting `CreateQueryBuilderOptions`, escaping `-\>` in `IndexParams`, and correcting the `generateTableDefinition` example.
