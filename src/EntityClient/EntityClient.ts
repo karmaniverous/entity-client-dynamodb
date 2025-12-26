@@ -15,6 +15,8 @@ import {
   type PutCommandOutput,
   type TransactWriteCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { EntityManager } from '@karmaniverous/entity-manager'; // imported to support API docs
 import {
   type BaseConfigMap,
   BaseEntityClient,

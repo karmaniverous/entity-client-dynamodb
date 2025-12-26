@@ -14,6 +14,8 @@ import {
  * - `GlobalSecondaryIndexes`
  * - `KeySchema`
  *
+ * @typeParam C - Entity-manager config map.
+ *
  * @param entityManager - {@link EntityManager | `EntityManager`} instance.
  * @param transcodeAttributeTypeMap - {@link TranscodeAttributeTypeMap | `TranscodeAttributeTypeMap`} object linking non-string transcodes to a DynamoDB {@link ScalarAttributeType | `ScalarAttributeType`}. Defaults to {@link defaultTranscodeAttributeTypeMap | `defaultTranscodeAttributeTypeMap`}.
  *

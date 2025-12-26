@@ -1,6 +1,6 @@
 {
   "categoryOrder": ["EntityClient", "ShardQueryMapBuilder"],
-  "entryPoints": ["./src/index.ts"],
+  "entryPoints": ["./src/index.ts", "./src/get-dotenv/index.ts"],
   "externalSymbolLinkMappings": {
     "@aws-sdk/client-dynamodb": {
       "CreateTableCommand": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/command/CreateTableCommand",
@@ -28,6 +28,7 @@
       "GetCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/GetCommandOutput",
       "PutCommandInput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandInput",
       "PutCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/PutCommandOutput",
+      "QueryCommandInput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/QueryCommandInput",
       "TransactWriteCommandOutput": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/TransactWriteCommandOutput"
     },
     "@aws-sdk/util-dynamodb": {
