@@ -48,17 +48,17 @@ Documentation (guides)
 - [Type Inference Mental Model](./guides/type-inference-model.md) - Tokens, projection K, and values‑first config (automatic index inference).
 - [AWS X-Ray](./guides/aws-xray.md) - Enable tracing for the DynamoDB SDK client.
 
-CLI Plugin
+CLI Plugin (get-dotenv)
 
-- [CLI Plugin](./guides/cli/index.md) - Index for install, versioned layout, table lifecycle, transforms, migration, config overlays, Serverless, and recipes.
+- [CLI Plugin](./guides/cli/index.md) - get-dotenv plugin (subpath export `@karmaniverous/entity-client-dynamodb/get-dotenv`) for versioned table lifecycle, transforms, migration, config overlays, Local DynamoDB, Serverless, and recipes.
 
 API Reference
 
 - [TypeDoc API](https://docs.karmanivero.us/entity-client-dynamodb) - Full API surface generated from the source.
 
-CLI Plugin (get-dotenv)
+License
 
-- [CLI Plugin](./guides/cli/index.md) - get-dotenv plugin (subpath export `@karmaniverous/entity-client-dynamodb/get-dotenv`) for versioned table lifecycle, transforms, migration, config overlays, Local DynamoDB, and recipes.
+BSD-3-Clause
 
 ---
 

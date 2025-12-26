@@ -87,8 +87,9 @@ npm i -D @karmaniverous/dynamodb-local
 
 # Start and wait until ready using the library, then probe readiness
 mycli aws dynamodb local start
-```
+```
+
 Notes
 
 - start blocks until Local is healthy; there is no separate “ready” command.
-- Endpoint is derived in this order: config endpoint > config port > `DYNAMODB_LOCAL_ENDPOINT` > `DYNAMODB_LOCAL_PORT` (default 8000).
+- Endpoint is derived in this order: config endpoint > config port > `DYNAMODB_LOCAL_ENDPOINT` > `DYNAMODB_LOCAL_PORT` (default 8000).

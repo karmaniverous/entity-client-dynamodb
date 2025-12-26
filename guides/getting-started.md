@@ -58,5 +58,5 @@ Next steps
 
 - Read [EntityClient: CRUD and batches](./entityclient-and-crud.md) for record/batch operations (purge and transactions).
 - Explore [Querying with QueryBuilder](./querying-with-querybuilder.md) for cross-shard, multi-index reads with projections.
-- Learn about [Type inference mental model](./type-inference-model.md) to get the most from value-first typing.
+- Learn about [Type inference mental model](./type-inference-model.md) to get the most from values-first typing.
 - If you need versioned table lifecycle and data migration, see the [CLI Plugin](./cli/index.md).

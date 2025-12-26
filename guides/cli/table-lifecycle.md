@@ -32,7 +32,8 @@ Invariants enforced by the implementation: Provisioned throughput management req
 
 ```bash
 mycli aws dynamodb generate --version 001 \
-  --table-name '$DDB_TABLE' \  --table-billing-mode PROVISIONED \
+  --table-name '$DDB_TABLE' \
+  --table-billing-mode PROVISIONED \
   --table-rcu 5 \
   --table-wcu 5
 ```
