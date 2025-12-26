@@ -33,10 +33,10 @@ export interface DeleteResolvedOptions {
  *
  * @category get-dotenv
  */
-export type ResolveDeleteResult = {
+export interface ResolveDeleteResult {
   /** Resolved options for delete-table. */
   options: DeleteResolvedOptions;
-};
+}
 
 /**
  * Resolve CLI flags + plugin config into delete-table options.

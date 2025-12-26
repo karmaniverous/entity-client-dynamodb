@@ -27,10 +27,10 @@ export interface PurgeResolvedOptions {
  *
  * @category get-dotenv
  */
-export type ResolvePurgeResult = {
+export interface ResolvePurgeResult {
   /** Resolved options for purge-table. */
   options: PurgeResolvedOptions;
-};
+}
 
 /**
  * Resolve CLI flags + plugin config into purge-table options.
