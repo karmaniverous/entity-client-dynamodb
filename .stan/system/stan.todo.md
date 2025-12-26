@@ -2,7 +2,8 @@
 
 ## Next up (priority order)
 
-- Audit for any remaining references to old overlay/force semantics in code/docs and remove.
+- Continue docs pass: remove remaining CR artifacts in guides and keep copy/paste-safe examples.
+- Re-check README/guide wording for any over-claims (especially “automatic inference” caveats).
 
 ## Completed
 
@@ -19,4 +20,5 @@
 - Fixed CLI command import paths for tableProperties and stabilized validation diffs against YAML key-order differences.
 - Normalized YAML CST nodes to plain JS before drift comparison and fixed validate.ts lint violations.
 - Updated CLI docs to assume `aws dynamodb ...` and `plugins["aws/dynamodb"]`, and documented `generate --clean` and managed table properties flags (`--table-*`).
-- Aligned README and guides with current implementation details (aws/dynamodb config namespace, create latest-only guard, managed table properties invariants, version token semantics, projection wording).- Continued doc pass: de-duplicated README CLI plugin section, restored License section, and normalized stray CR characters in touched guides for reliable copy/paste.
+- Aligned README and guides with current implementation details (aws/dynamodb config namespace, create latest-only guard, managed table properties invariants, version token semantics, projection wording).
+- Continued doc pass: de-duplicated README CLI plugin section, restored License section, and normalized stray CR characters in touched guides for reliable copy/paste.

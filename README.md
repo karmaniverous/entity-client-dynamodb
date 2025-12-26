@@ -45,7 +45,7 @@ Documentation (guides)
 - [EntityClient: CRUD and Batches](./guides/entityclient-and-crud.md) - Record/recordset operations with strong types.
 - [Querying with QueryBuilder](./guides/querying-with-querybuilder.md) - Cross-shard, multi-index querying and projections.
 - [Tables & Table Definition](./guides/tables-and-definition.md) - Generate AttributeDefinitions/GSIs/KeySchema.
-- [Type Inference Mental Model](./guides/type-inference-model.md) - Tokens, projection K, and values‑first config (automatic index inference).
+- [Type Inference Mental Model](./guides/type-inference-model.md) - Tokens, projection K, and values‑first config (CF-enabled index inference).
 - [AWS X-Ray](./guides/aws-xray.md) - Enable tracing for the DynamoDB SDK client.
 
 CLI Plugin (get-dotenv)
