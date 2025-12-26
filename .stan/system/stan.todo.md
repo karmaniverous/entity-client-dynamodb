@@ -2,6 +2,7 @@
 
 ## Next up (priority order)
 
+- Re-run `npm run docs`; fix any `validation.notDocumented` warnings until 0 (this is the “complete TypeDoc pass” gate).
 - Audit exported symbols (entrypoints `src/index.ts`, `src/get-dotenv/index.ts`) and ensure every exported symbol has a clear, concise, complete TypeDoc comment (even if TypeDoc emits 0 warnings).
 - Re-run `npm run lint`, `npm run typecheck`, and `npm run docs` and confirm all pass with 0 TypeDoc warnings (expect 0).
 - If `src/EntityClient/EntityClient.ts` is still >300 LOC, continue decomposition (keep API inference intact; prefer small helpers/modules).
@@ -29,3 +30,4 @@
 - Fixed getItem/getItems option narrowing to satisfy TS/ESLint after readonly projection support.
 - Fixed readonly array narrowing for BatchGetOptions vs projections (unblocks tsc/typedoc).
 - Exported EntityClient GetItemOutput/GetItemsOutput so TypeDoc can include referenced return types (0 warnings goal).
+- Enabled TypeDoc `validation.notDocumented` to enforce complete API docs.
