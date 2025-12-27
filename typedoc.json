@@ -105,6 +105,7 @@
     "./guides/type-inference-model.md",
     "./guides/aws-xray.md",
     "./guides/cli/index.md",
+    "./guides/stan-assistant-guide.md",
     "./CHANGELOG.md"
   ],
   "replaceText": {

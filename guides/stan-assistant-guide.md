@@ -1,4 +1,4 @@
-# STAN Assistant Guide — entity-client-dynamodb (+ get-dotenv DynamoDB plugin)
+# STAN Assistant Guide
 
 This file is a compact, assistant-focused guide for using this repo’s two public entrypoints correctly and effectively:
 
