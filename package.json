@@ -74,11 +74,11 @@
     },
     "./get-dotenv": {
       "import": {
-        "types": "./dist/index.d.ts",
+        "types": "./dist/get-dotenv/index.d.ts",
         "default": "./dist/mjs/get-dotenv/index.js"
       },
       "require": {
-        "types": "./dist/index.d.ts",
+        "types": "./dist/get-dotenv/index.d.ts",
         "default": "./dist/cjs/get-dotenv/index.js"
       }
     }

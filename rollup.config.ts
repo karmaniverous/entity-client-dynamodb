@@ -28,13 +28,15 @@ const commonAliases: Alias[] = [];
 
 type Package = Record<string, Record<string, string> | undefined>;
 
+const entryPoints = ['src/index.ts', 'src/get-dotenv/index.ts'] as const;
+
 const commonInputOptions: InputOptions = {
   external: [
     ...Object.keys((pkg as unknown as Package).dependencies ?? {}),
     ...Object.keys((pkg as unknown as Package).peerDependencies ?? {}),
     'tslib',
   ],
-  input: 'src/index.ts',
+  input: [...entryPoints],
   plugins: [aliasPlugin({ entries: commonAliases }), ...commonPlugins],
 };
 
@@ -65,9 +67,10 @@ const config: RollupOptions[] = [
     ],
   },
 
-  // Type definitions output.
+  // Type definitions output (root).
   {
     ...commonInputOptions,
+    input: 'src/index.ts',
     // Rebuild plugin list locally to avoid spreading a possibly non-iterable
     // InputPluginOption union (fixes TS2488 in typed builds).
     plugins: [
@@ -79,6 +82,26 @@ const config: RollupOptions[] = [
       {
         extend: true,
         file: `${outputPath}/index.d.ts`,
+        format: 'esm',
+      },
+    ],
+  },
+
+  // Type definitions output (get-dotenv subpath).
+  {
+    ...commonInputOptions,
+    input: 'src/get-dotenv/index.ts',
+    // Rebuild plugin list locally to avoid spreading a possibly non-iterable
+    // InputPluginOption union (fixes TS2488 in typed builds).
+    plugins: [
+      aliasPlugin({ entries: commonAliases }),
+      ...commonPlugins,
+      dtsPlugin(),
+    ],
+    output: [
+      {
+        extend: true,
+        file: `${outputPath}/get-dotenv/index.d.ts`,
         format: 'esm',
       },
     ],
