@@ -15,8 +15,9 @@
 </ul>
 <p>Notes</p>
 <ul>
-<li>Version directories are zero-padded (e.g., <code>001</code>, <code>002</code>).</li>
-<li>File resolution supports .ts and .js for EM/transform modules.</li>
+<li>Version directories are digit-only (for example <code>001/</code> or <code>1/</code>); ordering is by numeric value, and duplicates by numeric value (for example <code>1/</code> and <code>001/</code>) are rejected.</li>
+<li><code>minTableVersionWidth</code> controls how tooling formats version tokens when it needs to emit a canonical token; it does not restrict existing directory tokens.</li>
+<li>File resolution supports <code>.ts</code> and <code>.js</code> for EM/transform modules, but in plain Node.js runtime you should prefer <code>.js</code> unless your host supports TS execution (for example via tsx/ts-node) or you precompile the modules.</li>
 </ul>
 <p>Related</p>
 <ul>

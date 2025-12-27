@@ -12,6 +12,11 @@
 <pre><code class="ts"><span class="hl-3">import</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-4">defaultTranscodeAttributeTypeMap</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-3">type</span><span class="hl-1"> </span><span class="hl-4">TranscodeAttributeTypeMap</span><span class="hl-1">,</span><br/><span class="hl-1">} </span><span class="hl-3">from</span><span class="hl-1"> </span><span class="hl-2">&#39;@karmaniverous/entity-client-dynamodb&#39;</span><span class="hl-1">;</span><br/><span class="hl-8">// defaultTranscodeAttributeTypeMap maps numeric-like transcodes to &#39;N&#39;</span>
 </code><button type="button">Copy</button></pre>
 
+<p>CLI Plugin</p>
+<p>If you’re using the get-dotenv DynamoDB CLI plugin (recommended as a child of the shipped aws plugin), commands are invoked as <code>aws dynamodb ...</code> and config is keyed under <code>plugins[&quot;aws/dynamodb&quot;]</code>.</p>
+<pre><code class="bash"><span class="hl-0">mycli</span><span class="hl-1"> </span><span class="hl-2">aws</span><span class="hl-1"> </span><span class="hl-2">dynamodb</span><span class="hl-1"> </span><span class="hl-2">generate</span><span class="hl-1"> </span><span class="hl-5">--version</span><span class="hl-1"> </span><span class="hl-9">001</span><br/><span class="hl-0">mycli</span><span class="hl-1"> </span><span class="hl-2">aws</span><span class="hl-1"> </span><span class="hl-2">dynamodb</span><span class="hl-1"> </span><span class="hl-2">validate</span><span class="hl-1"> </span><span class="hl-5">--version</span><span class="hl-1"> </span><span class="hl-9">001</span>
+</code><button type="button">Copy</button></pre>
+
 <p>Related</p>
 <ul>
 <li><a href="CLI_Plugin.Table_Lifecycle.html">CLI Plugin – Table lifecycle</a> for YAML composition, validation, and create/delete/purge flows.</li>

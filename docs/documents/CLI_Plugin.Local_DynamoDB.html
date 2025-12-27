@@ -1,17 +1,17 @@
 <!DOCTYPE html><html class="default" lang="en" data-base="../"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>Local DynamoDB | @karmaniverous/entity-client-dynamodb</title><meta name="description" content="Documentation for @karmaniverous/entity-client-dynamodb"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/icons.js" id="tsd-icons-script"></script><script async src="../assets/search.js" id="tsd-search-script"></script><script async src="../assets/navigation.js" id="tsd-nav-script"></script><script async src="../assets/hierarchy.js" id="tsd-hierarchy-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="../index.html" class="title">@karmaniverous/entity-client-dynamodb</a><div id="tsd-toolbar-links"><a href="https://github.com/karmaniverous/entity-client-dynamodb">GitHub</a></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><ul class="tsd-breadcrumb" aria-label="Breadcrumb"><li><a href="CLI_Plugin.html">CLI Plugin</a></li><li><a href="" aria-current="page">Local DynamoDB</a></li></ul></div><div class="tsd-panel tsd-typography"><h1 id="local-dynamodb" class="tsd-anchor-link">Local DynamoDB<a href="#local-dynamodb" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h1><p>Configure and control a local DynamoDB instance under the plugin namespace. Commands:</p>
 <ul>
-<li>dynamodb local start [--port <n>]</li>
-<li>dynamodb local stop</li>
-<li>dynamodb local status</li>
+<li><code>aws dynamodb local start [--port &lt;n&gt;]</code></li>
+<li><code>aws dynamodb local stop</code></li>
+<li><code>aws dynamodb local status</code></li>
 </ul>
 <p>Behavior (config-first with embedded fallback)</p>
 <ul>
 <li>Config-driven (preferred when configured):
 <ul>
 <li>Strings are interpolated by the host once before execution.</li>
-<li>start: run <code>plugins.dynamodb.local.start</code>, then wait for readiness before returning success.</li>
-<li>status: run <code>plugins.dynamodb.local.status</code> and return its exit code (0 = healthy).</li>
-<li>stop: run <code>plugins.dynamodb.local.stop</code> and return non-zero on failure.</li>
+<li>start: run <code>plugins[&quot;aws/dynamodb&quot;].local.start</code>, then wait for readiness before returning success.</li>
+<li>status: run <code>plugins[&quot;aws/dynamodb&quot;].local.status</code> and return its exit code (0 = healthy).</li>
+<li>stop: run <code>plugins[&quot;aws/dynamodb&quot;].local.stop</code> and return non-zero on failure.</li>
 </ul>
 </li>
 <li>Embedded fallback (only when no config command is set):
@@ -33,8 +33,8 @@
 </ul>
 <p>Endpoint derivation</p>
 <ol>
-<li><code>plugins.dynamodb.local.endpoint</code></li>
-<li><code>plugins.dynamodb.local.port</code> → <code>http://localhost:{port}</code></li>
+<li><code>plugins[&quot;aws/dynamodb&quot;].local.endpoint</code></li>
+<li><code>plugins[&quot;aws/dynamodb&quot;].local.port</code> → <code>http://localhost:{port}</code></li>
 <li><code>DYNAMODB_LOCAL_ENDPOINT</code> (env)</li>
 <li>Fallback: <code>http://localhost:${DYNAMODB_LOCAL_PORT ?? '8000'}</code></li>
 </ol>
@@ -43,7 +43,7 @@
 </code><button>Copy</button></pre>
 
 <p>Config slice</p>
-<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-10">&quot;plugins&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-10">&quot;dynamodb&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">      </span><span class="hl-10">&quot;local&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">        </span><span class="hl-10">&quot;port&quot;</span><span class="hl-1">: </span><span class="hl-9">8000</span><span class="hl-1">,</span><br/><span class="hl-1">        </span><span class="hl-10">&quot;endpoint&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;http://localhost:8000&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">        </span><span class="hl-10">&quot;start&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;docker compose up -d dynamodb&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">        </span><span class="hl-10">&quot;stop&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;docker compose stop dynamodb&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">        </span><span class="hl-10">&quot;status&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;docker ps --format &#39;{{.Names}}&#39; | grep -q dynamodb&quot;</span><br/><span class="hl-1">      }</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span>
+<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-10">&quot;plugins&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-10">&quot;aws/dynamodb&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">      </span><span class="hl-10">&quot;local&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">        </span><span class="hl-10">&quot;port&quot;</span><span class="hl-1">: </span><span class="hl-9">8000</span><span class="hl-1">,</span><br/><span class="hl-1">        </span><span class="hl-10">&quot;endpoint&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;http://localhost:8000&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">        </span><span class="hl-10">&quot;start&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;docker compose up -d dynamodb&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">        </span><span class="hl-10">&quot;stop&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;docker compose stop dynamodb&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">        </span><span class="hl-10">&quot;status&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;docker ps --format &#39;{{.Names}}&#39; | grep -q dynamodb&quot;</span><br/><span class="hl-1">      }</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span>
 </code><button type="button">Copy</button></pre>
 
 <p>Shell/env/capture</p>
