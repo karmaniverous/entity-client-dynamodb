@@ -16,6 +16,43 @@ const pkg = JSON.parse(
 
 const outputPath = `dist`;
 
+/**
+ * Extract a package name from an import specifier so we can treat subpath exports
+ * as external dependencies.
+ *
+ * Examples:
+ * - "\@karmaniverous/get-dotenv/cliHost" -\> "\@karmaniverous/get-dotenv"
+ * - "radash" -\> "radash"
+ * - "./local" -\> undefined
+ */
+function packageNameFromImport(id: string): string | undefined {
+  if (id.startsWith('.') || id.startsWith('/') || id.startsWith('\0'))
+    return undefined;
+  if (id.startsWith('node:')) return 'node:';
+  const parts = id.split('/');
+  if (id.startsWith('@')) {
+    if (parts.length < 2) return undefined;
+    return `${parts[0]}/${parts[1]}`;
+  }
+  return parts[0];
+}
+
+type Package = Record<string, Record<string, string> | undefined>;
+
+const externalPackages = new Set<string>([
+  ...Object.keys((pkg as unknown as Package).dependencies ?? {}),
+  ...Object.keys((pkg as unknown as Package).peerDependencies ?? {}),
+  'tslib',
+]);
+
+const isExternal = (id: string): boolean => {
+  if (externalPackages.has(id)) return true;
+  const pkgName = packageNameFromImport(id);
+  if (!pkgName) return false;
+  if (pkgName === 'node:') return true;
+  return externalPackages.has(pkgName);
+};
+
 const commonPlugins = [
   stripPlugin({ include: ['**/*.ts'] }),
   commonjsPlugin(),
@@ -26,16 +63,10 @@ const commonPlugins = [
 
 const commonAliases: Alias[] = [];
 
-type Package = Record<string, Record<string, string> | undefined>;
-
 const entryPoints = ['src/index.ts', 'src/get-dotenv/index.ts'] as const;
 
 const commonInputOptions: InputOptions = {
-  external: [
-    ...Object.keys((pkg as unknown as Package).dependencies ?? {}),
-    ...Object.keys((pkg as unknown as Package).peerDependencies ?? {}),
-    'tslib',
-  ],
+  external: isExternal,
   input: [...entryPoints],
   plugins: [aliasPlugin({ entries: commonAliases }), ...commonPlugins],
 };

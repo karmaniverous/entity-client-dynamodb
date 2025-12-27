@@ -30,4 +30,9 @@
 - Fixed getItem/getItems option narrowing to satisfy TS/ESLint after readonly projection support.
 - Fixed readonly array narrowing for BatchGetOptions vs projections (unblocks tsc/typedoc).
 - Exported EntityClient GetItemOutput/GetItemsOutput so TypeDoc can include referenced return types (0 warnings goal).
-- Enabled TypeDoc `validation.notDocumented` to enforce complete API docs.- Added missing TypeDoc comments and named result types to clear notDocumented warnings across exported surfaces.- Fixed docs script warnings by removing schema exports, documenting resolver return properties, and re-exporting referenced result types for TypeDoc inclusion.- Removed remaining TypeDoc config-schema reference warnings by decoupling `DynamodbPluginConfig` from the internal Zod schema symbol.- Split root vs /get-dotenv packaging outputs: add a real get-dotenv entrypoint build and map its export types to dist/get-dotenv/index.d.ts.
+- Enabled TypeDoc `validation.notDocumented` to enforce complete API docs.
+- Added missing TypeDoc comments and named result types to clear notDocumented warnings across exported surfaces.
+- Fixed docs script warnings by removing schema exports, documenting resolver return properties, and re-exporting referenced result types for TypeDoc inclusion.
+- Removed remaining TypeDoc config-schema reference warnings by decoupling `DynamodbPluginConfig` from the internal Zod schema symbol.
+- Split root vs /get-dotenv packaging outputs: add a real get-dotenv entrypoint build and map its export types to dist/get-dotenv/index.d.ts.
+- Fixed rollup build by externalizing dependency subpath imports (e.g. `@karmaniverous/get-dotenv/cliHost`) so transitive deps like `npm-run-path` are not bundled.
