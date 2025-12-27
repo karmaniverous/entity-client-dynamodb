@@ -2,12 +2,20 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.11.0](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.10.0...0.11.0)
+
+- Fix rollup externals for subpath imports [`7087edd`](https://github.com/karmaniverous/entity-client-dynamodb/commit/7087edd3f562472a578ddc1d51c230e5e510cc49)
+- Fix /get-dotenv exports to use own d.ts [`894a0bc`](https://github.com/karmaniverous/entity-client-dynamodb/commit/894a0bccfc07b49c678c074d5bccde290914bfc0)
+
 #### [0.10.0](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.9.0...0.10.0)
+
+> 27 December 2025
 
 - [GETDOTENV-6] updated dependencies [`268b504`](https://github.com/karmaniverous/entity-client-dynamodb/commit/268b5047154a11c71812bede8f698b9400e2b82f)
 - [GETDOTENV-6] updated dependencies & getdotenv imports [`4b1c3ac`](https://github.com/karmaniverous/entity-client-dynamodb/commit/4b1c3ac6e3c82d034733faa49ea5baab36605030)
 - updated docs [`30648f2`](https://github.com/karmaniverous/entity-client-dynamodb/commit/30648f256541714e10178f361aa6c50541dc821e)
 - [GETDOTENV-6] stan imports [`0a8ee08`](https://github.com/karmaniverous/entity-client-dynamodb/commit/0a8ee08ae876bfcacd38290b686c9a5c8e0ace09)
+- chore: release v0.10.0 [`48b074f`](https://github.com/karmaniverous/entity-client-dynamodb/commit/48b074fb01e2a497be1791ac579fbf1db97a32d3)
 - [GETDOTENV-6] Migrate wiring tests to registration smoke [`3d93125`](https://github.com/karmaniverous/entity-client-dynamodb/commit/3d931252af2ab7380414daff58edcc3a30bd681f)
 - [GETDOTENV-6] Decompose EntityClient and fix TypeDoc exports [`d46c1d7`](https://github.com/karmaniverous/entity-client-dynamodb/commit/d46c1d79d206e37fff4c6424bf367aa73daf020c)
 - [GETDOTENV-6] docs: codify typed CLI patterns [`6aa1c6e`](https://github.com/karmaniverous/entity-client-dynamodb/commit/6aa1c6ed31ed3ab00cd0232e53732c8e885a301a)
