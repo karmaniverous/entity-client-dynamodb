@@ -2,8 +2,17 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.11.2](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.1...0.11.2)
+
+- updated dependencies [`a7356e6`](https://github.com/karmaniverous/entity-client-dynamodb/commit/a7356e6f356e217182a69ed70cc84428927fa604)
+- build(rollup): externalize dynamodb-local [`5366025`](https://github.com/karmaniverous/entity-client-dynamodb/commit/536602576f26d04620be632ce469c2d70f8b8865)
+- fix(rollup): align outputs with package exports [`2bcf8bf`](https://github.com/karmaniverous/entity-client-dynamodb/commit/2bcf8bfb1f631a52359657a2f3d1b5b7339040ef)
+
 #### [0.11.1](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.0...0.11.1)
 
+> 27 December 2025
+
+- chore: release v0.11.1 [`9639fe3`](https://github.com/karmaniverous/entity-client-dynamodb/commit/9639fe312698f80c3c44aba9e7cf8652f6bf9c49)
 - stan imports [`c1e11d1`](https://github.com/karmaniverous/entity-client-dynamodb/commit/c1e11d10962d3aa692b8be3a9e07ffcd481f8b2c)
 - Add STAN assistant usage guide [`9f9eb26`](https://github.com/karmaniverous/entity-client-dynamodb/commit/9f9eb26b8ca8adf10c978b1fec3a073027de5384)
 - updated dependencies [`be12055`](https://github.com/karmaniverous/entity-client-dynamodb/commit/be120555ea92c01401b8d3ab82950b4cfd7cc23a)
