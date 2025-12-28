@@ -30,7 +30,9 @@ stan-cli:
       sequential: true
   patchOpenCommand: code -g {file}
   scripts:
-    build: cross-env NO_COLOR=1 npm run build
+    build:
+      script: cross-env NO_COLOR=1 npm run build
+      warnPattern: '^(?!\\(!\\)\\s+\\[plugin typescript\\]\\s+@rollup\\/plugin-typescript:\\s+outputToFilesystem option is defaulting to true\\.)\\(!\\)'
     typecheck: npm run typecheck
     lint:
       script: npm run lint:fix

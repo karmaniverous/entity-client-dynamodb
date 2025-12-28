@@ -43,6 +43,10 @@ const externalPackages = new Set<string>([
   ...Object.keys((pkg as unknown as Package).dependencies ?? {}),
   ...Object.keys((pkg as unknown as Package).peerDependencies ?? {}),
   'tslib',
+  // Optional runtime dependency used only when the get-dotenv "local" service
+  // chooses the embedded fallback. Keep it external to avoid bundling heavy
+  // transitive deps into dist outputs (and to keep build logs clean).
+  '@karmaniverous/dynamodb-local',
 ]);
 
 const isExternal = (id: string): boolean => {
