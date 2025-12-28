@@ -4,6 +4,7 @@
 
 - Re-run `npm run docs`; fix any `validation.notDocumented` warnings until 0 (this is the “complete TypeDoc pass” gate).
 - Audit exported symbols (entrypoints `src/index.ts`, `src/get-dotenv/index.ts`) and ensure every exported symbol has a clear, concise, complete TypeDoc comment (even if TypeDoc emits 0 warnings).
+- Re-run `npm run build` and verify Rollup outputs align with `package.json` exports (`dist/mjs/index.js`, `dist/mjs/get-dotenv/index.js`, and CJS equivalents).
 - Re-run `npm run lint`, `npm run typecheck`, and `npm run docs` and confirm all pass with 0 TypeDoc warnings (expect 0).
 - If `src/EntityClient/EntityClient.ts` is still >300 LOC, continue decomposition (keep API inference intact; prefer small helpers/modules).
 
@@ -37,3 +38,4 @@
 - Split root vs /get-dotenv packaging outputs: add a real get-dotenv entrypoint build and map its export types to dist/get-dotenv/index.d.ts.
 - Fixed rollup build by externalizing dependency subpath imports (e.g. `@karmaniverous/get-dotenv/cliHost`) so transitive deps like `npm-run-path` are not bundled.
 - Added a compact STAN-assistant guide for using the base library and the get-dotenv DynamoDB plugin (entrypoints, typing model, lifecycle/migration semantics, and common pitfalls).
+- Fixed Rollup preserveModules output paths (set preserveModulesRoot) so built files match exports (`dist/mjs/index.js`), resolving SMOZ interop missing-module errors.
