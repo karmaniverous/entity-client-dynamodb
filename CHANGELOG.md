@@ -2,8 +2,15 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.11.3](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.2...0.11.3)
+
+- updated dependencies [`f036b9e`](https://github.com/karmaniverous/entity-client-dynamodb/commit/f036b9eb18741d545030d9cece28e6ff8a2af48a)
+
 #### [0.11.2](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.1...0.11.2)
 
+> 28 December 2025
+
+- chore: release v0.11.2 [`a69a710`](https://github.com/karmaniverous/entity-client-dynamodb/commit/a69a710c0818794c41283b9731c397ef804ee92d)
 - updated dependencies [`a7356e6`](https://github.com/karmaniverous/entity-client-dynamodb/commit/a7356e6f356e217182a69ed70cc84428927fa604)
 - build(rollup): externalize dynamodb-local [`5366025`](https://github.com/karmaniverous/entity-client-dynamodb/commit/536602576f26d04620be632ce469c2d70f8b8865)
 - fix(rollup): align outputs with package exports [`2bcf8bf`](https://github.com/karmaniverous/entity-client-dynamodb/commit/2bcf8bfb1f631a52359657a2f3d1b5b7339040ef)
