@@ -16,7 +16,7 @@
     "@karmaniverous/batch-process": "^0.1.0",
     "@karmaniverous/entity-manager": "^8.0.0",
     "@karmaniverous/entity-tools": "^0.8.0",
-    "@karmaniverous/get-dotenv": "^6.2.4",
+    "@karmaniverous/get-dotenv": "^6.3.0",
     "aws-xray-sdk": "^3.12.0",
     "nanoid": "^5.1.6",
     "radash": "^12.1.1",
@@ -24,7 +24,7 @@
   },
   "description": "Entity Manager integrated into a DynamoDB client wrapper.",
   "devDependencies": {
-    "@dotenvx/dotenvx": "^1.51.2",
+    "@dotenvx/dotenvx": "^1.51.4",
     "@eslint/js": "^9.39.2",
     "@karmaniverous/dynamodb-local": "^0.0.1",
     "@rollup/plugin-alias": "^6.0.0",
@@ -58,7 +58,7 @@
     "typedoc-plugin-mdn-links": "^5.0.10",
     "typedoc-plugin-replace-text": "^4.2.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.50.1",
+    "typescript-eslint": "^8.51.0",
     "vitest": "^4.0.16"
   },
   "exports": {
