@@ -38,4 +38,6 @@
 - Split root vs /get-dotenv packaging outputs: add a real get-dotenv entrypoint build and map its export types to dist/get-dotenv/index.d.ts.
 - Fixed rollup build by externalizing dependency subpath imports (e.g. `@karmaniverous/get-dotenv/cliHost`) so transitive deps like `npm-run-path` are not bundled.
 - Added a compact STAN-assistant guide for using the base library and the get-dotenv DynamoDB plugin (entrypoints, typing model, lifecycle/migration semantics, and common pitfalls).
-- Fixed Rollup preserveModules output paths (set preserveModulesRoot) so built files match exports (`dist/mjs/index.js`), resolving SMOZ interop missing-module errors.- Reduced Rollup build warnings by externalizing optional `@karmaniverous/dynamodb-local` (prevents bundling its heavy transitive dependency graph).
+- Fixed Rollup preserveModules output paths (set preserveModulesRoot) so built files match exports (`dist/mjs/index.js`), resolving SMOZ interop missing-module errors.
+- Reduced Rollup build warnings by externalizing optional `@karmaniverous/dynamodb-local` (prevents bundling its heavy transitive dependency graph).
+- Added a get-dotenv interop note documenting the canonical pattern for plugins with many subcommands, each with its own options and defaults.

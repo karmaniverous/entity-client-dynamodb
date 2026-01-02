@@ -19,7 +19,7 @@ stan-core:
       - ../entity-tools/guides/stan-assistant-guide.md
     '@karmaniverous/get-dotenv':
       - ../get-dotenv/.stan/interop/entity-client-dynamodb/**
-      - ../get-dotenv/guides/stan-assistant-guide.md
+      - ../get-dotenv/guides/stan-assistant-guide/**
     '@karmaniverous/smoz':
       - ../smoz/.stan/interop/entity-client-dynamodb/**
 stan-cli:
