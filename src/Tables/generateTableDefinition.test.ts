@@ -1,6 +1,6 @@
 import {
   type Config,
-  ConfigMap,
+  type ConfigMap,
   EntityManager,
 } from '@karmaniverous/entity-manager';
 import {

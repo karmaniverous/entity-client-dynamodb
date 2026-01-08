@@ -35,6 +35,7 @@ Keep requirement statements out of this file; use it solely to guide assistant b
 - The public API MUST support type inference without requiring downstream consumers to pass explicit type parameters.
 - Exceptions to these rules are permitted only after a brief design discussion and rationale captured in the dev plan; prefer localized, well-justified exceptions.
 - CRITICAL: Downstream DX is NON-NEGOTIABLE. Favor intuitive signatures and inferred types over verbose annotations or casts; changes that degrade downstream inference require rework or a design adjustment before merging.
+- Type-only imports MUST use `import type` (or inline `type` specifiers for mixed imports). This is enforced by ESLint.
 
 ## TypeDoc
 

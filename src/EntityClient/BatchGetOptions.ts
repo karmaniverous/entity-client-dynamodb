@@ -1,5 +1,5 @@
-import { BatchGetCommandInput } from '@aws-sdk/lib-dynamodb';
-import { BatchProcessOptions } from '@karmaniverous/batch-process';
+import { type BatchGetCommandInput } from '@aws-sdk/lib-dynamodb';
+import { type BatchProcessOptions } from '@karmaniverous/batch-process';
 
 /**
  * Options for batch get operations.

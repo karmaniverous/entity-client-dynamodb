@@ -1,8 +1,12 @@
-import { dotenvExpand, interpolateDeep } from '@karmaniverous/get-dotenv';
+import {
+  dotenvExpand,
+  interpolateDeep,
+  type ProcessEnv,
+} from '@karmaniverous/get-dotenv';
 
 import type { VersionedLayoutConfig } from '../../layout';
 import { num } from './coerce';
-import type { DynamodbPluginConfig, EnvRef } from './types';
+import type { DynamodbPluginConfig } from './types';
 
 /** Build VersionedLayoutConfig from flags+config with dotenv expansion. */
 /**
@@ -21,7 +25,7 @@ import type { DynamodbPluginConfig, EnvRef } from './types';
 export function resolveLayoutConfig(
   flags: { tablesPath?: string; tokens?: DynamodbPluginConfig['tokens'] },
   config?: DynamodbPluginConfig,
-  ref: EnvRef = process.env,
+  ref: ProcessEnv = process.env,
 ): VersionedLayoutConfig {
   const envRef = { ...process.env, ...ref };
   // Host interpolates config strings once before plugin execution.

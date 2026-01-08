@@ -1,6 +1,6 @@
-import { dotenvExpand } from '@karmaniverous/get-dotenv';
+import { dotenvExpand, type ProcessEnv } from '@karmaniverous/get-dotenv';
 
-import type { DynamodbPluginConfig, EnvRef } from './types';
+import type { DynamodbPluginConfig } from './types';
 
 /**
  * Raw CLI flags for `purge` (before merge/expansion).
@@ -48,7 +48,7 @@ export interface ResolvePurgeResult {
 export function resolvePurge(
   flags: PurgeFlags,
   config?: DynamodbPluginConfig,
-  ref: EnvRef = process.env,
+  ref: ProcessEnv = process.env,
 ): ResolvePurgeResult {
   // Host interpolates config strings once; expand flags only.
   const envRef = { ...process.env, ...ref };

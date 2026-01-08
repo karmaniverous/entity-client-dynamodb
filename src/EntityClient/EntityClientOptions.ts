@@ -1,7 +1,7 @@
-import { DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
+import { type DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import {
-  BaseConfigMap,
-  BaseEntityClientOptions,
+  type BaseConfigMap,
+  type BaseEntityClientOptions,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   type EntityManager, // imported to support API docs
 } from '@karmaniverous/entity-manager';

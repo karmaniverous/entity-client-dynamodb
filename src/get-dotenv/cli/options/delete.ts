@@ -1,8 +1,8 @@
-import { dotenvExpand } from '@karmaniverous/get-dotenv';
+import { dotenvExpand, type ProcessEnv } from '@karmaniverous/get-dotenv';
 
 import type { WaiterConfig } from '../../../EntityClient/WaiterConfig';
 import { firstDefined, num } from './coerce';
-import type { DynamodbPluginConfig, EnvRef } from './types';
+import type { DynamodbPluginConfig } from './types';
 
 /**
  * Raw CLI flags for `delete` (before merge/expansion/coercion).
@@ -54,7 +54,7 @@ export interface ResolveDeleteResult {
 export function resolveDelete(
   flags: DeleteFlags,
   config?: DynamodbPluginConfig,
-  ref: EnvRef = process.env,
+  ref: ProcessEnv = process.env,
 ): ResolveDeleteResult {
   const envRef = { ...process.env, ...ref };
   // Host interpolates config strings once; expand flags only.

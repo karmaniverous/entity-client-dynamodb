@@ -1,5 +1,5 @@
-import { BatchWriteCommandInput } from '@aws-sdk/lib-dynamodb';
-import { BatchProcessOptions } from '@karmaniverous/batch-process';
+import { type BatchWriteCommandInput } from '@aws-sdk/lib-dynamodb';
+import { type BatchProcessOptions } from '@karmaniverous/batch-process';
 
 /**
  * Options for batch put & delete operations.

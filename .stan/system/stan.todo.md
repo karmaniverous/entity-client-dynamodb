@@ -41,3 +41,4 @@
 - Fixed Rollup preserveModules output paths (set preserveModulesRoot) so built files match exports (`dist/mjs/index.js`), resolving SMOZ interop missing-module errors.
 - Reduced Rollup build warnings by externalizing optional `@karmaniverous/dynamodb-local` (prevents bundling its heavy transitive dependency graph).
 - Added a get-dotenv interop note documenting the canonical pattern for plugins with many subcommands, each with its own options and defaults.
+- Enforced `import type` for type-only imports via ESLint and fixed get-dotenv `ProcessEnv` imports.

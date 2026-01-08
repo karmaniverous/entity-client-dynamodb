@@ -1,5 +1,5 @@
 import { DynamoDBClient, ListTablesCommand } from '@aws-sdk/client-dynamodb';
-import { buildSpawnEnv } from '@karmaniverous/get-dotenv';
+import { buildSpawnEnv, type ProcessEnv } from '@karmaniverous/get-dotenv';
 import {
   runCommand,
   runCommandResult,
@@ -19,7 +19,7 @@ type LocalCfg = NonNullable<DynamodbPluginConfig['local']>;
  */
 export function deriveEndpoint(
   cfg?: LocalCfg,
-  envRef: Record<string, string | undefined> = process.env,
+  envRef: ProcessEnv = process.env,
   overridePort?: number,
 ): { endpoint: string; port: number } {
   const cfgPortRaw = cfg?.port;
@@ -127,7 +127,7 @@ async function probeReadyWithSdk(endpoint: string): Promise<boolean> {
  */
 export async function startLocal(args: {
   cfg?: LocalCfg;
-  envRef?: Record<string, string | undefined>;
+  envRef?: ProcessEnv;
   shell?: string | boolean;
   capture?: boolean;
   portOverride?: number;
@@ -181,7 +181,7 @@ export async function startLocal(args: {
  */
 export async function stopLocal(args: {
   cfg?: LocalCfg;
-  envRef?: Record<string, string | undefined>;
+  envRef?: ProcessEnv;
   shell?: string | boolean;
   capture?: boolean;
 }): Promise<void> {
@@ -216,7 +216,7 @@ export async function stopLocal(args: {
  */
 export async function statusLocal(args: {
   cfg?: LocalCfg;
-  envRef?: Record<string, string | undefined>;
+  envRef?: ProcessEnv;
   shell?: string | boolean;
   capture?: boolean;
   portOverride?: number;

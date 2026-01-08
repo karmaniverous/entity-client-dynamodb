@@ -3,7 +3,7 @@ import type {
   BaseQueryBuilderOptions,
 } from '@karmaniverous/entity-manager';
 
-import { EntityClient } from '../EntityClient';
+import { type EntityClient } from '../EntityClient';
 
 /**
  * {@link QueryBuilder | `QueryBuilder`} constructor options.

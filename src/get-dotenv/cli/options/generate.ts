@@ -1,9 +1,13 @@
-import { dotenvExpand, interpolateDeep } from '@karmaniverous/get-dotenv';
+import {
+  dotenvExpand,
+  interpolateDeep,
+  type ProcessEnv,
+} from '@karmaniverous/get-dotenv';
 
 import type { VersionedLayoutConfig } from '../../layout';
 import { firstDefined } from './coerce';
 import { resolveLayoutConfig } from './layout';
-import type { DynamodbPluginConfig, EnvRef, GenerateFlags } from './types';
+import type { DynamodbPluginConfig, GenerateFlags } from './types';
 
 /** Managed table properties flags (generate). */
 export interface GenerateTablePropertiesFlags {
@@ -59,7 +63,7 @@ export interface ResolvedGenerateAtVersion {
 export function resolveGenerateAtVersion(
   flags: GenerateFlags,
   config?: DynamodbPluginConfig,
-  ref: EnvRef = process.env,
+  ref: ProcessEnv = process.env,
 ): ResolvedGenerateAtVersion {
   const cfg = resolveLayoutConfig({}, config, ref);
   const envRef = { ...process.env, ...ref };

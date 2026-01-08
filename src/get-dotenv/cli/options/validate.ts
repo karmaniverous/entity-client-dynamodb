@@ -1,8 +1,8 @@
-import { dotenvExpand } from '@karmaniverous/get-dotenv';
+import { dotenvExpand, type ProcessEnv } from '@karmaniverous/get-dotenv';
 
 import type { VersionedLayoutConfig } from '../../layout';
 import { resolveLayoutConfig } from './layout';
-import type { DynamodbPluginConfig, EnvRef, ValidateFlags } from './types';
+import type { DynamodbPluginConfig, ValidateFlags } from './types';
 
 /**
  * Fully resolved inputs for a `validate` operation at a specific version.
@@ -32,7 +32,7 @@ export interface ResolvedValidateAtVersion {
 export function resolveValidateAtVersion(
   flags: ValidateFlags,
   config?: DynamodbPluginConfig,
-  ref: EnvRef = process.env,
+  ref: ProcessEnv = process.env,
 ): ResolvedValidateAtVersion {
   const cfg = resolveLayoutConfig({}, config, ref);
   // Host interpolates config strings once; expand flags only.

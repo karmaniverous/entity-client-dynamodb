@@ -1,10 +1,10 @@
-import { dotenvExpand } from '@karmaniverous/get-dotenv';
+import { dotenvExpand, type ProcessEnv } from '@karmaniverous/get-dotenv';
 
 import type { WaiterConfig } from '../../../EntityClient/WaiterConfig';
 import type { VersionedLayoutConfig } from '../../layout';
 import { firstDefined, num } from './coerce';
 import { resolveLayoutConfig } from './layout';
-import type { DynamodbPluginConfig, EnvRef } from './types';
+import type { DynamodbPluginConfig } from './types';
 
 /**
  * Raw CLI flags for `create` (before merge/expansion/coercion).
@@ -78,7 +78,7 @@ export interface ResolvedCreateAtVersion {
 export function resolveCreateAtVersion(
   flags: CreateFlags,
   config?: DynamodbPluginConfig,
-  ref: EnvRef = process.env,
+  ref: ProcessEnv = process.env,
 ): ResolvedCreateAtVersion {
   const cfg = resolveLayoutConfig({}, config, ref);
   const envRef = { ...process.env, ...ref };

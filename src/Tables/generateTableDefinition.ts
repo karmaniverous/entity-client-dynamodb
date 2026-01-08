@@ -1,11 +1,14 @@
 import type { CreateTableCommandInput } from '@aws-sdk/client-dynamodb';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { ScalarAttributeType } from '@aws-sdk/client-dynamodb'; // imported to support API docs
-import { BaseConfigMap, EntityManager } from '@karmaniverous/entity-manager';
+import {
+  type BaseConfigMap,
+  type EntityManager,
+} from '@karmaniverous/entity-manager';
 
 import {
   defaultTranscodeAttributeTypeMap,
-  TranscodeAttributeTypeMap,
+  type TranscodeAttributeTypeMap,
 } from './TranscodeAttributeTypeMap';
 
 /**

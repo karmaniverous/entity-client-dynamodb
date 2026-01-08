@@ -1,3 +1,5 @@
+import { type ProcessEnv } from '@karmaniverous/get-dotenv';
+
 import { EntityClient } from '../../../EntityClient';
 
 /**
@@ -14,7 +16,7 @@ import { EntityClient } from '../../../EntityClient';
 export function buildEntityClient(
   em: unknown,
   tableName: string,
-  envRef: Record<string, string | undefined> = process.env,
+  envRef: ProcessEnv = process.env,
 ) {
   const env = { ...process.env, ...envRef };
   // Explicit endpoint overrides only. Do not default to localhost here:

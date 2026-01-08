@@ -14,7 +14,7 @@ import {
 } from '@karmaniverous/entity-manager';
 import type { ReplaceKey } from '@karmaniverous/entity-tools';
 
-import { EntityClient } from '../EntityClient';
+import { type EntityClient } from '../EntityClient';
 import { getDocumentQueryArgs } from '../EntityClient/getDocumentQueryArgs';
 import {
   addFilterCondition as addFilterConditionHelper,

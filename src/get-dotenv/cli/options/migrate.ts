@@ -1,9 +1,9 @@
-import { dotenvExpand } from '@karmaniverous/get-dotenv';
+import { dotenvExpand, type ProcessEnv } from '@karmaniverous/get-dotenv';
 
 import type { VersionedLayoutConfig } from '../../layout';
 import { firstDefined, num } from './coerce';
 import { resolveLayoutConfig } from './layout';
-import type { DynamodbPluginConfig, EnvRef } from './types';
+import type { DynamodbPluginConfig } from './types';
 
 /**
  * Raw CLI flags for `migrate` (before merge/expansion/coercion).
@@ -71,7 +71,7 @@ export interface ResolvedMigrate {
 export function resolveMigrate(
   flags: MigrateFlags,
   config?: DynamodbPluginConfig,
-  ref: EnvRef = process.env,
+  ref: ProcessEnv = process.env,
 ): ResolvedMigrate {
   const cfg = resolveLayoutConfig({}, config, ref);
   const envRef = { ...process.env, ...ref };

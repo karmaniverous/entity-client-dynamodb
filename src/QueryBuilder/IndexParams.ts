@@ -1,4 +1,5 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
+import type { ProcessEnv } from '@karmaniverous/get-dotenv';
 
 /**
  * IndexParams
@@ -7,7 +8,7 @@ import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
  */
 export interface IndexParams {
   /** Expression attribute names for this index (e.g., `#created` -\> `created`). */
-  expressionAttributeNames: Record<string, string | undefined>;
+  expressionAttributeNames: ProcessEnv;
   /** Expression attribute values for this index (e.g., `:v123` -\> `1700000000`). */
   expressionAttributeValues: Record<
     string,

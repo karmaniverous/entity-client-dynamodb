@@ -1,10 +1,3 @@
-/**
- * Environment reference used for dotenv expansion (typically `{ ...process.env, ...ctx.dotenv }`).
- *
- * @category get-dotenv
- */
-export type EnvRef = Record<string, string | undefined>;
-
 export type { DynamodbPluginConfig } from './schema';
 
 // Flag shapes (re-exported from each resolver module too)

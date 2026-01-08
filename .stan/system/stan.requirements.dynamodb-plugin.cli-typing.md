@@ -127,7 +127,7 @@ Normative type excerpts (for reference; not vendored)
 // From @karmaniverous/get-dotenv/cliHost:
 readMergedOptions(cmd: CommandUnknownOpts): GetDotenvCliOptions;
 shouldCapture(bagCapture?: boolean): boolean;
-buildSpawnEnv(base?: NodeJS.ProcessEnv, overlay?: Record<string, string | undefined>): NodeJS.ProcessEnv;
+buildSpawnEnv(base?: NodeJS.ProcessEnv, overlay?: ProcessEnv): NodeJS.ProcessEnv;
 ```
 
 ## Typed plugin instance seam (aws-pattern; hard rule)

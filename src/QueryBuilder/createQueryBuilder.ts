@@ -4,7 +4,7 @@ import type {
   IndexTokensOf,
 } from '@karmaniverous/entity-manager';
 
-import { EntityClient } from '../EntityClient';
+import { type EntityClient } from '../EntityClient';
 import { QueryBuilder } from './QueryBuilder';
 
 /**
