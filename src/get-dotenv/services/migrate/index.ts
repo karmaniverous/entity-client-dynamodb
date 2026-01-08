@@ -12,7 +12,8 @@ import { loadStepContext } from './load';
 import type { StepContext } from './types';
 
 function unwrapSingleAggregateError(err: unknown): unknown {
-  if (err instanceof AggregateError) {
+  // Guard in case a runtime/polyfill lacks AggregateError (or it is shadowed).
+  if (typeof AggregateError === 'function' && err instanceof AggregateError) {
     const errors = (err as { errors?: unknown[] }).errors;
     if (Array.isArray(errors) && errors.length === 1) return errors[0];
     return err;
