@@ -42,6 +42,7 @@ Notes
 - `--force` is required to proceed (non-interactive confirmation guard).
 - Limit is enforced across outputs; fan-out counts toward the limit.
 - `sourceTable` and `targetTable` can be provided via flags, config, or env (dotenv expansion supported).
+- Cross-entity fan-out is not supported and is enforced: returning a fully-keyed storage record for a different entity token causes migration to error.
 
 Related
 

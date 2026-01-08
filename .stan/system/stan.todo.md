@@ -44,3 +44,4 @@
 - Enforced `import type` for type-only imports via ESLint and fixed get-dotenv `ProcessEnv` imports.
 - Refactored to use Radash helpers (`parallel`, `retry`/`sleep`, `tryit`, `unique`, `shake`) to reduce custom infra and conditional-spread boilerplate.
 - Refactored dynamodb get-dotenv CLI adapters to use the host Logger contract (debug/info/warn/error) and emit JSON to stdout without relying on `logger.log`.
+- Enforced migration transform output entity-token matching (reject cross-entity keyed records) and updated docs to match.

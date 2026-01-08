@@ -27,7 +27,7 @@ Semantics
 - `undefined` → drop the record
 - single item/record → migrate one
 - array of items/records → fan-out (same entity token)
-- Cross-entity fan-out is not supported in v1.
+- Cross-entity fan-out is not supported and is enforced at runtime: if a handler returns a fully-keyed storage record whose hash key resolves to a different entity token, migration throws.
 
 Performance knobs
 

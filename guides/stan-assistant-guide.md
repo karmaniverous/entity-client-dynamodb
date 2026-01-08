@@ -189,8 +189,7 @@ Exports (grouped by usage):
   - `resolveLayoutConfig`
   - `resolveGenerateAtVersion`, `resolveValidateAtVersion`
   - `resolveCreateAtVersion`, `resolveDelete`, `resolvePurge`, `resolveMigrate`
-- CLI parsers (Commander numeric strictness):
-  - `parseFiniteNumber`, `parsePositiveInt`, `parseNonNegativeInt`
+- Note: Commander numeric parsers (e.g., `parsePositiveInt`) are provided by `@karmaniverous/get-dotenv`, not exported by this package.
 
 ## get-dotenv plugin: canonical mounting and config model (aws-pattern)
 
@@ -327,6 +326,10 @@ Transform semantics:
   - `undefined` → drop
   - single item/record → migrate one
   - array → fan-out (same entity token)
+
+Cross-entity fan-out: not supported (enforced):
+
+- Returning a fully-keyed storage record whose hash key resolves to a different entity token causes migration to throw (to prevent unsupported cross-entity fan-out).
 
 Streaming and batching:
 

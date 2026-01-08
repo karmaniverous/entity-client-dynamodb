@@ -47,6 +47,21 @@ export function extractEntityTokenFromRecord(
   throw new Error('unable to extract entity token from record');
 }
 
+function assertStorageRecordMatchesEntityToken(args: {
+  record: Record<string, unknown>;
+  expectedEntityToken: string;
+  em: EntityManager<BaseConfigMap>;
+  stepVersion: string;
+}): void {
+  const { record, expectedEntityToken, em, stepVersion } = args;
+  const actual = extractEntityTokenFromRecord(record, em);
+  if (actual !== expectedEntityToken) {
+    throw new Error(
+      `transform output entity token mismatch in step ${stepVersion}: expected ${JSON.stringify(expectedEntityToken)} but got ${JSON.stringify(actual)} (cross-entity fan-out is not supported)`,
+    );
+  }
+}
+
 /** Apply a chain across steps, normalizing to storage records for the last EM. */
 export async function applyStepChain(
   initial: Record<string, unknown>,
@@ -66,8 +81,17 @@ export async function applyStepChain(
           const hk = (next.config as { hashKey?: string }).hashKey ?? 'hashKey';
           const rk =
             (next.config as { rangeKey?: string }).rangeKey ?? 'rangeKey';
-          if (hk in out && rk in out) nextAcc.push(out);
-          else nextAcc.push(next.addKeys(entityToken as never, out as never));
+          if (hk in out && rk in out) {
+            assertStorageRecordMatchesEntityToken({
+              record: out,
+              expectedEntityToken: entityToken,
+              em: next,
+              stepVersion: ctx.version,
+            });
+            nextAcc.push(out);
+          } else {
+            nextAcc.push(next.addKeys(entityToken as never, out as never));
+          }
         }
       } else {
         nextAcc.push(...defaultChain(entityToken, rec, prev, next));

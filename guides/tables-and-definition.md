@@ -14,7 +14,7 @@ import { generateTableDefinition } from '@karmaniverous/entity-client-dynamodb';
 const def = generateTableDefinition(client.entityManager);
 // def includes:
 // - AttributeDefinitions (global & index tokens)
-// - GlobalSecondaryIndexes (with projections resolved)
+// - GlobalSecondaryIndexes (when indexes are configured; with projections resolved)
 // - KeySchema
 ```
 
