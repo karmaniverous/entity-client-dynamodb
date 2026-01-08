@@ -1,11 +1,14 @@
 import type { Command } from '@commander-js/extra-typings';
-import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
+import { parsePositiveInt } from '@karmaniverous/get-dotenv';
+import {
+  ensureForce,
+  type GetDotenvCliPublic,
+} from '@karmaniverous/get-dotenv/cliHost';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
 import { deleteTable } from '../../../services/delete';
 import { resolveDelete, resolveLayoutConfig } from '../../options';
-import { buildEntityClient, ensureForce } from '../helpers';
-import { parsePositiveInt } from '../parsers';
+import { buildEntityClient } from '../helpers';
 import type { DynamodbPluginInstance } from '../pluginInstance';
 
 export function registerDelete(

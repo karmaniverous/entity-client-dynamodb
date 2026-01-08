@@ -1,4 +1,5 @@
 import type { Command } from '@commander-js/extra-typings';
+import { parsePositiveInt } from '@karmaniverous/get-dotenv';
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
@@ -6,7 +7,6 @@ import { createTableAtVersion } from '../../../services/create';
 import { resolveManagedTableProperties } from '../../../tableProperties';
 import { resolveCreateAtVersion, resolveLayoutConfig } from '../../options';
 import { buildEntityClient } from '../helpers';
-import { parsePositiveInt } from '../parsers';
 import type { DynamodbPluginInstance } from '../pluginInstance';
 
 export function registerCreate(

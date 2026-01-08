@@ -1,11 +1,17 @@
 import type { Command } from '@commander-js/extra-typings';
-import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
+import {
+  parseNonNegativeInt,
+  parsePositiveInt,
+} from '@karmaniverous/get-dotenv';
+import {
+  ensureForce,
+  type GetDotenvCliPublic,
+} from '@karmaniverous/get-dotenv/cliHost';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
 import { migrateData } from '../../../services/migrate';
 import { resolveLayoutConfig, resolveMigrate } from '../../options';
-import { buildEntityClient, ensureForce } from '../helpers';
-import { parseNonNegativeInt, parsePositiveInt } from '../parsers';
+import { buildEntityClient } from '../helpers';
 import type { DynamodbPluginInstance } from '../pluginInstance';
 
 export function registerMigrate(

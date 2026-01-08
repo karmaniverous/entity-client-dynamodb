@@ -17,6 +17,7 @@ import type {
   BaseConfigMap,
   EntityManager,
 } from '@karmaniverous/entity-manager';
+import { unique } from 'radash';
 import YAML from 'yaml';
 
 import type { GeneratedSections } from './tableDefinition';
@@ -135,10 +136,9 @@ function canonicalizeGsi(v: unknown): unknown {
         ? (projObj as ProjectionLike).NonKeyAttributes
         : undefined;
       const nkaa = isUnknownArray(nkaRaw)
-        ? nkaRaw
-            .map((x) => sortableString(x))
-            .filter((s) => s !== '')
-            .sort()
+        ? unique(
+            nkaRaw.map((x) => sortableString(x)).filter((s) => s !== ''),
+          ).sort()
         : undefined;
 
       return {

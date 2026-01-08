@@ -4,6 +4,7 @@ import {
   runCommand,
   runCommandResult,
 } from '@karmaniverous/get-dotenv/cliHost';
+import { retry, sleep, tryit } from 'radash';
 
 import type { DynamodbPluginConfig } from '../cli/options/types';
 
@@ -74,24 +75,24 @@ async function libraryAvailable(): Promise<
     }
   | undefined
 > {
-  try {
-    const mod: unknown = await import('@karmaniverous/dynamodb-local');
-    // Best-effort structural guard
-    if (
-      mod &&
-      typeof mod === 'object' &&
-      'setupDynamoDbLocal' in (mod as Record<string, unknown>) &&
-      'teardownDynamoDbLocal' in (mod as Record<string, unknown>) &&
-      'dynamoDbLocalReady' in (mod as Record<string, unknown>)
-    ) {
-      return mod as {
-        setupDynamoDbLocal: (port?: number) => Promise<void>;
-        teardownDynamoDbLocal: () => Promise<void>;
-        dynamoDbLocalReady: (client: DynamoDBClient) => Promise<void>;
-      };
-    }
-  } catch {
-    // ignore
+  const [importErr, mod] = await tryit(
+    () => import('@karmaniverous/dynamodb-local') as Promise<unknown>,
+  )();
+  if (importErr) return undefined;
+
+  // Best-effort structural guard
+  if (
+    mod &&
+    typeof mod === 'object' &&
+    'setupDynamoDbLocal' in (mod as Record<string, unknown>) &&
+    'teardownDynamoDbLocal' in (mod as Record<string, unknown>) &&
+    'dynamoDbLocalReady' in (mod as Record<string, unknown>)
+  ) {
+    return mod as {
+      setupDynamoDbLocal: (port?: number) => Promise<void>;
+      teardownDynamoDbLocal: () => Promise<void>;
+      dynamoDbLocalReady: (client: DynamoDBClient) => Promise<void>;
+    };
   }
   return undefined;
 }
@@ -108,15 +109,20 @@ async function probeReadyWithSdk(endpoint: string): Promise<boolean> {
   const client = makeClient(endpoint);
   const maxAttempts = 50;
   const delayMs = 100;
-  for (let i = 0; i < maxAttempts; i++) {
-    try {
-      await client.send(new ListTablesCommand({ Limit: 1 }));
-      return true;
-    } catch {
-      await new Promise((r) => setTimeout(r, delayMs));
-    }
-  }
-  return false;
+  const [err] = await tryit(async () => {
+    // Radash `retry.times` is "retry count" (not attempt count), so match our old loop:
+    // old attempts = maxAttempts => retries = maxAttempts - 1
+    await retry({ times: maxAttempts - 1, delay: 0 }, async () => {
+      try {
+        await client.send(new ListTablesCommand({ Limit: 1 }));
+      } catch (e) {
+        await sleep(delayMs);
+        throw e;
+      }
+    });
+  })();
+
+  return err === undefined;
 }
 
 /**
@@ -226,17 +232,13 @@ export async function statusLocal(args: {
   const env = buildSpawnEnv(process.env, envRef);
 
   if (cfg?.status) {
-    try {
-      const exitCode = await runConfigCommand({
-        command: cfg.status,
-        env,
-        shell,
-        capture,
-      });
-      return exitCode === 0;
-    } catch {
-      return false;
-    }
+    const [err, exitCode] = await tryit(runConfigCommand)({
+      command: cfg.status,
+      env,
+      shell,
+      capture,
+    });
+    return err === undefined && exitCode === 0;
   }
   // Health probe
   const ok = await probeReadyWithSdk(endpoint);

@@ -1,10 +1,10 @@
 import type { Command } from '@commander-js/extra-typings';
+import { parsePositiveInt } from '@karmaniverous/get-dotenv';
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
 import { generateTableDefinitionAtVersion } from '../../../services/generate';
 import { resolveGenerateAtVersion, resolveLayoutConfig } from '../../options';
-import { parsePositiveInt } from '../parsers';
 import type { DynamodbPluginInstance } from '../pluginInstance';
 
 export function registerGenerate(

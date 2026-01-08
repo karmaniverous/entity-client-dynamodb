@@ -1,10 +1,13 @@
 import type { Command } from '@commander-js/extra-typings';
-import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
+import {
+  ensureForce,
+  type GetDotenvCliPublic,
+} from '@karmaniverous/get-dotenv/cliHost';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
 import { purgeTable } from '../../../services/delete';
 import { resolveLayoutConfig, resolvePurge } from '../../options';
-import { buildEntityClient, ensureForce } from '../helpers';
+import { buildEntityClient } from '../helpers';
 import type { DynamodbPluginInstance } from '../pluginInstance';
 
 export function registerPurge(

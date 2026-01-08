@@ -1,4 +1,5 @@
 import { dotenvExpand, type ProcessEnv } from '@karmaniverous/get-dotenv';
+import { shake } from 'radash';
 
 import type { WaiterConfig } from '../../../EntityClient/WaiterConfig';
 import type { VersionedLayoutConfig } from '../../layout';
@@ -94,6 +95,14 @@ export function resolveCreateAtVersion(
   const tableNameOverride =
     dotenvExpand(flags.tableNameOverride, envRef) ??
     config?.create?.tableNameOverride;
+  const validateResolved = firstDefined(
+    flags.validate,
+    config?.create?.validate,
+  );
+  const refreshGeneratedResolved = firstDefined(
+    flags.refreshGenerated,
+    config?.create?.refreshGenerated,
+  );
 
   const maxSecondsRaw = firstDefined(
     flags.maxSeconds,
@@ -105,29 +114,18 @@ export function resolveCreateAtVersion(
       : maxSecondsRaw;
   const maxSeconds = num(maxSecondsExpanded);
 
-  const options: CreateAtVersionOptions = {
-    ...(firstDefined(flags.validate, config?.create?.validate) !== undefined
-      ? { validate: !!firstDefined(flags.validate, config?.create?.validate) }
-      : {}),
-    ...(firstDefined(
-      flags.refreshGenerated,
-      config?.create?.refreshGenerated,
-    ) !== undefined
-      ? {
-          refreshGenerated: !!firstDefined(
-            flags.refreshGenerated,
-            config?.create?.refreshGenerated,
-          ),
-        }
-      : {}),
-    ...(firstDefined(flags.force, config?.create?.force)
-      ? { force: true }
-      : {}),
-    ...(flags.allowNonLatest ? { allowNonLatest: true } : {}),
-    ...(maxSeconds !== undefined
-      ? { waiter: { maxWaitTime: maxSeconds } as WaiterConfig }
-      : {}),
-    ...(tableNameOverride ? { tableNameOverride } : {}),
-  };
+  const optionsInput = {
+    validate: validateResolved ?? undefined,
+    refreshGenerated: refreshGeneratedResolved ?? undefined,
+    force: firstDefined(flags.force, config?.create?.force) ? true : undefined,
+    allowNonLatest: flags.allowNonLatest ? true : undefined,
+    waiter:
+      maxSeconds !== undefined
+        ? ({ maxWaitTime: maxSeconds } satisfies WaiterConfig)
+        : undefined,
+    tableNameOverride: tableNameOverride ?? undefined,
+  } satisfies CreateAtVersionOptions;
+
+  const options = shake(optionsInput);
   return { version, cfg, options };
 }

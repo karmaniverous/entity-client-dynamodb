@@ -1,4 +1,5 @@
 import type { BaseConfigMap } from '@karmaniverous/entity-manager';
+import { parallel } from 'radash';
 
 import type { EntityClient } from '../../../EntityClient/EntityClient';
 import {
@@ -8,7 +9,6 @@ import {
 } from '../../layout';
 import { applyStepChain } from './chain';
 import { loadStepContext } from './load';
-import { runLimited } from './pool';
 import type { StepContext } from './types';
 
 /**
@@ -111,12 +111,10 @@ export async function migrateData<C extends BaseConfigMap>(
     items += pageItems.length;
 
     // Transform with optional concurrency
-    const tasks = pageItems.map(
-      (rec) => () => applyStepChain(rec, stepContexts),
-    );
-    const transformed = await runLimited(
-      tasks,
+    const transformed = await parallel(
       Math.max(1, transformConcurrency),
+      pageItems,
+      (rec) => applyStepChain(rec, stepContexts),
     );
     let flat = transformed.flat();
 
