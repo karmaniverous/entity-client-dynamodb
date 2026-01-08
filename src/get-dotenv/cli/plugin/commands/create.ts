@@ -1,6 +1,9 @@
 import type { Command } from '@commander-js/extra-typings';
-import { parsePositiveInt } from '@karmaniverous/get-dotenv';
-import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
+import { assertLogger, parsePositiveInt } from '@karmaniverous/get-dotenv';
+import {
+  type GetDotenvCliPublic,
+  readMergedOptions,
+} from '@karmaniverous/get-dotenv/cliHost';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
 import { createTableAtVersion } from '../../../services/create';
@@ -108,7 +111,8 @@ export function registerCreate(
       ),
     )
     .action(async (opts, thisCommand) => {
-      void thisCommand;
+      const bag = readMergedOptions(thisCommand);
+      const logger = assertLogger(bag.logger);
       const ctx = cli.getCtx();
       const envRef = ctx.dotenv;
       const env = { ...process.env, ...envRef };
@@ -147,14 +151,16 @@ export function registerCreate(
         env.TABLE_NAME ??
         env.DYNAMODB_TABLE ??
         'DynamoDBTable';
-      const client = buildEntityClient(em, clientTable, envRef);
+      const client = buildEntityClient(em, clientTable, envRef, logger);
       const out = await createTableAtVersion(client, em, version, cfg, {
         ...options,
         managedTableProperties: managed,
       });
-      const waiterStateCreate = out.waiterResult.state;
-      console.info('dynamodb create: ' + waiterStateCreate);
-      console.log(JSON.stringify({ waiter: waiterStateCreate }, null, 2));
+      const waiterState = out.waiterResult.state;
+      logger.info(`dynamodb create: ${waiterState}`);
+      process.stdout.write(
+        JSON.stringify({ waiter: waiterState }, null, 2) + '\n',
+      );
     });
   void cmd;
 }

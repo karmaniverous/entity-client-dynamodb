@@ -1,5 +1,5 @@
 import type { Command } from '@commander-js/extra-typings';
-import { parsePositiveInt } from '@karmaniverous/get-dotenv';
+import { assertLogger, parsePositiveInt } from '@karmaniverous/get-dotenv';
 import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
 import {
   readMergedOptions,
@@ -42,6 +42,7 @@ export function registerLocal(
         const envRef = { ...process.env, ...ctx.dotenv };
         const pluginCfg = plugin.readConfig(cli);
         const bag = readMergedOptions(thisCommand);
+        const logger = assertLogger(bag.logger);
         const shell = bag.shell;
         const capture = shouldCapture(bag.capture);
 
@@ -57,15 +58,15 @@ export function registerLocal(
 
         const { endpoint } = out;
         // UX: endpoint + export hint
-        console.info(`local dynamodb: endpoint ${endpoint}`);
-        console.log(JSON.stringify({ endpoint }, null, 2));
-        console.info(
+        logger.info(`local dynamodb: endpoint ${endpoint}`);
+        process.stdout.write(JSON.stringify({ endpoint }, null, 2) + '\n');
+        logger.info(
           `Hint: export DYNAMODB_LOCAL_ENDPOINT=${endpoint} so app code targets Local.`,
         );
       } catch (err) {
         const msg =
           err instanceof Error ? err.message : 'local dynamodb start failed';
-        console.error(msg);
+        assertLogger(readMergedOptions(thisCommand).logger).error(msg);
         process.exitCode = 1;
       }
     });
@@ -91,6 +92,7 @@ export function registerLocal(
         const envRef = { ...process.env, ...ctx.dotenv };
         const pluginCfg = plugin.readConfig(cli);
         const bag = readMergedOptions(thisCommand);
+        const logger = assertLogger(bag.logger);
         const shell = bag.shell;
         const capture = shouldCapture(bag.capture);
 
@@ -106,10 +108,11 @@ export function registerLocal(
         if (!ok) {
           process.exitCode = 1;
         }
+        void logger;
       } catch (err) {
         const msg =
           err instanceof Error ? err.message : 'local dynamodb status failed';
-        console.error(msg);
+        assertLogger(readMergedOptions(thisCommand).logger).error(msg);
         process.exitCode = 1;
       }
     });
@@ -121,6 +124,7 @@ export function registerLocal(
       const envRef = { ...process.env, ...ctx.dotenv };
       const pluginCfg = plugin.readConfig(cli);
       const bag = readMergedOptions(thisCommand);
+      const logger = assertLogger(bag.logger);
       const shell = bag.shell;
       const capture = shouldCapture(bag.capture);
 
@@ -130,10 +134,11 @@ export function registerLocal(
         shell,
         capture,
       });
+      void logger;
     } catch (err) {
       const msg =
         err instanceof Error ? err.message : 'local dynamodb stop failed';
-      console.error(msg);
+      assertLogger(readMergedOptions(thisCommand).logger).error(msg);
       process.exitCode = 1;
     }
   });

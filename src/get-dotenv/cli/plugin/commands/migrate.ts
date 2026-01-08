@@ -1,11 +1,13 @@
 import type { Command } from '@commander-js/extra-typings';
 import {
+  assertLogger,
   parseNonNegativeInt,
   parsePositiveInt,
 } from '@karmaniverous/get-dotenv';
 import {
   ensureForce,
   type GetDotenvCliPublic,
+  readMergedOptions,
 } from '@karmaniverous/get-dotenv/cliHost';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
@@ -174,8 +176,9 @@ export function registerMigrate(
     )
     .option('--force', 'proceed without confirmation')
     .action(async (opts, thisCommand) => {
-      void thisCommand;
       if (!ensureForce(opts.force, 'migrate-data')) return;
+      const bag = readMergedOptions(thisCommand);
+      const logger = assertLogger(bag.logger);
       const ctx = cli.getCtx();
       const envRef = ctx.dotenv;
       const env = { ...process.env, ...envRef };
@@ -227,7 +230,7 @@ export function registerMigrate(
           ? { progressIntervalMs: m.progressIntervalMs }
           : {}),
         onProgress: (p) => {
-          console.info(
+          logger.info(
             'migrate progress: pages=' +
               String(p.pages) +
               ' items=' +
@@ -240,7 +243,7 @@ export function registerMigrate(
           );
         },
       });
-      console.info(
+      logger.info(
         'migrate done: pages=' +
           String(out.pages) +
           ' items=' +
@@ -248,6 +251,6 @@ export function registerMigrate(
           ' outputs=' +
           String(out.outputs),
       );
-      console.log(JSON.stringify(out, null, 2));
+      process.stdout.write(JSON.stringify(out, null, 2) + '\n');
     });
 }

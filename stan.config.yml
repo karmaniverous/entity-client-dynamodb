@@ -9,6 +9,9 @@ stan-core:
   imports:
     '@commander-js/extra-typings':
       - node_modules/@commander-js/extra-typings/index.d.ts
+    '@karmaniverous/aws-xray-tools':
+      - ../aws-xray-tools/.stan/interop/entity-client-dynamodb/**
+      - ../aws-xray-tools/guides/stan-assistant-guide.md
     '@karmaniverous/entity-manager':
       - ../entity-manager/.stan/interop/entity-client-dynamodb/**
       - ../entity-manager/guides/stan-assistant-guide.md

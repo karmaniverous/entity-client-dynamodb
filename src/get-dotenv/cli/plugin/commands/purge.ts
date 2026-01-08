@@ -1,7 +1,9 @@
 import type { Command } from '@commander-js/extra-typings';
+import { assertLogger } from '@karmaniverous/get-dotenv';
 import {
   ensureForce,
   type GetDotenvCliPublic,
+  readMergedOptions,
 } from '@karmaniverous/get-dotenv/cliHost';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
@@ -35,8 +37,9 @@ export function registerPurge(
     .option('--version <string>', 'EM version for client wiring (optional)')
     .option('--force', 'proceed without confirmation')
     .action(async (opts, thisCommand) => {
-      void thisCommand;
       if (!ensureForce(opts.force, 'purge-table')) return;
+      const bag = readMergedOptions(thisCommand);
+      const logger = assertLogger(bag.logger);
       const ctx = cli.getCtx();
       const envRef = ctx.dotenv;
       const env = { ...process.env, ...envRef };
@@ -54,9 +57,9 @@ export function registerPurge(
         env.TABLE_NAME ??
         env.DYNAMODB_TABLE ??
         'DynamoDBTable';
-      const client = buildEntityClient(em, tableName, envRef);
+      const client = buildEntityClient(em, tableName, envRef, logger);
       const count = await purgeTable(client, options);
-      console.info('dynamodb purge: ' + String(count));
-      console.log(JSON.stringify({ purged: count }, null, 2));
+      logger.info(`dynamodb purge: ${String(count)}`);
+      process.stdout.write(JSON.stringify({ purged: count }, null, 2) + '\n');
     });
 }

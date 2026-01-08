@@ -1,8 +1,9 @@
 import type { Command } from '@commander-js/extra-typings';
-import { parsePositiveInt } from '@karmaniverous/get-dotenv';
+import { assertLogger, parsePositiveInt } from '@karmaniverous/get-dotenv';
 import {
   ensureForce,
   type GetDotenvCliPublic,
+  readMergedOptions,
 } from '@karmaniverous/get-dotenv/cliHost';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
@@ -49,8 +50,9 @@ export function registerDelete(
     )
     .option('--force', 'proceed without confirmation')
     .action(async (opts, thisCommand) => {
-      void thisCommand;
       if (!ensureForce(opts.force, 'delete-table')) return;
+      const bag = readMergedOptions(thisCommand);
+      const logger = assertLogger(bag.logger);
       const ctx = cli.getCtx();
       const envRef = ctx.dotenv;
       const env = { ...process.env, ...envRef };
@@ -71,10 +73,12 @@ export function registerDelete(
         env.TABLE_NAME ??
         env.DYNAMODB_TABLE ??
         'DynamoDBTable';
-      const client = buildEntityClient(em, tableName, envRef);
+      const client = buildEntityClient(em, tableName, envRef, logger);
       const out = await deleteTable(client, options);
-      const waiterStateDelete = out.waiterResult.state;
-      console.info('dynamodb delete: ' + waiterStateDelete);
-      console.log(JSON.stringify({ waiter: waiterStateDelete }, null, 2));
+      const waiterState = out.waiterResult.state;
+      logger.info(`dynamodb delete: ${waiterState}`);
+      process.stdout.write(
+        JSON.stringify({ waiter: waiterState }, null, 2) + '\n',
+      );
     });
 }

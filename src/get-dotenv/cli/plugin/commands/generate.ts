@@ -1,6 +1,9 @@
 import type { Command } from '@commander-js/extra-typings';
-import { parsePositiveInt } from '@karmaniverous/get-dotenv';
-import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
+import { assertLogger, parsePositiveInt } from '@karmaniverous/get-dotenv';
+import {
+  type GetDotenvCliPublic,
+  readMergedOptions,
+} from '@karmaniverous/get-dotenv/cliHost';
 
 import { resolveAndLoadEntityManager } from '../../../emLoader';
 import { generateTableDefinitionAtVersion } from '../../../services/generate';
@@ -126,7 +129,8 @@ export function registerGenerate(
       'recompose table.yml from baseline + generated + managed props',
     )
     .action(async (opts, thisCommand) => {
-      void thisCommand;
+      const bag = readMergedOptions(thisCommand);
+      const logger = assertLogger(bag.logger);
       const ctx = cli.getCtx();
       const envRef = ctx.dotenv;
       const pluginCfg = plugin.readConfig(cli);
@@ -164,7 +168,9 @@ export function registerGenerate(
           : {}),
       });
       const action = out.refreshed ? 'refreshed' : 'created';
-      console.info(`dynamodb generate: ${action} ${out.path}`);
-      console.log(JSON.stringify({ action, path: out.path }, null, 2));
+      logger.info(`dynamodb generate: ${action} ${out.path}`);
+      process.stdout.write(
+        JSON.stringify({ action, path: out.path }, null, 2) + '\n',
+      );
     });
 }

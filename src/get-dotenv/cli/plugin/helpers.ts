@@ -1,4 +1,4 @@
-import { type ProcessEnv } from '@karmaniverous/get-dotenv';
+import type { Logger, ProcessEnv } from '@karmaniverous/get-dotenv';
 
 import { EntityClient } from '../../../EntityClient';
 
@@ -11,12 +11,14 @@ import { EntityClient } from '../../../EntityClient';
  * @param em - EntityManager instance (or compatible).
  * @param tableName - Resolved table name.
  * @param envRef - Env overlay (typically ctx.dotenv).
+ * @param logger - Optional unified logger (debug/info/warn/error) from the get-dotenv host.
  * @returns A configured EntityClient.
  */
 export function buildEntityClient(
   em: unknown,
   tableName: string,
   envRef: ProcessEnv = process.env,
+  logger?: Logger,
 ) {
   const env = { ...process.env, ...envRef };
   // Explicit endpoint overrides only. Do not default to localhost here:
@@ -38,6 +40,7 @@ export function buildEntityClient(
     entityManager: em as never,
     tableName,
     region,
+    ...(logger ? { logger } : {}),
     ...(endpoint ? { endpoint } : {}),
     ...(hasEnvCreds
       ? {}

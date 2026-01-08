@@ -1,5 +1,9 @@
 import type { Command } from '@commander-js/extra-typings';
-import type { GetDotenvCliPublic } from '@karmaniverous/get-dotenv/cliHost';
+import { assertLogger } from '@karmaniverous/get-dotenv';
+import {
+  type GetDotenvCliPublic,
+  readMergedOptions,
+} from '@karmaniverous/get-dotenv/cliHost';
 
 import { validateTableDefinitionAtVersion } from '../../../services/validateTable';
 import { resolveManagedTableProperties } from '../../../tableProperties';
@@ -71,7 +75,8 @@ export function registerValidate(
       ),
     )
     .action(async (opts, thisCommand) => {
-      void thisCommand;
+      const bag = readMergedOptions(thisCommand);
+      const logger = assertLogger(bag.logger);
       const ctx = cli.getCtx();
       const envRef = ctx.dotenv;
       const pluginCfg = plugin.readConfig(cli);
@@ -100,12 +105,12 @@ export function registerValidate(
         cfg,
         managed,
       );
-      console.info(
+      logger.info(
         result.equal
           ? 'dynamodb validate: OK (no drift)'
           : 'dynamodb validate: drift detected',
       );
-      console.log(
+      process.stdout.write(
         JSON.stringify(
           {
             tablePath: result.tablePath,
@@ -114,7 +119,7 @@ export function registerValidate(
           },
           null,
           2,
-        ),
+        ) + '\n',
       );
       if (!result.equal) process.exitCode = 1;
     });
