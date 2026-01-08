@@ -2,7 +2,6 @@
 
 ## Next up (priority order)
 
-- Re-run `npm run docs`; fix any `validation.notDocumented` warnings until 0 (this is the “complete TypeDoc pass” gate).
 - Audit exported symbols (entrypoints `src/index.ts`, `src/get-dotenv/index.ts`) and ensure every exported symbol has a clear, concise, complete TypeDoc comment (even if TypeDoc emits 0 warnings).
 - Re-run `npm run build` and verify Rollup outputs align with `package.json` exports, and that Rollup no longer bundles `@karmaniverous/dynamodb-local` (warnings should drop significantly).
 - Re-run `npm run lint`, `npm run typecheck`, and `npm run docs` and confirm all pass with 0 TypeDoc warnings (expect 0).

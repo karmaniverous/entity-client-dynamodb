@@ -1,5 +1,5 @@
 import type { BaseConfigMap } from '@karmaniverous/entity-manager';
-import { parallel } from 'radash';
+import { AggregateError, parallel } from 'radash';
 
 import type { EntityClient } from '../../../EntityClient/EntityClient';
 import {
@@ -10,6 +10,28 @@ import {
 import { applyStepChain } from './chain';
 import { loadStepContext } from './load';
 import type { StepContext } from './types';
+
+function unwrapSingleAggregateError(err: unknown): unknown {
+  if (err instanceof AggregateError) {
+    const errors = (err as { errors?: unknown[] }).errors;
+    if (Array.isArray(errors) && errors.length === 1) return errors[0];
+    return err;
+  }
+
+  // Radash/JS runtimes may produce AggregateError-like objects.
+  if (err && typeof err === 'object') {
+    const rec = err as Record<string, unknown>;
+    if (
+      rec.name === 'AggregateError' &&
+      Array.isArray(rec.errors) &&
+      rec.errors.length === 1
+    ) {
+      return rec.errors[0];
+    }
+  }
+
+  return err;
+}
 
 /**
  * Result returned by {@link migrateData | `migrateData`}.
@@ -111,11 +133,18 @@ export async function migrateData<C extends BaseConfigMap>(
     items += pageItems.length;
 
     // Transform with optional concurrency
-    const transformed = await parallel(
-      Math.max(1, transformConcurrency),
-      pageItems,
-      (rec) => applyStepChain(rec, stepContexts),
-    );
+    let transformed: Record<string, unknown>[][];
+    try {
+      transformed = await parallel(
+        Math.max(1, transformConcurrency),
+        pageItems,
+        (rec) => applyStepChain(rec, stepContexts),
+      );
+    } catch (err) {
+      const inner = unwrapSingleAggregateError(err);
+      if (inner instanceof Error) throw inner;
+      throw err;
+    }
     let flat = transformed.flat();
 
     // Enforce limit when provided
