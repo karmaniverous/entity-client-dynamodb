@@ -37,6 +37,7 @@
       "NativeScalarAttributeValue": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/TypeAlias/NativeScalarAttributeValue",
       "NumberValue": "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/Class/NumberValue"
     },
+    "@karmaniverous/aws-xray-tools": { "XrayMode": "#" },
     "@karmaniverous/batch-process": {
       "BatchProcessOptions": "https://docs.karmanivero.us/batch-process/interfaces/batch_process.BatchProcessOptions.html"
     },

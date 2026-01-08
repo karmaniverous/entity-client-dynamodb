@@ -170,4 +170,33 @@ describe('get-dotenv migrateData service', function () {
     expect(target._putBatches.length).to.equal(1);
     expect(target._putBatches[0].length).to.equal(2);
   });
+
+  it('transform: rejects cross-entity keyed outputs', async function () {
+    const root = await fs.mkdtemp(join(tmpdir(), 'migrate-'));
+    const cfg: VersionedLayoutConfig = { tablesPath: root };
+    await writeVersion(root, '000');
+
+    // Handler for "user" returns a fully-keyed record that belongs to "email"
+    // (hashKey2 prefix mismatch). This is explicitly unsupported and must throw.
+    const transform = `({
+      user: async () => ({
+        hashKey2: 'email!x',
+        rangeKey: 'rk',
+        a: 1
+      })
+    })`;
+    await writeVersion(root, '001', transform);
+
+    const srcItems = [{ hashKey2: 'user!a', rangeKey: 'r1', a: 1 }];
+    const { source, target } = makeClients(srcItems);
+
+    await expect(
+      migrateData(source, target, {
+        fromVersion: '000',
+        toVersion: '001',
+        cfg,
+        pageSize: 25,
+      }),
+    ).rejects.toThrow(/transform output entity token mismatch/);
+  });
 });
