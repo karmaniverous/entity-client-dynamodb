@@ -13,7 +13,7 @@
     "@aws-sdk/client-dynamodb": "^3.965.0",
     "@aws-sdk/lib-dynamodb": "^3.965.0",
     "@commander-js/extra-typings": "^14.0.0",
-    "@karmaniverous/aws-xray-tools": "^0.1.0",
+    "@karmaniverous/aws-xray-tools": "^0.2.0",
     "@karmaniverous/batch-process": "^0.1.0",
     "@karmaniverous/entity-manager": "^8.0.0",
     "@karmaniverous/entity-tools": "^0.8.0",
