@@ -15,6 +15,7 @@ import {
   type PutCommandOutput,
   type TransactWriteCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
+import { captureAwsSdkV3Client } from '@karmaniverous/aws-xray-tools';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { EntityManager } from '@karmaniverous/entity-manager'; // imported to support API docs
 import {
@@ -26,7 +27,6 @@ import {
   type EntityToken,
 } from '@karmaniverous/entity-manager';
 import type { MakeOptional, ReplaceKey } from '@karmaniverous/entity-tools';
-import AWSXray from 'aws-xray-sdk';
 
 import type { BatchGetOptions } from './BatchGetOptions';
 import type { BatchWriteOptions } from './BatchWriteOptions';
@@ -132,7 +132,7 @@ export class EntityClient<
   constructor(options: EntityClientOptions<C, CF>) {
     const {
       batchProcessOptions,
-      enableXray = false,
+      xray = 'off',
       entityManager,
       logger,
       tableName,
@@ -143,10 +143,10 @@ export class EntityClient<
 
     const client = new DynamoDBClient(dynamoDbClientConfig);
 
-    this.client =
-      enableXray && process.env.AWS_XRAY_DAEMON_ADDRESS
-        ? AWSXray.captureAWSv3Client(client)
-        : client;
+    this.client = captureAwsSdkV3Client(client, {
+      mode: xray,
+      daemonAddress: process.env.AWS_XRAY_DAEMON_ADDRESS,
+    });
 
     this.doc = DynamoDBDocument.from(this.client, {
       marshallOptions: { removeUndefinedValues: true },

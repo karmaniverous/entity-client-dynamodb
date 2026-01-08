@@ -1,4 +1,5 @@
 import { type DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
+import type { XrayMode } from '@karmaniverous/aws-xray-tools';
 import {
   type BaseConfigMap,
   type BaseEntityClientOptions,
@@ -8,7 +9,7 @@ import {
 
 /**
  * DynamoDB EntityClient options. Extends {@link BaseEntityClientOptions | `BaseEntityClientOptions`} and {@link DynamoDBClientConfig | `DynamoDBClientConfig`} with the following additional properties:
- * - `[enableXray]` - Activates AWS Xray for internal DynamoDb client when `true` and running in a Lambda environment.
+ * - `[xray]` - AWS X-Ray capture mode for the internal DynamoDB client.
  * - `entityManager` - {@link EntityManager | `EntityManager`} instance.
  * - `tableName` - Table name.
  *
@@ -19,8 +20,18 @@ import {
  */
 export interface EntityClientOptions<C extends BaseConfigMap, CF = unknown>
   extends BaseEntityClientOptions<C, CF>, Omit<DynamoDBClientConfig, 'logger'> {
-  /** Activates AWS Xray for internal DynamoDb client when `true` and running in a Lambda environment. */
-  enableXray?: boolean | undefined;
+  /**
+   * AWS X-Ray capture mode for the internal DynamoDB client.
+   *
+   * @remarks
+   * This uses {@link XrayMode | `XrayMode`} semantics from `@karmaniverous/aws-xray-tools`:
+   * - `'off'`: never capture
+   * - `'auto'`: capture only when `AWS_XRAY_DAEMON_ADDRESS` is set
+   * - `'on'`: force capture (requires `AWS_XRAY_DAEMON_ADDRESS`)
+   *
+   * Default: `'off'`.
+   */
+  xray?: XrayMode | undefined;
 
   /** Table name. */
   tableName: string;
