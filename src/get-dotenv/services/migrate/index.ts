@@ -1,5 +1,5 @@
 import type { BaseConfigMap } from '@karmaniverous/entity-manager';
-import { AggregateError, parallel } from 'radash';
+import { parallel } from 'radash';
 
 import type { EntityClient } from '../../../EntityClient/EntityClient';
 import {
@@ -12,26 +12,37 @@ import { loadStepContext } from './load';
 import type { StepContext } from './types';
 
 function unwrapSingleAggregateError(err: unknown): unknown {
-  // Guard in case a runtime/polyfill lacks AggregateError (or it is shadowed).
-  if (typeof AggregateError === 'function' && err instanceof AggregateError) {
-    const errors = (err as { errors?: unknown[] }).errors;
-    if (Array.isArray(errors) && errors.length === 1) return errors[0];
-    return err;
-  }
+  // Prefer structural unwrapping to avoid realm/polyfill/import pitfalls.
+  //
+  // Radash may throw an AggregateError-like object whose `name` is not reliably
+  // "AggregateError" in all runtimes. We only care about the wrapper shape:
+  // a single nested error in `errors`.
+  let cur: unknown = err;
+  for (let depth = 0; depth < 8; depth++) {
+    if (!cur || typeof cur !== 'object') return cur;
 
-  // Radash/JS runtimes may produce AggregateError-like objects.
-  if (err && typeof err === 'object') {
-    const rec = err as Record<string, unknown>;
-    if (
-      rec.name === 'AggregateError' &&
-      Array.isArray(rec.errors) &&
-      rec.errors.length === 1
-    ) {
-      return rec.errors[0];
+    const rec = cur as Record<string, unknown>;
+    const errorsVal = rec.errors;
+
+    const errors = Array.isArray(errorsVal)
+      ? errorsVal
+      : errorsVal &&
+          typeof errorsVal === 'object' &&
+          typeof (errorsVal as Record<PropertyKey, unknown>)[
+            Symbol.iterator
+          ] === 'function'
+        ? Array.from(errorsVal as Iterable<unknown>)
+        : undefined;
+
+    if (errors?.length === 1) {
+      cur = errors[0];
+      continue;
     }
+
+    return cur;
   }
 
-  return err;
+  return cur;
 }
 
 /**
