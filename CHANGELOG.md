@@ -2,8 +2,26 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.11.5](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.4...0.11.5)
+
+- refactor: use radash helpers in services [`4bfa389`](https://github.com/karmaniverous/entity-client-dynamodb/commit/4bfa389bd598ec8574fb84b08ba5bb783550ecee)
+- docs: add get-dotenv interop note [`b300323`](https://github.com/karmaniverous/entity-client-dynamodb/commit/b300323d9bf668e27ebfc520022a603dee8cc129)
+- deleted interop [`b57a270`](https://github.com/karmaniverous/entity-client-dynamodb/commit/b57a270813ff9df04467465ffa5d1bec6d7d7a4a)
+- refactor: use host logger in dynamodb CLI [`eb2c285`](https://github.com/karmaniverous/entity-client-dynamodb/commit/eb2c285edc036355cff0aa87342d2a6a0d8b97b6)
+- chore(eslint): enforce type-only imports [`c61f425`](https://github.com/karmaniverous/entity-client-dynamodb/commit/c61f425fd3914c60081a740959a84a5e09ac5b20)
+- Fix migrate AggregateError unwrapping [`d89df8e`](https://github.com/karmaniverous/entity-client-dynamodb/commit/d89df8e814e35b074b52d1b320c71e23d84f25dd)
+- Enforce transform entity token constraints [`f57b141`](https://github.com/karmaniverous/entity-client-dynamodb/commit/f57b141f0e98f3fb8a4736eb42f32e7f206af74f)
+- Unwrap migrate AggregateError; update plan [`2f6becb`](https://github.com/karmaniverous/entity-client-dynamodb/commit/2f6becb2d6ff6e6ff698d947099dd5f1d1aa4ca3)
+- refactor: adopt aws-xray-tools for client [`8365544`](https://github.com/karmaniverous/entity-client-dynamodb/commit/83655443e778a56b0d18b6c48c0125d750a6d989)
+- Fix TypeDoc warning; test migrate enforcement [`30b1af4`](https://github.com/karmaniverous/entity-client-dynamodb/commit/30b1af4a58a3cafb64c703a578fd4318af5fd4f9)
+- updated dependency [`9e44ccd`](https://github.com/karmaniverous/entity-client-dynamodb/commit/9e44ccdd03f45af26ff816d5043c69cd0c0cb8d9)
+- Fix migrate AggregateError instanceof crash [`0ca4900`](https://github.com/karmaniverous/entity-client-dynamodb/commit/0ca490076f86e8238b0a2e6283679bdcfca93bd1)
+
 #### [0.11.4](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.3...0.11.4)
 
+> 1 January 2026
+
+- chore: release v0.11.4 [`5ff92fd`](https://github.com/karmaniverous/entity-client-dynamodb/commit/5ff92fd11e3c1ecafd6aaccc9a1e1967077c78e6)
 - updated dependencies [`0a7cf16`](https://github.com/karmaniverous/entity-client-dynamodb/commit/0a7cf169ab0c95dab88203a0984c712352889d7e)
 
 #### [0.11.3](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.2...0.11.3)

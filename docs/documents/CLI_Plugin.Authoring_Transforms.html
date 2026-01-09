@@ -8,7 +8,7 @@
 <li><code>undefined</code> → drop the record</li>
 <li>single item/record → migrate one</li>
 <li>array of items/records → fan-out (same entity token)</li>
-<li>Cross-entity fan-out is not supported in v1.</li>
+<li>Cross-entity fan-out is not supported and is enforced at runtime: if a handler returns a fully-keyed storage record whose hash key resolves to a different entity token, migration throws.</li>
 </ul>
 <p>Performance knobs</p>
 <ul>

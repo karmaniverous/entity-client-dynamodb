@@ -25,6 +25,7 @@
 <li><code>--force</code> is required to proceed (non-interactive confirmation guard).</li>
 <li>Limit is enforced across outputs; fan-out counts toward the limit.</li>
 <li><code>sourceTable</code> and <code>targetTable</code> can be provided via flags, config, or env (dotenv expansion supported).</li>
+<li>Cross-entity fan-out is not supported and is enforced: returning a fully-keyed storage record for a different entity token causes migration to error.</li>
 </ul>
 <p>Related</p>
 <ul>

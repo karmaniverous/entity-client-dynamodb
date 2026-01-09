@@ -164,11 +164,7 @@
 <li><code>resolveCreateAtVersion</code>, <code>resolveDelete</code>, <code>resolvePurge</code>, <code>resolveMigrate</code></li>
 </ul>
 </li>
-<li>CLI parsers (Commander numeric strictness):
-<ul>
-<li><code>parseFiniteNumber</code>, <code>parsePositiveInt</code>, <code>parseNonNegativeInt</code></li>
-</ul>
-</li>
+<li>Note: Commander numeric parsers (e.g., <code>parsePositiveInt</code>) are provided by <code>@karmaniverous/get-dotenv</code>, not exported by this package.</li>
 </ul>
 <h2 id="get-dotenv-plugin-canonical-mounting-and-config-model-aws-pattern" class="tsd-anchor-link">get-dotenv plugin: canonical mounting and config model (aws-pattern)<a href="#get-dotenv-plugin-canonical-mounting-and-config-model-aws-pattern" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Expected usage is as a child of the shipped get-dotenv <code>aws</code> plugin:</p>
 <ul>
@@ -287,6 +283,10 @@
 <li>array → fan-out (same entity token)</li>
 </ul>
 </li>
+</ul>
+<p>Cross-entity fan-out: not supported (enforced):</p>
+<ul>
+<li>Returning a fully-keyed storage record whose hash key resolves to a different entity token causes migration to throw (to prevent unsupported cross-entity fan-out).</li>
 </ul>
 <p>Streaming and batching:</p>
 <ul>
