@@ -8,6 +8,9 @@ dist/
 esm/
 node_modules/
 
+# TypeDoc output
+docs/
+
 # STAN
 .stan/imports/
 .stan/output/
