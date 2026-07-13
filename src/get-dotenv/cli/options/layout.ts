@@ -42,9 +42,18 @@ export function resolveLayoutConfig(
     throw new Error('minTableVersionWidth must be a positive integer');
   }
 
-  const tokensFromFlags = flags.tokens
-    ? (interpolateDeep(flags.tokens, envRef) as DynamodbPluginConfig['tokens'])
+  // Expand flag tokens, then strip undefined values so they cannot clobber
+  // valid keys that were already set in config. An all-undefined result is
+  // normalised to `undefined` so the downstream merge treats it as absent.
+  const expandedFlagTokens = flags.tokens
+    ? (interpolateDeep(flags.tokens, envRef) as Record<string, unknown>)
     : undefined;
+  const tokensFromFlags =
+    expandedFlagTokens !== undefined
+      ? (Object.fromEntries(
+          Object.entries(expandedFlagTokens).filter(([, v]) => v !== undefined),
+        ) as DynamodbPluginConfig['tokens'])
+      : undefined;
   const mergedTokens: Record<string, unknown> = {
     ...(config?.tokens ?? {}),
     ...(tokensFromFlags ?? {}),
