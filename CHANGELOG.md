@@ -2,7 +2,14 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.11.7](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.6...0.11.7)
+
+- refactor: replace hand-rolled validate diff with microdiff [`#8`](https://github.com/karmaniverous/entity-client-dynamodb/pull/8)
+- refactor: replace hand-rolled validate diff with microdiff (#7) [`7ae8f1a`](https://github.com/karmaniverous/entity-client-dynamodb/commit/7ae8f1a524be204ecbf2d219eb92410af8e779f9)
+
 #### [0.11.6](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.5...0.11.6)
+
+> 14 July 2026
 
 - fix: strip undefined CLI token flags before merging with config [`#5`](https://github.com/karmaniverous/entity-client-dynamodb/pull/5)
 - chore: move changelog generation to after:bump hook [`#2`](https://github.com/karmaniverous/entity-client-dynamodb/pull/2)
@@ -14,6 +21,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - fix: replace conditional expects with direct assertions [`6a6529b`](https://github.com/karmaniverous/entity-client-dynamodb/commit/6a6529b57efd205ce43ecb7e89c34cf9cff3c8a2)
 - cleanup [`03e5fa8`](https://github.com/karmaniverous/entity-client-dynamodb/commit/03e5fa8dd196184813056da101a4d7f3dce80a6a)
 - chore: add copilot review instructions [`2c17486`](https://github.com/karmaniverous/entity-client-dynamodb/commit/2c17486660690ec590bbf82e05945647afaf536c)
+- chore: release v0.11.6 [`742b8ad`](https://github.com/karmaniverous/entity-client-dynamodb/commit/742b8ad2b70f4fbae3acb3b9a8338057ea264fbf)
 - lint fix [`1637c0f`](https://github.com/karmaniverous/entity-client-dynamodb/commit/1637c0f16a90192e9f0a8b96cbb0981b705a5557)
 - chore: add npm publish safety net (.npmignore + gitignore *.local) [`b4b45c2`](https://github.com/karmaniverous/entity-client-dynamodb/commit/b4b45c2c8759aacad33ad92ef32a180d5e9a7e53)
 
