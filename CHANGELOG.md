@@ -2,9 +2,27 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.11.6](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.5...0.11.6)
+
+- fix: strip undefined CLI token flags before merging with config [`#5`](https://github.com/karmaniverous/entity-client-dynamodb/pull/5)
+- chore: move changelog generation to after:bump hook [`#2`](https://github.com/karmaniverous/entity-client-dynamodb/pull/2)
+- chore: add npm-pack-check CI workflow [`#1`](https://github.com/karmaniverous/entity-client-dynamodb/pull/1)
+- updated dependencies & gitignored docs [`aff2a0c`](https://github.com/karmaniverous/entity-client-dynamodb/commit/aff2a0c2268e9a9e30f44a78be522fce5015aadb)
+- lint:fix [`f5c3132`](https://github.com/karmaniverous/entity-client-dynamodb/commit/f5c31326fdf9dc22d7eb22cdb958fe33d8f8bc7a)
+- Removed STAN support [`89be8c0`](https://github.com/karmaniverous/entity-client-dynamodb/commit/89be8c0cf11fea0f6139dc57b48808ff28bee5f9)
+- fix: correct misleading comment per Copilot review [`c8e299d`](https://github.com/karmaniverous/entity-client-dynamodb/commit/c8e299dec85104fb0d2aebf8bfe9edf10a266e77)
+- fix: replace conditional expects with direct assertions [`6a6529b`](https://github.com/karmaniverous/entity-client-dynamodb/commit/6a6529b57efd205ce43ecb7e89c34cf9cff3c8a2)
+- cleanup [`03e5fa8`](https://github.com/karmaniverous/entity-client-dynamodb/commit/03e5fa8dd196184813056da101a4d7f3dce80a6a)
+- chore: add copilot review instructions [`2c17486`](https://github.com/karmaniverous/entity-client-dynamodb/commit/2c17486660690ec590bbf82e05945647afaf536c)
+- lint fix [`1637c0f`](https://github.com/karmaniverous/entity-client-dynamodb/commit/1637c0f16a90192e9f0a8b96cbb0981b705a5557)
+- chore: add npm publish safety net (.npmignore + gitignore *.local) [`b4b45c2`](https://github.com/karmaniverous/entity-client-dynamodb/commit/b4b45c2c8759aacad33ad92ef32a180d5e9a7e53)
+
 #### [0.11.5](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.4...0.11.5)
 
+> 9 January 2026
+
 - refactor: use radash helpers in services [`4bfa389`](https://github.com/karmaniverous/entity-client-dynamodb/commit/4bfa389bd598ec8574fb84b08ba5bb783550ecee)
+- chore: release v0.11.5 [`89ae58f`](https://github.com/karmaniverous/entity-client-dynamodb/commit/89ae58f1f3f6dd132e231fa8b791bac7bd7823b9)
 - docs: add get-dotenv interop note [`b300323`](https://github.com/karmaniverous/entity-client-dynamodb/commit/b300323d9bf668e27ebfc520022a603dee8cc129)
 - deleted interop [`b57a270`](https://github.com/karmaniverous/entity-client-dynamodb/commit/b57a270813ff9df04467465ffa5d1bec6d7d7a4a)
 - refactor: use host logger in dynamodb CLI [`eb2c285`](https://github.com/karmaniverous/entity-client-dynamodb/commit/eb2c285edc036355cff0aa87342d2a6a0d8b97b6)
