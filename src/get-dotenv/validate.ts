@@ -70,13 +70,11 @@ function pickGeneratedFromDoc(doc: YAML.Document): GeneratedSections {
     AttributeDefinitions: attributeDefinitions,
     KeySchema: keySchema,
     GlobalSecondaryIndexes: globalSecondaryIndexes,
-  } as GeneratedSections;
+  };
 }
 
 type GeneratedKey =
-  | 'AttributeDefinitions'
-  | 'KeySchema'
-  | 'GlobalSecondaryIndexes';
+  'AttributeDefinitions' | 'KeySchema' | 'GlobalSecondaryIndexes';
 
 type CanonicalGenerated = Record<GeneratedKey, unknown>;
 
@@ -166,12 +164,10 @@ function canonicalizeGenerated(
 ): CanonicalGenerated {
   return {
     AttributeDefinitions: canonicalizeAttributeDefinitions(
-      sections.AttributeDefinitions as unknown,
+      sections.AttributeDefinitions,
     ),
-    KeySchema: canonicalizeKeySchema(sections.KeySchema as unknown),
-    GlobalSecondaryIndexes: canonicalizeGsi(
-      sections.GlobalSecondaryIndexes as unknown,
-    ),
+    KeySchema: canonicalizeKeySchema(sections.KeySchema),
+    GlobalSecondaryIndexes: canonicalizeGsi(sections.GlobalSecondaryIndexes),
   };
 }
 

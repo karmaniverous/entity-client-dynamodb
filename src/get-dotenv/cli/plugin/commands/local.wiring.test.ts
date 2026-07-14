@@ -12,7 +12,7 @@ describe('dynamodb plugin: local command registration', () => {
   it('registers dynamodb local start|status|stop commands', async () => {
     const cli = await makeInstalledCli((c) => c.use(dynamodbPlugin()));
 
-    const dynamodb = findSubcommand(cli as unknown as Command, 'dynamodb');
+    const dynamodb = findSubcommand(cli, 'dynamodb');
     const local = findSubcommand(dynamodb, 'local');
     const start = findSubcommand(local, 'start');
     const status = findSubcommand(local, 'status');
@@ -26,7 +26,7 @@ describe('dynamodb plugin: local command registration', () => {
   it('exposes --port on local start and local status', async () => {
     const cli = await makeInstalledCli((c) => c.use(dynamodbPlugin()));
 
-    const dynamodb = findSubcommand(cli as unknown as Command, 'dynamodb');
+    const dynamodb = findSubcommand(cli, 'dynamodb');
     const local = findSubcommand(dynamodb, 'local');
     const start = findSubcommand(local, 'start');
     const status = findSubcommand(local, 'status');

@@ -35,7 +35,7 @@ export async function deleteTable<C extends BaseConfigMap>(
   const tableInput = options?.tableNameOverride
     ? { TableName: options.tableNameOverride }
     : {};
-  return client.deleteTable(tableInput as never, options?.waiter);
+  return client.deleteTable(tableInput, options?.waiter);
 }
 
 /**

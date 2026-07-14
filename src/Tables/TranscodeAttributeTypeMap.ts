@@ -13,9 +13,9 @@ import type {
  * @category Tables
  */
 export type TranscodeAttributeTypeMap<T extends TranscodeRegistry> = {
-  [P in keyof Exactify<T> as T[P] extends string
-    ? never
-    : P]?: ScalarAttributeType;
+  [
+    P in keyof Exactify<T> as T[P] extends string ? never : P
+  ]?: ScalarAttributeType;
 };
 
 /**

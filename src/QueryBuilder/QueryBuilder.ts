@@ -251,8 +251,7 @@ export class QueryBuilder<
     const entitiesMap = this.entityClient.entityManager.config
       .entities as Record<string, { uniqueProperty?: string }>;
     const entityDef = entitiesMap[this.entityToken] as
-      | { uniqueProperty?: string }
-      | undefined;
+      { uniqueProperty?: string } | undefined;
     const uniqueProperty = entityDef?.uniqueProperty;
     const sortKeys = (options.sortOrder ?? []).map((s) => s.property as string);
     for (const indexToken of Object.keys(this.indexParamsMap) as ITS[]) {
@@ -268,9 +267,7 @@ export class QueryBuilder<
         );
       }
     }
-    return super.query(options) as unknown as Promise<
-      QueryResult<C, ET, ITS, K>
-    >;
+    return super.query(options);
   }
 
   /**

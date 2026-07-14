@@ -150,5 +150,5 @@ export async function createTableAtVersion<C extends BaseConfigMap>(
   }
 
   const waiter = { maxWaitTime: 60, ...(options?.waiter ?? {}) };
-  return client.createTable(props as never, waiter);
+  return client.createTable(props, waiter);
 }

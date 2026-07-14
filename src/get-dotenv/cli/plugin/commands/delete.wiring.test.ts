@@ -12,7 +12,7 @@ describe('dynamodb plugin: delete command registration', () => {
   it('registers dynamodb delete and key options', async () => {
     const cli = await makeInstalledCli((c) => c.use(dynamodbPlugin()));
 
-    const dynamodb = findSubcommand(cli as unknown as Command, 'dynamodb');
+    const dynamodb = findSubcommand(cli, 'dynamodb');
     const del = findSubcommand(dynamodb, 'delete');
 
     expect(hasLongOption(del, '--table-name')).toBe(true);

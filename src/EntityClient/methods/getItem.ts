@@ -23,8 +23,7 @@ export async function getItem<
   client: EntityClient<C>,
   keyOrOptions: EntityKey<C> | MakeOptional<GetCommandInput, 'TableName'>,
   attributesOrOptions?:
-    | readonly string[]
-    | MakeOptional<Omit<GetCommandInput, 'Key'>, 'TableName'>,
+    readonly string[] | MakeOptional<Omit<GetCommandInput, 'Key'>, 'TableName'>,
   options?: MakeOptional<
     Omit<
       GetCommandInput,

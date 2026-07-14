@@ -110,11 +110,7 @@ export const addRangeKeyCondition = <
       throw new Error('range key condition already exists');
 
     // Compose condition string.
-    const conditionString = composeCondition(
-      builder as unknown as MinimalBuilder,
-      indexToken as unknown as ITS,
-      condition,
-    );
+    const conditionString = composeCondition(builder, indexToken, condition);
 
     builder.entityClient.logger.debug(
       conditionString === undefined

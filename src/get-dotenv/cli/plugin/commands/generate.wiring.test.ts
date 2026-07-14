@@ -12,7 +12,7 @@ describe('dynamodb plugin: generate command registration', () => {
   it('registers dynamodb generate and key options', async () => {
     const cli = await makeInstalledCli((c) => c.use(dynamodbPlugin()));
 
-    const dynamodb = findSubcommand(cli as unknown as Command, 'dynamodb');
+    const dynamodb = findSubcommand(cli, 'dynamodb');
     const gen = findSubcommand(dynamodb, 'generate');
 
     expect(hasLongOption(gen, '--version')).toBe(true);

@@ -89,7 +89,7 @@ export function resolveGenerateAtVersion(
   const options: GenerateAtVersionOptions = {
     ...(clean ? { clean: true } : {}),
     ...(Object.keys(tableProperties).length
-      ? { tableProperties: tableProperties as never }
+      ? { tableProperties: tableProperties }
       : {}),
   };
   return { version, cfg, options };

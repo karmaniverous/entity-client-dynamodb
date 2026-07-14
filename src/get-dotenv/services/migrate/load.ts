@@ -23,7 +23,7 @@ export async function loadTransformMapForVersion(
     'default' in (mod as Record<string, unknown>)
       ? (mod as { default: unknown }).default
       : mod;
-  if (exp && typeof exp === 'object') return exp as TransformMapLike;
+  if (exp && typeof exp === 'object') return exp;
   return undefined;
 }
 
@@ -38,8 +38,8 @@ export async function loadStepContext(
   const transformMap = (await loadTransformMapForVersion(version, cfg)) ?? {};
   return {
     version,
-    prev: prev as unknown as EntityManager<BaseConfigMap>,
-    next: next as unknown as EntityManager<BaseConfigMap>,
+    prev: prev,
+    next: next,
     transformMap,
   };
 }

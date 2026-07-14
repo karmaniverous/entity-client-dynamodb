@@ -144,11 +144,7 @@ export const addFilterCondition = <
     };
 
     // Compose condition string.
-    const conditionString = composeCondition(
-      builder as never,
-      indexToken,
-      condition,
-    );
+    const conditionString = composeCondition(builder, indexToken, condition);
 
     builder.entityClient.logger.debug(
       conditionString === undefined

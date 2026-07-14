@@ -12,7 +12,7 @@ describe('dynamodb plugin: purge command registration', () => {
   it('registers dynamodb purge and key options', async () => {
     const cli = await makeInstalledCli((c) => c.use(dynamodbPlugin()));
 
-    const dynamodb = findSubcommand(cli as unknown as Command, 'dynamodb');
+    const dynamodb = findSubcommand(cli, 'dynamodb');
     const purge = findSubcommand(dynamodb, 'purge');
 
     expect(hasLongOption(purge, '--table-name')).toBe(true);

@@ -12,7 +12,7 @@ describe('dynamodb plugin: validate command registration', () => {
   it('registers dynamodb validate and key options', async () => {
     const cli = await makeInstalledCli((c) => c.use(dynamodbPlugin()));
 
-    const dynamodb = findSubcommand(cli as unknown as Command, 'dynamodb');
+    const dynamodb = findSubcommand(cli, 'dynamodb');
     const validate = findSubcommand(dynamodb, 'validate');
 
     expect(hasLongOption(validate, '--version')).toBe(true);

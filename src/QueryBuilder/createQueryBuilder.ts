@@ -65,7 +65,5 @@ export function createQueryBuilder<
   options: CreateQueryBuilderOptions<C, ET, CF>,
 ): QueryBuilder<C, ET, IndexTokensOf<CF>, CF> {
   // Narrow ITS from CF captured on the client; no cf argument required.
-  return new QueryBuilder<C, ET, IndexTokensOf<CF>, CF, unknown>(
-    options as unknown as CreateQueryBuilderOptions<C, ET>,
-  );
+  return new QueryBuilder<C, ET, IndexTokensOf<CF>, CF, unknown>(options);
 }

@@ -139,8 +139,7 @@ export async function migrateData<C extends BaseConfigMap>(
     });
     const pageItems = (scanOut.Items ?? []) as Record<string, unknown>[];
     exclusiveStartKey = scanOut.LastEvaluatedKey as
-      | Record<string, unknown>
-      | undefined;
+      Record<string, unknown> | undefined;
     pages++;
     items += pageItems.length;
 
@@ -169,10 +168,7 @@ export async function migrateData<C extends BaseConfigMap>(
     }
 
     if (flat.length > 0) {
-      await target.putItems(
-        flat as never,
-        { tableName: targetTableName } as never,
-      );
+      await target.putItems(flat as never, { tableName: targetTableName });
       outputs += flat.length;
       windowOutputs += flat.length;
     }

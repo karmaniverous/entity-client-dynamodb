@@ -74,7 +74,7 @@ export function resolveDelete(
   const options: DeleteResolvedOptions = {
     ...(tableNameOverride ? { tableNameOverride } : {}),
     ...(maxSeconds !== undefined
-      ? { waiter: { maxWaitTime: maxSeconds } as WaiterConfig }
+      ? { waiter: { maxWaitTime: maxSeconds } }
       : {}),
   };
   return { options };

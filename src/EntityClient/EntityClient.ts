@@ -356,8 +356,7 @@ export class EntityClient<
     entityToken: ET,
     keyOrOptions: EntityKey<C> | MakeOptional<GetCommandInput, 'TableName'>,
     attributesOrOptions?:
-      | A
-      | MakeOptional<Omit<GetCommandInput, 'Key'>, 'TableName'>,
+      A | MakeOptional<Omit<GetCommandInput, 'Key'>, 'TableName'>,
     options?: MakeOptional<
       Omit<
         GetCommandInput,
@@ -374,9 +373,9 @@ export class EntityClient<
 
     const output = await getItemFn<C, ET>(
       this,
-      keyOrOptions as never,
-      attributesOrOptions as never,
-      options as never,
+      keyOrOptions,
+      attributesOrOptions,
+      options,
     );
 
     return output as unknown as GetItemOutput<C, ET, A>;

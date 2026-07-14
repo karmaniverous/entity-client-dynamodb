@@ -29,8 +29,7 @@ export async function purgeItems<C extends BaseConfigMap>(
       });
       const items = (scanOut.Items ?? []) as Record<string, unknown>[];
       lastEvaluatedKey = scanOut.LastEvaluatedKey as
-        | Record<string, unknown>
-        | undefined;
+        Record<string, unknown> | undefined;
 
       if (items.length) {
         const itemKeys = items.map((item) =>
