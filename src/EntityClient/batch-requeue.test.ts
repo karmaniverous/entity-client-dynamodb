@@ -72,15 +72,13 @@ describe('EntityClient - batch requeue on UnprocessedItems', () => {
       expect(second.length).to.equal(Math.ceil(first.length / 2));
 
       // Sanity: UnprocessedItems are cleared by the second call.
-      outputs.forEach((o, i) => {
-        if (i === 0) {
-          expect(
-            o.UnprocessedItems?.[tableName]?.length ?? 0,
-          ).to.be.greaterThan(0);
-        } else {
-          expect(o.UnprocessedItems?.[tableName]).to.be.undefined;
-        }
-      });
+      expect(
+        outputs[0].UnprocessedItems?.[tableName]?.length ?? 0,
+      ).to.be.greaterThan(0);
+
+      for (const o of outputs.slice(1)) {
+        expect(o.UnprocessedItems?.[tableName]).to.be.undefined;
+      }
     } finally {
       // Restore original
       docSpy.batchWrite = original;
