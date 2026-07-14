@@ -1,4 +1,3 @@
-import type { Command } from '@commander-js/extra-typings';
 import { describe, expect, it } from 'vitest';
 
 import { dynamodbPlugin } from '../index';

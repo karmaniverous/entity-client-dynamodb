@@ -1,10 +1,5 @@
 import { pathToFileURL } from 'node:url';
 
-import type {
-  BaseConfigMap,
-  EntityManager,
-} from '@karmaniverous/entity-manager';
-
 import { resolveAndLoadEntityManager } from '../../emLoader';
 import { resolveTransformFile, type VersionedLayoutConfig } from '../../layout';
 import type { StepContext, TransformMapLike } from './types';
