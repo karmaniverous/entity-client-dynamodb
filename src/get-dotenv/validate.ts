@@ -6,8 +6,10 @@
  *   • AttributeDefinitions
  *   • KeySchema
  *   • GlobalSecondaryIndexes
- * - Return a structured diff (key + expected + actual) for CLI presentation (order-insensitive).
+ * - Return path-granular diffs via microdiff for CLI presentation (order-insensitive).
  * - Keep YAML parsing comment-safe (we do not modify anything here).
+ *
+ * @module
  */
 
 import { promises as fs } from 'node:fs';
@@ -17,6 +19,7 @@ import type {
   BaseConfigMap,
   EntityManager,
 } from '@karmaniverous/entity-manager';
+import diff from 'microdiff';
 import { unique } from 'radash';
 import YAML from 'yaml';
 
@@ -171,43 +174,27 @@ function canonicalizeGenerated(
   };
 }
 
-function stableStringify(value: unknown): string {
-  const seen = new WeakSet();
-
-  const normalize = (v: unknown, inArray: boolean): unknown => {
-    if (v === undefined) return inArray ? null : undefined;
-    if (v === null || typeof v !== 'object') return v;
-
-    if (seen.has(v)) return '[Circular]';
-    seen.add(v);
-
-    if (Array.isArray(v)) return v.map((x) => normalize(x, true));
-
-    const obj = v as Record<string, unknown>;
-    const out: Record<string, unknown> = {};
-    for (const k of Object.keys(obj).sort()) {
-      const nv = normalize(obj[k], false);
-      if (nv !== undefined) out[k] = nv;
-    }
-    return out;
-  };
-
-  const normalized = normalize(value, true);
-  return JSON.stringify(normalized ?? null);
-}
-
 /**
- * Structured diff for a single generated/managed key.
+ * Structured diff entry produced by microdiff for a single changed path.
+ *
+ * `type` distinguishes creation, removal, and value changes.
+ * `path` gives JSON-pointer-style segments into the canonical structure.
+ * `key` is the top-level section name (first `path` segment) for quick display.
+ * `value` is the expected (new) value; `oldValue` is the actual (existing) value.
  *
  * @category get-dotenv
  */
 export interface GeneratedDiff {
-  /** Key name (e.g. `KeySchema`, `BillingMode`). */
+  /** Diff type: CREATE (missing from actual), REMOVE (extra in actual), or CHANGE. */
+  type: 'CREATE' | 'REMOVE' | 'CHANGE';
+  /** JSON path segments to the differing value (e.g. `['AttributeDefinitions', 0, 'AttributeType']`). */
+  path: (string | number)[];
+  /** Top-level section name — first segment of `path` (e.g. `'AttributeDefinitions'`). */
   key: string;
-  /** Expected canonical value. */
-  expected: unknown;
-  /** Actual canonical value (from YAML). */
-  actual: unknown;
+  /** Expected value — present on CREATE and CHANGE. */
+  value?: unknown;
+  /** Actual value — present on REMOVE and CHANGE. */
+  oldValue?: unknown;
 }
 
 /**
@@ -218,8 +205,21 @@ export interface GeneratedDiff {
 export interface ValidateResult {
   /** True when no diffs were detected. */
   equal: boolean;
-  /** List of diffs (empty when equal is true). */
+  /** List of path-granular diffs (empty when equal is true). */
   diffs: GeneratedDiff[];
+}
+
+function toDiffs(
+  actualObj: Record<string, unknown>,
+  expectedObj: Record<string, unknown>,
+): GeneratedDiff[] {
+  return diff(actualObj, expectedObj, { cyclesFix: false }).map((d) => ({
+    type: d.type,
+    path: d.path,
+    key: String(d.path[0] ?? ''),
+    value: 'value' in d ? (d.value as unknown) : undefined,
+    oldValue: 'oldValue' in d ? (d.oldValue as unknown) : undefined,
+  }));
 }
 
 /**
@@ -240,17 +240,7 @@ export async function validateGeneratedSections<C extends BaseConfigMap>(
   const expected = canonicalizeGenerated(computeGeneratedSections(em));
   const actual = canonicalizeGenerated(pickGeneratedFromDoc(doc));
 
-  const diffs: GeneratedDiff[] = [];
-
-  (
-    ['AttributeDefinitions', 'KeySchema', 'GlobalSecondaryIndexes'] as const
-  ).forEach((k) => {
-    const exp = expected[k];
-    const act = actual[k];
-    if (stableStringify(exp) !== stableStringify(act)) {
-      diffs.push({ key: k, expected: exp, actual: act });
-    }
-  });
+  const diffs: GeneratedDiff[] = toDiffs(actual, expected);
 
   if (managed) {
     const propsNode = doc.get('Properties');
@@ -267,42 +257,25 @@ export async function validateGeneratedSections<C extends BaseConfigMap>(
 
     const actualManaged = pickManagedActualFromProperties(props);
     const expectedManaged = managed.managed;
+
+    const managedActual: Record<string, unknown> = {};
+    const managedExpected: Record<string, unknown> = {};
+
     if (managed.manages.billingMode) {
-      if (
-        stableStringify(expectedManaged.BillingMode) !==
-        stableStringify(actualManaged.BillingMode)
-      ) {
-        diffs.push({
-          key: 'BillingMode',
-          expected: expectedManaged.BillingMode,
-          actual: actualManaged.BillingMode,
-        });
-      }
+      managedActual.BillingMode = actualManaged.BillingMode;
+      managedExpected.BillingMode = expectedManaged.BillingMode;
     }
     if (managed.manages.provisionedThroughput) {
-      if (
-        stableStringify(expectedManaged.ProvisionedThroughput) !==
-        stableStringify(actualManaged.ProvisionedThroughput)
-      ) {
-        diffs.push({
-          key: 'ProvisionedThroughput',
-          expected: expectedManaged.ProvisionedThroughput,
-          actual: actualManaged.ProvisionedThroughput,
-        });
-      }
+      managedActual.ProvisionedThroughput = actualManaged.ProvisionedThroughput;
+      managedExpected.ProvisionedThroughput =
+        expectedManaged.ProvisionedThroughput;
     }
     if (managed.manages.tableName) {
-      if (
-        stableStringify(expectedManaged.TableName) !==
-        stableStringify(actualManaged.TableName)
-      ) {
-        diffs.push({
-          key: 'TableName',
-          expected: expectedManaged.TableName,
-          actual: actualManaged.TableName,
-        });
-      }
+      managedActual.TableName = actualManaged.TableName;
+      managedExpected.TableName = expectedManaged.TableName;
     }
+
+    diffs.push(...toDiffs(managedActual, managedExpected));
   }
 
   return { equal: diffs.length === 0, diffs };
