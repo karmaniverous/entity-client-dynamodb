@@ -69,4 +69,67 @@ describe('get-dotenv validate generated sections', function () {
     expect(result.equal).to.equal(false);
     expect(result.diffs.length).to.be.greaterThan(0);
   });
+
+  it('should produce path-level granularity for a single changed field', async function () {
+    const dir = await fs.mkdtemp(join(tmpdir(), 'val-'));
+    const out = resolve(dir, 'table.yml');
+
+    const em = makeFakeEm();
+    const generated = computeGeneratedSections(em);
+    await composeNewTableYaml(out, undefined, generated);
+
+    // Change one AttributeType to trigger a targeted CHANGE diff
+    const text = await fs.readFile(out, 'utf8');
+    const doc = YAML.parseDocument(text);
+    const props = doc.get('Properties') as YAML.YAMLMap;
+    const attrDefs = props.get('AttributeDefinitions') as YAML.YAMLSeq;
+
+    // Find 'created' (AttributeType: N) and change to 'S' so EM expects N but YAML has S
+    for (const item of attrDefs.items) {
+      if (YAML.isMap(item) && item.get('AttributeType') === 'N') {
+        item.set('AttributeType', 'S');
+        break;
+      }
+    }
+    await fs.writeFile(out, doc.toString(), 'utf8');
+
+    const result = await validateGeneratedSections(out, em);
+    expect(result.equal).to.equal(false);
+
+    // Diff must include at least one CHANGE with a multi-segment path
+    const changeDiff = result.diffs.find((d) => d.type === 'CHANGE');
+    expect(changeDiff).toBeDefined();
+    expect(changeDiff?.path.length).toBeGreaterThan(1);
+    expect(changeDiff?.path[0]).toBe('AttributeDefinitions');
+  });
+
+  it('should include both value and oldValue on CHANGE diffs', async function () {
+    const dir = await fs.mkdtemp(join(tmpdir(), 'val-'));
+    const out = resolve(dir, 'table.yml');
+
+    const em = makeFakeEm();
+    const generated = computeGeneratedSections(em);
+    await composeNewTableYaml(out, undefined, generated);
+
+    // Same edit: change 'created' AttributeType from N to S
+    const text = await fs.readFile(out, 'utf8');
+    const doc = YAML.parseDocument(text);
+    const props = doc.get('Properties') as YAML.YAMLMap;
+    const attrDefs = props.get('AttributeDefinitions') as YAML.YAMLSeq;
+
+    for (const item of attrDefs.items) {
+      if (YAML.isMap(item) && item.get('AttributeType') === 'N') {
+        item.set('AttributeType', 'S');
+        break;
+      }
+    }
+    await fs.writeFile(out, doc.toString(), 'utf8');
+
+    const result = await validateGeneratedSections(out, em);
+    const changeDiff = result.diffs.find((d) => d.type === 'CHANGE');
+    expect(changeDiff).toBeDefined();
+    expect(changeDiff?.value).toBeDefined();
+    expect(changeDiff?.oldValue).toBeDefined();
+    expect(changeDiff?.value).not.toEqual(changeDiff?.oldValue);
+  });
 });
