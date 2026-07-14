@@ -10,12 +10,3 @@ node_modules/
 
 # TypeDoc output
 docs/
-
-# STAN
-.stan/imports/
-.stan/output/
-.stan/diff/
-.stan/dist/
-.stan/patch/
-.stan/system/facet.state.json
-.stan/system/.docs.meta.json
