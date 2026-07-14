@@ -5,6 +5,7 @@ import {
   resolveCreateAtVersion,
   resolveDelete,
   resolveGenerateAtVersion,
+  resolveLayoutConfig,
   resolveMigrate,
   resolvePurge,
   resolveValidateAtVersion,
@@ -114,6 +115,51 @@ describe('dynamodb CLI option resolvers', () => {
     const cfg: DynamodbPluginConfig = { purge: { tableName: 'CfgTable' } };
     const out = resolvePurge({ tableName: '$NAME' }, cfg, { NAME: 'T' });
     expect(out.options.tableNameOverride).toEqual('T');
+  });
+
+  it('resolveLayoutConfig: undefined flag tokens must not clobber config tokens', () => {
+    // Callers always construct a tokens object with all three keys even when
+    // the CLI flag was not passed. The bug caused undefined flag values to
+    // overwrite valid config values after the spread merge.
+    const cfg: DynamodbPluginConfig = {
+      tokens: {
+        table: 'table',
+        entityManager: 'entityManager',
+        transform: 'transform',
+      },
+    };
+    const flagsWithAllUndefined = {
+      tokens: {
+        table: undefined,
+        entityManager: undefined,
+        transform: undefined,
+      },
+    };
+    const result = resolveLayoutConfig(flagsWithAllUndefined, cfg, {});
+    expect(result.tokens?.table).toEqual('table');
+    expect(result.tokens?.entityManager).toEqual('entityManager');
+    expect(result.tokens?.transform).toEqual('transform');
+  });
+
+  it('resolveLayoutConfig: defined flag tokens should override config tokens', () => {
+    const cfg: DynamodbPluginConfig = {
+      tokens: {
+        table: 'cfgTable',
+        entityManager: 'cfgEm',
+        transform: 'cfgTransform',
+      },
+    };
+    const flagsWithOverride = {
+      tokens: {
+        table: 'flagTable',
+        entityManager: undefined,
+        transform: undefined,
+      },
+    };
+    const result = resolveLayoutConfig(flagsWithOverride, cfg, {});
+    expect(result.tokens?.table).toEqual('flagTable');
+    expect(result.tokens?.entityManager).toEqual('cfgEm');
+    expect(result.tokens?.transform).toEqual('cfgTransform');
   });
 
   it('resolveMigrate should merge/expand and coerce numerics', () => {
