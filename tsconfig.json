@@ -9,9 +9,8 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
-    "baseUrl": ".",
     "paths": {
-      "@karmaniverous/entity-client-dynamodb": ["dist/index.d.ts"]
+      "@karmaniverous/entity-client-dynamodb": ["./dist/index.d.ts"]
     },
     "resolveJsonModule": true,
     "strict": true,
