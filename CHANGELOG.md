@@ -2,9 +2,17 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.11.9](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.8...0.11.9)
+
+- fix(migrate): handle already-latest version gracefully [`#10`](https://github.com/karmaniverous/entity-client-dynamodb/pull/10)
+- fix: fixed unit test [`c478b1a`](https://github.com/karmaniverous/entity-client-dynamodb/commit/c478b1a786ed309dbad6fe90253d81f33a30d761)
+
 #### [0.11.8](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.7...0.11.8)
 
+> 16 July 2026
+
 - chore: update dependencies [`#9`](https://github.com/karmaniverous/entity-client-dynamodb/pull/9)
+- chore: release v0.11.8 [`daee410`](https://github.com/karmaniverous/entity-client-dynamodb/commit/daee4102e2ac0a2260736ead9e7443e9ffdbf0f5)
 
 #### [0.11.7](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.6...0.11.7)
 
