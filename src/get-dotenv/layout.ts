@@ -293,14 +293,22 @@ export async function enumerateStepVersions(
   fromVersion: string,
   toVersion: string,
   cfg?: VersionedLayoutConfig,
-): Promise<string[]> {
+): Promise<{ steps: string[]; isLatest: boolean }> {
   const from = parseVersionValue(fromVersion);
   const to = parseVersionValue(toVersion);
+
+  if (from === to) {
+    return { steps: [], isLatest: true };
+  }
+
   if (!(to > from))
     throw new Error(`toVersion must be greater than fromVersion`);
 
   const dirs = await listVersionDirEntries(cfg);
-  return dirs
-    .filter((d) => d.value > from && d.value <= to)
-    .map((d) => d.token);
+  return {
+    steps: dirs
+      .filter((d) => d.value > from && d.value <= to)
+      .map((d) => d.token),
+    isLatest: false,
+  };
 }

@@ -1,4 +1,5 @@
 import type { BaseConfigMap } from '@karmaniverous/entity-manager';
+import { type Logger } from '@karmaniverous/get-dotenv';
 import { parallel } from 'radash';
 
 import type { EntityClient } from '../../../EntityClient/EntityClient';
@@ -84,6 +85,7 @@ export async function migrateData<C extends BaseConfigMap>(
       ratePerSec: number;
     }) => void;
   },
+  logger?: Logger,
 ): Promise<MigrateDataResult> {
   const {
     fromVersion,
@@ -103,7 +105,19 @@ export async function migrateData<C extends BaseConfigMap>(
   await resolveVersionDir(toVersion, cfg, { mustExist: true });
 
   // Build step list
-  const steps = await enumerateStepVersions(fromVersion, toVersion, cfg);
+  const { steps, isLatest } = await enumerateStepVersions(
+    fromVersion,
+    toVersion,
+    cfg,
+  );
+
+  if (isLatest) {
+    logger?.info(
+      `Already at latest version ${toVersion}, no migration needed.`,
+    );
+    return { pages: 0, items: 0, outputs: 0 };
+  }
+
   const stepContexts: StepContext[] = [];
   let prevHint = fromVersion;
   for (const ver of steps) {

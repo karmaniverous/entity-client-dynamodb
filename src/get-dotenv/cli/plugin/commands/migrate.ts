@@ -217,32 +217,37 @@ export function registerMigrate(
         m.targetTableName ?? env.TARGET_TABLE ?? env.TABLE_NAME ?? 'Target';
       const source = buildEntityClient(emFrom, sourceTable, envRef);
       const target = buildEntityClient(emTo, targetTable, envRef);
-      const out = await migrateData(source, target, {
-        fromVersion: m.fromVersion,
-        toVersion: m.toVersion,
-        cfg,
-        ...(m.pageSize !== undefined ? { pageSize: m.pageSize } : {}),
-        ...(m.limit !== undefined ? { limit: m.limit } : {}),
-        ...(m.transformConcurrency !== undefined
-          ? { transformConcurrency: m.transformConcurrency }
-          : {}),
-        ...(m.progressIntervalMs !== undefined
-          ? { progressIntervalMs: m.progressIntervalMs }
-          : {}),
-        onProgress: (p) => {
-          logger.info(
-            'migrate progress: pages=' +
-              String(p.pages) +
-              ' items=' +
-              String(p.items) +
-              ' outputs=' +
-              String(p.outputs) +
-              ' rate=' +
-              p.ratePerSec.toFixed(2) +
-              '/s',
-          );
+      const out = await migrateData(
+        source,
+        target,
+        {
+          fromVersion: m.fromVersion,
+          toVersion: m.toVersion,
+          cfg,
+          ...(m.pageSize !== undefined ? { pageSize: m.pageSize } : {}),
+          ...(m.limit !== undefined ? { limit: m.limit } : {}),
+          ...(m.transformConcurrency !== undefined
+            ? { transformConcurrency: m.transformConcurrency }
+            : {}),
+          ...(m.progressIntervalMs !== undefined
+            ? { progressIntervalMs: m.progressIntervalMs }
+            : {}),
+          onProgress: (p) => {
+            logger.info(
+              'migrate progress: pages=' +
+                String(p.pages) +
+                ' items=' +
+                String(p.items) +
+                ' outputs=' +
+                String(p.outputs) +
+                ' rate=' +
+                p.ratePerSec.toFixed(2) +
+                '/s',
+            );
+          },
         },
-      });
+        logger,
+      );
       logger.info(
         'migrate done: pages=' +
           String(out.pages) +
