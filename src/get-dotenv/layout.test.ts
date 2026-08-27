@@ -46,7 +46,7 @@ describe('get-dotenv layout helpers', function () {
     await fs.mkdir(join(root, '010'));
     const cfg: VersionedLayoutConfig = { tablesPath: root };
 
-    const steps = await enumerateStepVersions('001', '010', cfg);
+    const { steps } = await enumerateStepVersions('001', '010', cfg);
     expect(steps).to.deep.equal(['002', '010']);
 
     await expect(enumerateStepVersions('010', '001', cfg)).rejects.toThrow(

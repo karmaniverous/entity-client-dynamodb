@@ -93,7 +93,7 @@ describe('get-dotenv migrateData service', function () {
     await writeVersion(root, '000');
     await writeVersion(root, '001');
     // Ensure enumerateStepVersions sees both
-    const steps = await enumerateStepVersions('000', '001', cfg);
+    const { steps } = await enumerateStepVersions('000', '001', cfg);
     expect(steps).to.deep.equal(['001']);
 
     // Build source items (storage records with hashKey2 carrying entity prefix).
@@ -148,11 +148,11 @@ describe('get-dotenv migrateData service', function () {
     const cfg: VersionedLayoutConfig = { tablesPath: root };
     await writeVersion(root, '000');
     // return array of items (domain items); service will addKeys against next
-    const transform = `({ 
+    const transform = `({
       user: async (record, { prev }) => {
         const item = prev.removeKeys('user', record);
         return [ { ...item, x: 1 }, { ...item, x: 2 } ];
-      } 
+      }
     })`;
     await writeVersion(root, '001', transform);
 
