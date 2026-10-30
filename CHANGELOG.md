@@ -2,9 +2,16 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.12.0-alpha.0](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.9...0.12.0-alpha.0)
+
+- feat: support exclude keys on purgeItems [`b353fcb`](https://github.com/karmaniverous/entity-client-dynamodb/commit/b353fcbd39e5cc96a6d84a2384d56944321885fd)
+
 #### [0.11.9](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.8...0.11.9)
 
+> 27 August 2026
+
 - fix(migrate): handle already-latest version gracefully [`#10`](https://github.com/karmaniverous/entity-client-dynamodb/pull/10)
+- chore: release v0.11.9 [`dd250bf`](https://github.com/karmaniverous/entity-client-dynamodb/commit/dd250bfb46168b130aef7ba71dec2d9d6ab0ba19)
 - fix: fixed unit test [`c478b1a`](https://github.com/karmaniverous/entity-client-dynamodb/commit/c478b1a786ed309dbad6fe90253d81f33a30d761)
 
 #### [0.11.8](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.7...0.11.8)
