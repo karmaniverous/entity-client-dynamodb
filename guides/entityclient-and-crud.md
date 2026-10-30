@@ -56,6 +56,20 @@ Purge (scan + batched deletes)
 
 ```ts
 const purged = await client.purgeItems();
+
+// Keep specific records whatever the scan returns.
+const purgedKeepingConfig = await client.purgeItems({
+  excludeKeys: [{ hashKey2: 'config', rangeKey: 'main' }],
+});
+```
+
+From the CLI, the same option is `--exclude-keys`, repeatable, each value a JSON
+key object or an array of them:
+
+```bash
+getdotenv dynamodb purge --force \
+  --exclude-keys '{"hashKey2":"config","rangeKey":"main"}' \
+  --exclude-keys '[{"hashKey2":"purge","rangeKey":"0"}]'
 ```
 
 Transactions

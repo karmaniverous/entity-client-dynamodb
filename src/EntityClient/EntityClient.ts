@@ -43,6 +43,7 @@ import { putItem as putItemFn } from './methods/putItem';
 import { putItems as putItemsFn } from './methods/putItems';
 import { transactDeleteItems as transactDeleteItemsFn } from './methods/transactDeleteItems';
 import { transactPutItems as transactPutItemsFn } from './methods/transactPutItems';
+import type { PurgeItemsOptions } from './PurgeItemsOptions';
 import type { WaiterConfig } from './WaiterConfig';
 
 /**
@@ -304,11 +305,14 @@ export class EntityClient<
   /**
    * Purge all items from a DynamoDB table.
    *
-   * @param options - BatchWriteOptions.
+   * Pass {@link PurgeItemsOptions.excludeKeys | `excludeKeys`} to keep specific
+   * records whatever the scan returns.
+   *
+   * @param options - PurgeItemsOptions.
    *
    * @returns Number of items purged.
    */
-  async purgeItems(options?: BatchWriteOptions): Promise<number> {
+  async purgeItems(options?: PurgeItemsOptions<C>): Promise<number> {
     return purgeItemsFn(this, options ?? {});
   }
 

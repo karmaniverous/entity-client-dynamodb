@@ -148,6 +148,9 @@
     "lint:fix": "npm run lint -- --fix .",
     "release": "dotenvx run -f .env.local -- release-it",
     "release:pre": "npm run release -- --no-git.requireBranch --github.prerelease --preRelease",
+    "release:pre-minor": "npm run release minor -- --no-git.requireBranch --github.prerelease --preRelease=alpha",
+    "release:pre-patch": "npm run release patch -- --no-git.requireBranch --github.prerelease --preRelease=alpha",
+    "release:print-next-version": "release-it --release-version --no-git.requireBranch --no-git.requireUpstream --no-git.requireCleanWorkingDir --no-hooks",
     "test": "vitest --run --silent",
     "typecheck": "tsc && tsd"
   },

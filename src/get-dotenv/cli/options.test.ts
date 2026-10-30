@@ -10,6 +10,7 @@ import {
   resolvePurge,
   resolveValidateAtVersion,
 } from './options';
+import { parseExcludeKeys } from './options/coerce';
 
 describe('dynamodb CLI option resolvers', () => {
   it('resolvers expand flag strings using dotenv syntax', () => {
@@ -115,6 +116,58 @@ describe('dynamodb CLI option resolvers', () => {
     const cfg: DynamodbPluginConfig = { purge: { tableName: 'CfgTable' } };
     const out = resolvePurge({ tableName: '$NAME' }, cfg, { NAME: 'T' });
     expect(out.options.tableNameOverride).toEqual('T');
+  });
+
+  it('resolvePurge should parse exclude keys from repeatable JSON flags', () => {
+    const out = resolvePurge(
+      {
+        excludeKeys: [
+          '{"hashKey2":"config","rangeKey":"${__GETDOTENV_TEST_TBL__}"}',
+          '[{"hashKey2":"purge","rangeKey":0}]',
+        ],
+      },
+      undefined,
+      { __GETDOTENV_TEST_TBL__: 'main' },
+    );
+
+    expect(out.options.excludeKeys).toEqual([
+      { hashKey2: 'config', rangeKey: 'main' },
+      { hashKey2: 'purge', rangeKey: '0' },
+    ]);
+  });
+
+  it('resolvePurge should leave exclude keys unset when the flag is absent', () => {
+    expect(resolvePurge({}, undefined, {}).options.excludeKeys).toBeUndefined();
+  });
+
+  it('parseExcludeKeys should flatten arrays and accept no input', () => {
+    expect(parseExcludeKeys(undefined)).toEqual([]);
+    expect(parseExcludeKeys([])).toEqual([]);
+    expect(parseExcludeKeys('[{"hashKey2":"a"},{"hashKey2":"b"}]')).toEqual([
+      { hashKey2: 'a' },
+      { hashKey2: 'b' },
+    ]);
+    expect(parseExcludeKeys(['{"hashKey2":"a"}', '{"rangeKey":"1"}'])).toEqual([
+      { hashKey2: 'a' },
+      { rangeKey: '1' },
+    ]);
+  });
+
+  it('parseExcludeKeys should reject invalid input', () => {
+    expect(() => parseExcludeKeys('not-json', '--exclude-keys')).toThrow(
+      /--exclude-keys: not valid JSON/,
+    );
+    expect(() => parseExcludeKeys('"a string"', '--exclude-keys')).toThrow(
+      /--exclude-keys: each entry must be a key object/,
+    );
+    expect(() => parseExcludeKeys('{}', '--exclude-keys')).toThrow(
+      /--exclude-keys: each entry must be a key object/,
+    );
+    expect(() =>
+      parseExcludeKeys('{"hashKey2":true}', '--exclude-keys'),
+    ).toThrow(
+      /--exclude-keys: attribute 'hashKey2' must be a string or number/,
+    );
   });
 
   it('resolveLayoutConfig: undefined flag tokens must not clobber config tokens', () => {

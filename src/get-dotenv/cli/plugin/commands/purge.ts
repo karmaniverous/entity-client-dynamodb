@@ -35,6 +35,10 @@ export function registerPurge(
       ),
     )
     .option('--version <string>', 'EM version for client wiring (optional)')
+    .option(
+      '--exclude-keys <json...>',
+      'entity keys to keep (JSON key object or array of them, repeatable)',
+    )
     .option('--force', 'proceed without confirmation')
     .action(async (opts, thisCommand) => {
       if (!ensureForce(opts.force, 'purge-table')) return;
@@ -45,7 +49,7 @@ export function registerPurge(
       const env = { ...process.env, ...envRef };
       const pluginCfg = plugin.readConfig(cli);
       const { options } = resolvePurge(
-        { tableName: opts.tableName },
+        { tableName: opts.tableName, excludeKeys: opts.excludeKeys },
         pluginCfg,
         envRef,
       );

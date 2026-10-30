@@ -1,5 +1,6 @@
 import { dotenvExpand, type ProcessEnv } from '@karmaniverous/get-dotenv';
 
+import { parseExcludeKeys } from './coerce';
 import type { DynamodbPluginConfig } from './types';
 
 /**
@@ -10,6 +11,13 @@ import type { DynamodbPluginConfig } from './types';
 export interface PurgeFlags {
   /** Table name (dotenv expanded). */
   tableName?: string;
+  /**
+   * Key arguments of items to keep (dotenv expanded).
+   *
+   * Each value is JSON: one key object or an array of them. The flag is
+   * repeatable.
+   */
+  excludeKeys?: string[];
 }
 
 /**
@@ -18,6 +26,8 @@ export interface PurgeFlags {
  * @category get-dotenv
  */
 export interface PurgeResolvedOptions {
+  /** Entity keys to keep, whatever the purge scans. */
+  excludeKeys?: Record<string, string>[];
   /** Optional one-off TableName override. */
   tableNameOverride?: string;
 }
@@ -43,7 +53,7 @@ export interface ResolvePurgeResult {
  * @param flags - Parsed CLI flags.
  * @param config - Plugin config slice (already interpolated by host).
  * @param ref - Env reference (typically ctx.dotenv).
- * @returns Purge-table options (tableNameOverride).
+ * @returns Purge-table options (tableNameOverride, excludeKeys).
  */
 export function resolvePurge(
   flags: PurgeFlags,
@@ -54,7 +64,18 @@ export function resolvePurge(
   const envRef = { ...process.env, ...ref };
   const tableNameOverride =
     dotenvExpand(flags.tableName, envRef) ?? config?.purge?.tableName;
+
+  const excludeKeys = parseExcludeKeys(
+    (flags.excludeKeys ?? []).map(
+      (value) => dotenvExpand(value, envRef) ?? value,
+    ),
+    '--exclude-keys',
+  );
+
   return {
-    options: { ...(tableNameOverride ? { tableNameOverride } : {}) },
+    options: {
+      ...(tableNameOverride ? { tableNameOverride } : {}),
+      ...(excludeKeys.length ? { excludeKeys } : {}),
+    },
   };
 }
