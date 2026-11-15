@@ -17,5 +17,9 @@ describe('dynamodb plugin: purge command registration', () => {
     expect(hasLongOption(purge, '--table-name')).toBe(true);
     expect(hasLongOption(purge, '--version')).toBe(true);
     expect(hasLongOption(purge, '--force')).toBe(true);
+
+    // Repeatable: `--exclude-keys '<json>' '<json>'` collects into a list.
+    const excludeKeys = purge.options.find((o) => o.long === '--exclude-keys');
+    expect(excludeKeys?.variadic).toBe(true);
   });
 });

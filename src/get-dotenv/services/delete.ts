@@ -7,7 +7,7 @@
  * - These wrappers remain pure; CLI-level confirm/logging is out of scope here.
  */
 
-import type { BaseConfigMap } from '@karmaniverous/entity-manager';
+import type { BaseConfigMap, EntityKey } from '@karmaniverous/entity-manager';
 
 import type { BatchWriteOptions } from '../../EntityClient/BatchWriteOptions';
 import type { EntityClient } from '../../EntityClient/EntityClient';
@@ -41,12 +41,15 @@ export async function deleteTable<C extends BaseConfigMap>(
 /**
  * Options for {@link purgeTable | `purgeTable`}.
  *
+ * @typeParam C - Entity-manager config map.
  * @category get-dotenv
  */
-export interface PurgeTableOptions extends Omit<
+export interface PurgeTableOptions<C extends BaseConfigMap> extends Omit<
   BatchWriteOptions,
   'tableName'
 > {
+  /** Entity keys to keep, whatever the purge scans. */
+  excludeKeys?: EntityKey<C>[];
   /**
    * One-off TableName override for purging; supersedes options.tableName.
    * Provided as a distinct option to keep call sites explicit.
@@ -55,18 +58,22 @@ export interface PurgeTableOptions extends Omit<
 }
 
 /**
- * Purge all items from a table using EntityClient, with an optional TableName override.
+ * Purge all items from a table using EntityClient, with an optional TableName
+ * override and entity keys to keep.
  *
  * @returns Number of items purged.
  */
 export async function purgeTable<C extends BaseConfigMap>(
   client: EntityClient<C>,
-  options?: PurgeTableOptions,
+  options?: PurgeTableOptions<C>,
 ): Promise<number> {
-  const { tableNameOverride, ...rest } = options ?? {};
+  const { tableNameOverride, excludeKeys, ...rest } = options ?? {};
   const batchOpts: BatchWriteOptions = {
     ...(rest as BatchWriteOptions),
     ...(tableNameOverride ? { tableName: tableNameOverride } : {}),
   };
-  return client.purgeItems(batchOpts);
+  return client.purgeItems({
+    ...batchOpts,
+    ...(excludeKeys ? { excludeKeys } : {}),
+  });
 }

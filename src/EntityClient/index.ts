@@ -5,4 +5,5 @@ export * from './EntityClientOptions';
 export * from './getDocumentQueryArgs';
 export type { CreateTableResult } from './methods/createTable';
 export type { DeleteTableResult } from './methods/deleteTable';
+export * from './PurgeItemsOptions';
 export * from './WaiterConfig';
