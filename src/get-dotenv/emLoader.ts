@@ -14,8 +14,8 @@
 
 import { pathToFileURL } from 'node:url';
 
-import {
-  type BaseConfigMap,
+import type {
+  BaseConfigMap,
   EntityManager,
 } from '@karmaniverous/entity-manager';
 
@@ -24,11 +24,41 @@ import {
   type VersionedLayoutConfig,
 } from './layout';
 
-/** Ensure the loaded value is an EntityManager from this package instance. */
+const entityManagerMethods = [
+  'addKeys',
+  'encodeGeneratedProperty',
+  'findIndexToken',
+  'getPrimaryKey',
+  'query',
+  'removeKeys',
+] as const;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+/**
+ * Validate the public EntityManager capability surface without relying on
+ * constructor identity. Dynamic modules can resolve a second physical copy of
+ * `@karmaniverous/entity-manager`, making `instanceof` reject valid instances.
+ */
 function isEntityManager(
   value: unknown,
 ): value is EntityManager<BaseConfigMap> {
-  return value instanceof EntityManager;
+  if (!isRecord(value) || !isRecord(value.config) || !isRecord(value.logger)) {
+    return false;
+  }
+
+  if (
+    typeof value.logger.debug !== 'function' ||
+    typeof value.logger.error !== 'function'
+  ) {
+    return false;
+  }
+
+  return entityManagerMethods.every(
+    (method) => typeof value[method] === 'function',
+  );
 }
 
 /**

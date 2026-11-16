@@ -9,9 +9,10 @@ export function commonJsDefault(body: string): string {
 export function entityManagerFactory(
   configSource: string,
   includeDefaultTranscodes = false,
+  moduleUrl = entityManagerModuleUrl,
 ): string {
   return `async () => {
-  const { EntityManager } = await import(${JSON.stringify(entityManagerModuleUrl)});
+  const { EntityManager } = await import(${JSON.stringify(moduleUrl)});
   ${
     includeDefaultTranscodes
       ? `const { defaultTranscodes } = await import(${JSON.stringify(entityToolsModuleUrl)});`
@@ -19,4 +20,12 @@ export function entityManagerFactory(
   }
   return new EntityManager(${configSource});
 }`;
+}
+
+export function entityManagerInstance(
+  configSource: string,
+  moduleUrl = entityManagerModuleUrl,
+): string {
+  return `import { EntityManager } from ${JSON.stringify(moduleUrl)};
+export default new EntityManager(${configSource});`;
 }

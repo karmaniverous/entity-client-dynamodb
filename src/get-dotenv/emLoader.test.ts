@@ -2,11 +2,13 @@ import { promises as fs } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { EntityManager } from '@karmaniverous/entity-manager';
 import { describe, expect, it } from 'vitest';
 
 import {
   commonJsDefault,
   entityManagerFactory,
+  entityManagerInstance,
 } from '../../test/entityManagerModule';
 import { resolveAndLoadEntityManager } from './emLoader';
 import type { VersionedLayoutConfig } from './layout';
@@ -55,13 +57,68 @@ describe('get-dotenv EM loader', function () {
     expect(em).to.have.property('config');
   });
 
-  it('rejects a structural lookalike that is not an EntityManager', async () => {
+  it('loads a direct instance from a separate EntityManager module copy', async () => {
+    const sandbox = await fs.mkdtemp(join(process.cwd(), '.em-loader-'));
+    try {
+      const packageRoot = new URL(
+        '../../',
+        import.meta.resolve('@karmaniverous/entity-manager'),
+      );
+      await fs.cp(
+        packageRoot,
+        join(sandbox, 'node_modules', '@karmaniverous', 'entity-manager'),
+        { recursive: true },
+      );
+
+      const root = join(sandbox, 'tables');
+      const cfg: VersionedLayoutConfig = { tablesPath: root };
+      const versionDir = join(root, '001');
+      await fs.mkdir(versionDir, { recursive: true });
+      await fs.writeFile(
+        join(versionDir, 'package.json'),
+        JSON.stringify({ type: 'module' }),
+        'utf8',
+      );
+      await fs.writeFile(
+        join(versionDir, 'entityManager.js'),
+        entityManagerInstance(
+          `{
+            entities: {},
+            generatedProperties: { sharded: {}, unsharded: {} },
+            hashKey: 'hashKey',
+            indexes: {},
+            propertyTranscodes: {},
+            rangeKey: 'rangeKey',
+            transcodes: {},
+          }`,
+          '@karmaniverous/entity-manager',
+        ),
+        'utf8',
+      );
+
+      const em = await resolveAndLoadEntityManager('001', cfg);
+      expect(em).not.toBeInstanceOf(EntityManager);
+      expect(em.config.hashKey).toBe('hashKey');
+    } finally {
+      await fs.rm(sandbox, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects an incomplete structural lookalike', async () => {
     const root = await fs.mkdtemp(join(tmpdir(), 'tables-'));
     const cfg: VersionedLayoutConfig = { tablesPath: root };
     await fs.mkdir(join(root, '001'), { recursive: true });
     await fs.writeFile(
       join(root, '001', 'entityManager.js'),
-      commonJsDefault(`() => ({ config: {} })`),
+      commonJsDefault(`() => ({
+        config: {},
+        logger: { debug() {}, error() {} },
+        addKeys() {},
+        encodeGeneratedProperty() {},
+        findIndexToken() {},
+        getPrimaryKey() {},
+        removeKeys() {},
+      })`),
       'utf8',
     );
 
