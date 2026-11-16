@@ -57,9 +57,8 @@ function makeClients(items: Record<string, unknown>[]): {
   const source = {
     tableName: 'Source',
     doc: {
-      scan: vi.fn(async (_input: unknown) => {
+      scan: vi.fn(async () => {
         // satisfy require-await
-        void _input;
         await Promise.resolve();
         if (scanned) return { Items: [], LastEvaluatedKey: undefined };
         scanned = true;

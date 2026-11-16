@@ -92,7 +92,7 @@ export function registerLocal(
         const envRef = { ...process.env, ...ctx.dotenv };
         const pluginCfg = plugin.readConfig(cli);
         const bag = readMergedOptions(thisCommand);
-        const logger = assertLogger(bag.logger);
+        assertLogger(bag.logger);
         const shell = bag.shell;
         const capture = shouldCapture(bag.capture);
 
@@ -108,7 +108,6 @@ export function registerLocal(
         if (!ok) {
           process.exitCode = 1;
         }
-        void logger;
       } catch (err) {
         const msg =
           err instanceof Error ? err.message : 'local dynamodb status failed';
@@ -118,13 +117,12 @@ export function registerLocal(
     });
 
   local.command('stop').action(async (_opts, thisCommand) => {
-    void _opts;
     try {
       const ctx = cli.getCtx();
       const envRef = { ...process.env, ...ctx.dotenv };
       const pluginCfg = plugin.readConfig(cli);
       const bag = readMergedOptions(thisCommand);
-      const logger = assertLogger(bag.logger);
+      assertLogger(bag.logger);
       const shell = bag.shell;
       const capture = shouldCapture(bag.capture);
 
@@ -134,7 +132,6 @@ export function registerLocal(
         shell,
         capture,
       });
-      void logger;
     } catch (err) {
       const msg =
         err instanceof Error ? err.message : 'local dynamodb stop failed';

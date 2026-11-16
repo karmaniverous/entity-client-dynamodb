@@ -346,7 +346,7 @@ export class EntityClient<
    * @typeParam ET - Entity token (use a literal to narrow the record type).
    * @typeParam A - Optional projection tuple (use `as const` to narrow the projected shape).
    *
-   * @param entityToken - Entity token used for type narrowing (no runtime effect).
+   * @param _entityToken - Entity token used for type narrowing (no runtime effect).
    * @param keyOrOptions - Primary key OR a {@link GetCommandInput | `GetCommandInput`}-like options object.
    * @param attributesOrOptions - Projection attributes OR an options object.
    * @param options - Additional {@link GetCommandInput | `GetCommandInput`} options (TableName optional).
@@ -357,7 +357,7 @@ export class EntityClient<
     ET extends EntityToken<C>,
     A extends readonly string[] | undefined = undefined,
   >(
-    entityToken: ET,
+    _entityToken: ET,
     keyOrOptions: EntityKey<C> | MakeOptional<GetCommandInput, 'TableName'>,
     attributesOrOptions?:
       A | MakeOptional<Omit<GetCommandInput, 'Key'>, 'TableName'>,
@@ -372,9 +372,6 @@ export class EntityClient<
       'TableName'
     >,
   ): Promise<GetItemOutput<C, ET, A>> {
-    // Token is type-only; the helper resolves key shape at runtime from the args.
-    void entityToken;
-
     const output = await getItemFn<C, ET>(
       this,
       keyOrOptions,
@@ -391,7 +388,7 @@ export class EntityClient<
    * @typeParam ET - Entity token (use a literal to narrow the record type).
    * @typeParam A - Optional projection tuple (use `as const` to narrow the projected shape).
    *
-   * @param entityToken - Entity token used for type narrowing (no runtime effect).
+   * @param _entityToken - Entity token used for type narrowing (no runtime effect).
    * @param keys - Primary keys to fetch.
    * @param attributesOrOptions - Projection attributes OR {@link BatchGetOptions | `BatchGetOptions`}.
    * @param options - {@link BatchGetOptions | `BatchGetOptions`} when projection attributes are provided.
@@ -402,14 +399,11 @@ export class EntityClient<
     ET extends EntityToken<C>,
     A extends readonly string[] | undefined = undefined,
   >(
-    entityToken: ET,
+    _entityToken: ET,
     keys: EntityKey<C>[],
     attributesOrOptions?: A | BatchGetOptions,
     options?: BatchGetOptions,
   ): Promise<GetItemsOutput<C, ET, A>> {
-    // Token is type-only; the helper is key-driven at runtime.
-    void entityToken;
-
     const result = Array.isArray(attributesOrOptions)
       ? await getItemsFn<C, ET>(this, keys, attributesOrOptions, options ?? {})
       : await getItemsFn<C, ET>(this, keys, attributesOrOptions ?? {});
