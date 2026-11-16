@@ -22,6 +22,9 @@ import {
 import { QueryBuilder } from '../QueryBuilder';
 
 const dockerAvailable = (() => {
+  // GitHub's Windows runner reports Docker but cannot run the Linux image.
+  if (process.platform === 'win32') return false;
+
   try {
     execSync('docker info', { stdio: 'ignore' });
     return true;
