@@ -5,6 +5,10 @@ import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import YAML from 'yaml';
 
+import {
+  commonJsDefault,
+  entityManagerFactory,
+} from '../../../test/entityManagerModule';
 import { resolveAndLoadEntityManager } from '../emLoader';
 import { type VersionedLayoutConfig } from '../layout';
 import {
@@ -13,8 +17,22 @@ import {
 } from '../tableDefinition';
 import { validateTableDefinitionAtVersion } from './validateTable';
 
-const jsModule = (body: string) =>
-  `module.exports = ${body};\nmodule.exports.default = module.exports;`;
+const validEntityManagerFactory = entityManagerFactory(
+  `{
+    entities: {},
+    generatedProperties: { sharded: {}, unsharded: {} },
+    hashKey: 'hashKey',
+    rangeKey: 'rangeKey',
+    indexes: { created: { hashKey: 'hashKey', rangeKey: 'created' } },
+    propertyTranscodes: { created: 'timestamp' },
+    transcodes: defaultTranscodes,
+  }`,
+  true,
+);
+
+async function writeEntityManager(path: string): Promise<void> {
+  await fs.writeFile(path, commonJsDefault(validEntityManagerFactory), 'utf8');
+}
 
 describe('get-dotenv validateTableDefinitionAtVersion service', function () {
   it('validates a matching YAML (equal=true)', async function () {
@@ -22,18 +40,8 @@ describe('get-dotenv validateTableDefinitionAtVersion service', function () {
     const cfg: VersionedLayoutConfig = { tablesPath: root };
     await fs.mkdir(join(root, '001'), { recursive: true });
 
-    // Minimal EM for tests (runtime-only shape expected by computeGeneratedSections)
     const emPath = join(root, '001', 'entityManager.js');
-    const emBody = `() => ({
-      config: {
-        generatedProperties: { sharded: {}, unsharded: {} },
-        hashKey: 'hashKey',
-        rangeKey: 'rangeKey',
-        indexes: { created: { hashKey: 'hashKey', rangeKey: 'created' } },
-        propertyTranscodes: { hashKey: 'string', rangeKey: 'string', created: 'timestamp' }
-      }
-    })`;
-    await fs.writeFile(emPath, jsModule(emBody), 'utf8');
+    await writeEntityManager(emPath);
 
     // Compose a matching table.yml for version 001
     const em = await resolveAndLoadEntityManager('001', cfg);
@@ -54,16 +62,7 @@ describe('get-dotenv validateTableDefinitionAtVersion service', function () {
     await fs.mkdir(join(root, '001'), { recursive: true });
 
     const emPath = join(root, '001', 'entityManager.js');
-    const emBody = `() => ({
-      config: {
-        generatedProperties: { sharded: {}, unsharded: {} },
-        hashKey: 'hashKey',
-        rangeKey: 'rangeKey',
-        indexes: { created: { hashKey: 'hashKey', rangeKey: 'created' } },
-        propertyTranscodes: { hashKey: 'string', rangeKey: 'string', created: 'timestamp' }
-      }
-    })`;
-    await fs.writeFile(emPath, jsModule(emBody), 'utf8');
+    await writeEntityManager(emPath);
 
     const em = await resolveAndLoadEntityManager('001', cfg);
     const generated = computeGeneratedSections(em);

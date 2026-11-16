@@ -5,29 +5,29 @@ import { join } from 'node:path';
 import type { BaseConfigMap } from '@karmaniverous/entity-manager';
 import { describe, expect, it, vi } from 'vitest';
 
+import {
+  commonJsDefault,
+  entityManagerFactory,
+} from '../../../test/entityManagerModule';
 import type { EntityClient } from '../../EntityClient/EntityClient';
 import { enumerateStepVersions, type VersionedLayoutConfig } from '../layout';
 import { migrateData } from './migrate';
 
-const jsModule = (body: string) =>
-  `module.exports = ${body};\nmodule.exports.default = module.exports;`;
-
-// Minimal EM module body with removeKeys/addKeys and hash config.
-const emBody = `() => ({
-  config: {
-    hashKey: 'hashKey2',
-    rangeKey: 'rangeKey',
-    shardKeyDelimiter: '!',
+const emBody = entityManagerFactory(
+  `{
+    entities: {
+      email: { timestampProperty: 'created', uniqueProperty: 'id' },
+      user: { timestampProperty: 'created', uniqueProperty: 'id' },
+    },
     generatedProperties: { sharded: {}, unsharded: {} },
+    hashKey: 'hashKey2',
     indexes: {},
-    propertyTranscodes: {}
-  },
-  removeKeys: (_et, rec) => {
-    const { hashKey2, rangeKey, ...rest } = rec || {};
-    return rest;
-  },
-  addKeys: (et, item) => ({ ...item, hashKey2: et + '!x', rangeKey: 'rk' })
-})`;
+    propertyTranscodes: { created: 'timestamp', id: 'string' },
+    rangeKey: 'rangeKey',
+    transcodes: defaultTranscodes,
+  }`,
+  true,
+);
 
 // Write an EM (and optional transform) for a version dir.
 async function writeVersion(
@@ -37,11 +37,15 @@ async function writeVersion(
 ) {
   const dir = join(root, version);
   await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(join(dir, 'entityManager.js'), jsModule(emBody), 'utf8');
+  await fs.writeFile(
+    join(dir, 'entityManager.js'),
+    commonJsDefault(emBody),
+    'utf8',
+  );
   if (transformBody) {
     await fs.writeFile(
       join(dir, 'transform.js'),
-      jsModule(transformBody),
+      commonJsDefault(transformBody),
       'utf8',
     );
   }
@@ -97,8 +101,8 @@ describe('get-dotenv migrateData service', function () {
 
     // Build source items (storage records with hashKey2 carrying entity prefix).
     const srcItems = [
-      { hashKey2: 'user!a', rangeKey: 'r1', a: 1 },
-      { hashKey2: 'user!b', rangeKey: 'r2', a: 2 },
+      { hashKey2: 'user!', rangeKey: 'id#a', id: 'a', created: 1, a: 1 },
+      { hashKey2: 'user!', rangeKey: 'id#b', id: 'b', created: 2, a: 2 },
     ];
     const { source, target } = makeClients(srcItems);
 
@@ -126,8 +130,8 @@ describe('get-dotenv migrateData service', function () {
     await writeVersion(root, '001', transform);
 
     const srcItems = [
-      { hashKey2: 'user!a', rangeKey: 'r1', a: 1 },
-      { hashKey2: 'user!b', rangeKey: 'r2', a: 2 },
+      { hashKey2: 'user!', rangeKey: 'id#a', id: 'a', created: 1, a: 1 },
+      { hashKey2: 'user!', rangeKey: 'id#b', id: 'b', created: 2, a: 2 },
     ];
     const { source, target } = makeClients(srcItems);
 
@@ -155,7 +159,9 @@ describe('get-dotenv migrateData service', function () {
     })`;
     await writeVersion(root, '001', transform);
 
-    const srcItems = [{ hashKey2: 'user!a', rangeKey: 'r1', a: 1 }];
+    const srcItems = [
+      { hashKey2: 'user!', rangeKey: 'id#a', id: 'a', created: 1, a: 1 },
+    ];
     const { source, target } = makeClients(srcItems);
 
     const out = await migrateData(source, target, {
@@ -186,7 +192,9 @@ describe('get-dotenv migrateData service', function () {
     })`;
     await writeVersion(root, '001', transform);
 
-    const srcItems = [{ hashKey2: 'user!a', rangeKey: 'r1', a: 1 }];
+    const srcItems = [
+      { hashKey2: 'user!', rangeKey: 'id#a', id: 'a', created: 1, a: 1 },
+    ];
     const { source, target } = makeClients(srcItems);
 
     await expect(

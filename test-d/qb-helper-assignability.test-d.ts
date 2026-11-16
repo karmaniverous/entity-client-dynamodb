@@ -26,4 +26,3 @@ addRangeKeyCondition(qb, 'any-index', {
 // No runtime assertions are needed for tsd.
 
 export {};
-

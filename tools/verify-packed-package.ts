@@ -83,7 +83,7 @@ try {
       join(fixture, 'index.ts'),
       [
         "import type { IndexParams, ProcessEnv } from '@karmaniverous/entity-client-dynamodb';",
-        "const names: ProcessEnv = { '#pk': 'pk' };",
+        "const names: ProcessEnv = { '#pk': 'pk', OPTIONAL: undefined };",
         'const params: IndexParams = {',
         '  expressionAttributeNames: names,',
         '  expressionAttributeValues: {},',

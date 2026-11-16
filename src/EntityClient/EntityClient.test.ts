@@ -21,9 +21,23 @@ import {
 
 import { QueryBuilder } from '../QueryBuilder';
 
+function supportsDynamoDbLocalImage(platform: NodeJS.Platform): boolean {
+  return platform !== 'win32';
+}
+
+describe('DynamoDB local integration prerequisites', () => {
+  it.each([
+    ['win32', false],
+    ['linux', true],
+    ['darwin', true],
+  ] as const)('supports the Linux image on %s: %s', (platform, supported) => {
+    expect(supportsDynamoDbLocalImage(platform)).toBe(supported);
+  });
+});
+
 const dockerAvailable = (() => {
   // GitHub's Windows runner reports Docker but cannot run the Linux image.
-  if (process.platform === 'win32') return false;
+  if (!supportsDynamoDbLocalImage(process.platform)) return false;
 
   try {
     execSync('docker info', { stdio: 'ignore' });

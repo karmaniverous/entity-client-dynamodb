@@ -24,19 +24,20 @@ Every implementation step ends with this gate:
    ```
 
    Stop if the newest pull request is merged or closed. Push immediately after every commit.
+
 7. CI must be green on Ubuntu and Windows for the pushed head before the step is complete.
 
 ## Finishing step
 
 The pull request remains draft until all finishing rows are complete:
 
-| Pass | What it checks |
-| --- | --- |
-| Completeness | Every approved requirement is traced to code, tests, and documentation. |
-| SOLID/DRY | Whole-PR design review. |
-| Test adequacy | Meaningful coverage and mutation evidence for every touched function or new module. |
-| Docs sync | README, guides, and TSDoc agree with the implementation; docs build without warnings. |
-| Independent review | A fresh reviewer checks the complete diff; every finding is fixed or answered. |
+| Pass                   | What it checks                                                                          |
+| ---------------------- | --------------------------------------------------------------------------------------- |
+| Completeness           | Every approved requirement is traced to code, tests, and documentation.                 |
+| SOLID/DRY              | Whole-PR design review.                                                                 |
+| Test adequacy          | Meaningful coverage and mutation evidence for every touched function or new module.     |
+| Docs sync              | README, guides, and TSDoc agree with the implementation; docs build without warnings.   |
+| Independent review     | A fresh reviewer checks the complete diff; every finding is fixed or answered.          |
 | Gates + CI + mergeable | All local gates and both CI platforms pass on the pushed head, and the PR is mergeable. |
 
 ## Lint, types, and tests

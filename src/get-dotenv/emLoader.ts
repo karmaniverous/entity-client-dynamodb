@@ -14,8 +14,8 @@
 
 import { pathToFileURL } from 'node:url';
 
-import type {
-  BaseConfigMap,
+import {
+  type BaseConfigMap,
   EntityManager,
 } from '@karmaniverous/entity-manager';
 
@@ -24,9 +24,11 @@ import {
   type VersionedLayoutConfig,
 } from './layout';
 
-/** Minimal structural guard to sanity check the loaded EM. */
-function isEntityManagerLike(value: unknown): value is { config: unknown } {
-  return !!value && typeof value === 'object' && 'config' in value;
+/** Ensure the loaded value is an EntityManager from this package instance. */
+function isEntityManager(
+  value: unknown,
+): value is EntityManager<BaseConfigMap> {
+  return value instanceof EntityManager;
 }
 
 /**
@@ -57,13 +59,13 @@ export async function loadEntityManagerFromFile(
     em = exp;
   }
 
-  if (!isEntityManagerLike(em)) {
+  if (!isEntityManager(em)) {
     throw new Error(
       `invalid EntityManager module export at ${modulePath} (expected default EM instance or factory)`,
     );
   }
 
-  return em as EntityManager<BaseConfigMap>;
+  return em;
 }
 
 /**

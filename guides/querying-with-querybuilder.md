@@ -53,10 +53,7 @@ Projections (K channel)
 const withProj = qb.setProjection('created', ['created'] as const);
 
 // Uniform projection across indices (first arg is the index token list)
-const withAll = qb.setProjectionAll(
-  ['created'] as const,
-  ['created'] as const,
-);
+const withAll = qb.setProjectionAll(['created'] as const, ['created'] as const);
 
 // Clear projections (widen K back to `unknown`, returning the default unprojected item shape)
 const resetOne = withAll.resetProjection('created');

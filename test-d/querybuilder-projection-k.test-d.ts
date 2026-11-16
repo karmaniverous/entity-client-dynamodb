@@ -42,6 +42,6 @@ const qb3 = qb0.setProjectionAll(
   ['created', 'updated'] as const,
 );
 type Items3 = QueryItemsOf<typeof qb3>;
-expectType<
-  Array<Pick<EntityItem<MyConfigMap, 'user'>, 'created' | 'updated'>>
->(null as unknown as Items3);
+expectType<Array<Pick<EntityItem<MyConfigMap, 'user'>, 'created' | 'updated'>>>(
+  null as unknown as Items3,
+);
