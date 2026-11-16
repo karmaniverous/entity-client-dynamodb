@@ -140,7 +140,7 @@
     "url": "git+https://github.com/karmaniverous/entity-client-dynamodb.git"
   },
   "scripts": {
-    "build": "rimraf dist && rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
+    "build": "rimraf dist && rollup --config rollup.config.ts --configLoader native",
     "changelog": "auto-changelog",
     "docs": "typedoc",
     "knip": "knip",

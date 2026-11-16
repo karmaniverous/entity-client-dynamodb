@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { readFileSync } from 'node:fs';
 
 import aliasPlugin, { type Alias } from '@rollup/plugin-alias';
@@ -10,7 +9,7 @@ import typescriptPlugin from '@rollup/plugin-typescript';
 import type { InputOptions, RollupOptions } from 'rollup';
 import dtsPlugin from 'rollup-plugin-dts';
 
-const pkg = JSON.parse(
+const pkg: unknown = JSON.parse(
   readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
 );
 
@@ -39,9 +38,11 @@ function packageNameFromImport(id: string): string | undefined {
 
 type Package = Record<string, Record<string, string> | undefined>;
 
+const packageConfig = pkg as Package;
+
 const externalPackages = new Set<string>([
-  ...Object.keys((pkg as unknown as Package).dependencies ?? {}),
-  ...Object.keys((pkg as unknown as Package).peerDependencies ?? {}),
+  ...Object.keys(packageConfig.dependencies ?? {}),
+  ...Object.keys(packageConfig.peerDependencies ?? {}),
   'tslib',
   // Optional runtime dependency used only when the get-dotenv "local" service
   // chooses the embedded fallback. Keep it external to avoid bundling heavy
@@ -62,7 +63,7 @@ const commonPlugins = [
   commonjsPlugin(),
   jsonPlugin(),
   nodeResolve(),
-  typescriptPlugin(),
+  typescriptPlugin({ outputToFilesystem: true }),
 ];
 
 const commonAliases: Alias[] = [];
