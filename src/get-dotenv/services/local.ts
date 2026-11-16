@@ -1,11 +1,12 @@
 import { DynamoDBClient, ListTablesCommand } from '@aws-sdk/client-dynamodb';
-import { buildSpawnEnv, type ProcessEnv } from '@karmaniverous/get-dotenv';
+import { buildSpawnEnv } from '@karmaniverous/get-dotenv';
 import {
   runCommand,
   runCommandResult,
 } from '@karmaniverous/get-dotenv/cliHost';
 import { retry, sleep, tryit } from 'radash';
 
+import type { ProcessEnv } from '../../ProcessEnv';
 import type { DynamodbPluginConfig } from '../cli/options/types';
 
 type LocalCfg = NonNullable<DynamodbPluginConfig['local']>;

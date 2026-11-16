@@ -1,9 +1,6 @@
-import {
-  dotenvExpand,
-  interpolateDeep,
-  type ProcessEnv,
-} from '@karmaniverous/get-dotenv';
+import { dotenvExpand, interpolateDeep } from '@karmaniverous/get-dotenv';
 
+import type { ProcessEnv } from '../../../ProcessEnv';
 import type { VersionedLayoutConfig } from '../../layout';
 import { num } from './coerce';
 import type { DynamodbPluginConfig } from './types';

@@ -1,6 +1,5 @@
 {
   "entry": ["src/**/index.ts"],
-  "ignore": ["test-d/**"],
   "ignoreDependencies": ["cross-env"],
   "project": ["*/**", "!docs/**"],
   "rules": {

@@ -1,6 +1,7 @@
-import type { Logger, ProcessEnv } from '@karmaniverous/get-dotenv';
+import type { Logger } from '@karmaniverous/get-dotenv';
 
 import { EntityClient } from '../../../EntityClient';
+import type { ProcessEnv } from '../../../ProcessEnv';
 
 /**
  * Build an EntityClient from a resolved table name and an env overlay.

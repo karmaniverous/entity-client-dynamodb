@@ -1,4 +1,4 @@
-import { z } from '@karmaniverous/get-dotenv/cliHost';
+import { z } from 'zod';
 
 /**
  * Zod schema for the DynamoDB plugin config slice.

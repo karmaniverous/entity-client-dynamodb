@@ -1,6 +1,7 @@
-import { dotenvExpand, type ProcessEnv } from '@karmaniverous/get-dotenv';
+import { dotenvExpand } from '@karmaniverous/get-dotenv';
 
 import type { WaiterConfig } from '../../../EntityClient/WaiterConfig';
+import type { ProcessEnv } from '../../../ProcessEnv';
 import { firstDefined, num } from './coerce';
 import type { DynamodbPluginConfig } from './types';
 

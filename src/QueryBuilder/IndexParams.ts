@@ -1,5 +1,6 @@
 import type { NativeScalarAttributeValue } from '@aws-sdk/lib-dynamodb';
-import type { ProcessEnv } from '@karmaniverous/get-dotenv';
+
+import type { ProcessEnv } from '../ProcessEnv';
 
 /**
  * IndexParams
