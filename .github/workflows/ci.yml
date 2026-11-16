@@ -41,14 +41,14 @@ jobs:
       - name: Typecheck without emit
         run: npx tsc --noEmit
 
+      - name: Build
+        run: npm run build
+
       - name: Type surface tests
         run: npm run typecheck
 
       - name: Tests with coverage
         run: npm test -- --coverage
-
-      - name: Build
-        run: npm run build
 
       - name: Unused-code check
         run: npm run knip
