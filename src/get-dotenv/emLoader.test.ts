@@ -23,6 +23,31 @@ const validEntityManagerFactory = entityManagerFactory(`{
   transcodes: {},
 }`);
 
+const validParsedConfig: Record<string, unknown> = {
+  entities: {},
+  generatedProperties: { sharded: {}, unsharded: {} },
+  hashKey: 'hashKey',
+  indexes: {},
+  generatedKeyDelimiter: '|',
+  generatedValueDelimiter: '#',
+  propertyTranscodes: {},
+  rangeKey: 'rangeKey',
+  shardKeyDelimiter: '!',
+  throttle: 10,
+  transcodes: {},
+};
+
+const entityManagerLookalike = (configSource: string): string => `() => ({
+  config: ${configSource},
+  logger: { debug() {}, error() {} },
+  addKeys() {},
+  encodeGeneratedProperty() {},
+  findIndexToken() {},
+  getPrimaryKey() {},
+  query() {},
+  removeKeys() {},
+})`;
+
 describe('get-dotenv EM loader', function () {
   it('should load EM from current version when present', async function () {
     const root = await fs.mkdtemp(join(tmpdir(), 'tables-'));
@@ -104,28 +129,69 @@ describe('get-dotenv EM loader', function () {
     }
   });
 
-  it('rejects a capability-complete lookalike with invalid config', async () => {
-    const root = await fs.mkdtemp(join(tmpdir(), 'tables-'));
-    const cfg: VersionedLayoutConfig = { tablesPath: root };
-    await fs.mkdir(join(root, '001'), { recursive: true });
-    await fs.writeFile(
-      join(root, '001', 'entityManager.js'),
-      commonJsDefault(`() => ({
-        config: {},
-        logger: { debug() {}, error() {} },
-        addKeys() {},
-        encodeGeneratedProperty() {},
-        findIndexToken() {},
-        getPrimaryKey() {},
-        query() {},
-        removeKeys() {},
-      })`),
-      'utf8',
-    );
+  it('rejects each invalid field on a capability-complete lookalike', async () => {
+    const cases: readonly (readonly [
+      string,
+      (config: Record<string, unknown>) => void,
+      configSource?: string,
+    ])[] = [
+      ['entities', (config) => (config.entities = null)],
+      ['generatedProperties', (config) => (config.generatedProperties = null)],
+      [
+        'generatedProperties.sharded',
+        (config) =>
+          ((config.generatedProperties as Record<string, unknown>).sharded =
+            null),
+      ],
+      [
+        'generatedProperties.unsharded',
+        (config) =>
+          ((config.generatedProperties as Record<string, unknown>).unsharded =
+            null),
+      ],
+      ['hashKey', (config) => (config.hashKey = null)],
+      ['indexes', (config) => (config.indexes = null)],
+      [
+        'generatedKeyDelimiter',
+        (config) => (config.generatedKeyDelimiter = null),
+      ],
+      [
+        'generatedValueDelimiter',
+        (config) => (config.generatedValueDelimiter = null),
+      ],
+      ['propertyTranscodes', (config) => (config.propertyTranscodes = null)],
+      ['rangeKey', (config) => (config.rangeKey = null)],
+      ['shardKeyDelimiter', (config) => (config.shardKeyDelimiter = null)],
+      ['throttle type', (config) => (config.throttle = 'invalid')],
+      [
+        'finite throttle',
+        () => undefined,
+        JSON.stringify(validParsedConfig).replace(
+          '"throttle":10',
+          '"throttle":Infinity',
+        ),
+      ],
+      ['transcodes', (config) => (config.transcodes = null)],
+    ];
 
-    await expect(resolveAndLoadEntityManager('001', cfg)).rejects.toThrow(
-      /invalid EntityManager module export/,
-    );
+    for (const [label, mutate, explicitConfigSource] of cases) {
+      const root = await fs.mkdtemp(join(tmpdir(), 'tables-'));
+      const cfg: VersionedLayoutConfig = { tablesPath: root };
+      await fs.mkdir(join(root, '001'), { recursive: true });
+      const config = structuredClone(validParsedConfig);
+      mutate(config);
+      const configSource = explicitConfigSource ?? JSON.stringify(config);
+      await fs.writeFile(
+        join(root, '001', 'entityManager.js'),
+        commonJsDefault(entityManagerLookalike(configSource)),
+        'utf8',
+      );
+
+      await expect(
+        resolveAndLoadEntityManager('001', cfg),
+        label,
+      ).rejects.toThrow(/invalid EntityManager module export/);
+    }
   });
 
   it('should error when no EM can be resolved across ancestry', async function () {
