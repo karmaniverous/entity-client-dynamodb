@@ -104,7 +104,7 @@ describe('get-dotenv EM loader', function () {
     }
   });
 
-  it('rejects an incomplete structural lookalike', async () => {
+  it('rejects a capability-complete lookalike with invalid config', async () => {
     const root = await fs.mkdtemp(join(tmpdir(), 'tables-'));
     const cfg: VersionedLayoutConfig = { tablesPath: root };
     await fs.mkdir(join(root, '001'), { recursive: true });
@@ -117,6 +117,7 @@ describe('get-dotenv EM loader', function () {
         encodeGeneratedProperty() {},
         findIndexToken() {},
         getPrimaryKey() {},
+        query() {},
         removeKeys() {},
       })`),
       'utf8',

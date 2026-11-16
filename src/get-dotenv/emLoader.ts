@@ -17,6 +17,7 @@ import { pathToFileURL } from 'node:url';
 import type {
   BaseConfigMap,
   EntityManager,
+  ParsedConfig,
 } from '@karmaniverous/entity-manager';
 
 import {
@@ -37,6 +38,28 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+function isParsedConfig(value: unknown): value is ParsedConfig {
+  if (!isRecord(value) || !isRecord(value.generatedProperties)) {
+    return false;
+  }
+
+  return (
+    isRecord(value.entities) &&
+    isRecord(value.generatedProperties.sharded) &&
+    isRecord(value.generatedProperties.unsharded) &&
+    typeof value.hashKey === 'string' &&
+    isRecord(value.indexes) &&
+    typeof value.generatedKeyDelimiter === 'string' &&
+    typeof value.generatedValueDelimiter === 'string' &&
+    isRecord(value.propertyTranscodes) &&
+    typeof value.rangeKey === 'string' &&
+    typeof value.shardKeyDelimiter === 'string' &&
+    typeof value.throttle === 'number' &&
+    Number.isFinite(value.throttle) &&
+    isRecord(value.transcodes)
+  );
+}
+
 /**
  * Validate the public EntityManager capability surface without relying on
  * constructor identity. Dynamic modules can resolve a second physical copy of
@@ -45,7 +68,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function isEntityManager(
   value: unknown,
 ): value is EntityManager<BaseConfigMap> {
-  if (!isRecord(value) || !isRecord(value.config) || !isRecord(value.logger)) {
+  if (
+    !isRecord(value) ||
+    !isParsedConfig(value.config) ||
+    !isRecord(value.logger)
+  ) {
     return false;
   }
 
