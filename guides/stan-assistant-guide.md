@@ -24,6 +24,8 @@ Rule: do not import from `src/**` in consumer code; use only package `exports` e
 These are “must stay consistent” constraints; many regressions come from violating them.
 
 - Root entrypoint (`.`) and subpath entrypoint (`./get-dotenv`) are distinct surfaces (Option B). They must not be aliases.
+- The root entrypoint has no runtime or declaration dependency on get-dotenv. `@karmaniverous/get-dotenv` is an optional `^8.0.0` peer used only by `./get-dotenv` and is installed as a dev dependency for this repository's build and tests.
+- Plugin config schemas import `zod` directly; `zod` is a runtime dependency and stays external in Rollup output.
 - `package.json` `exports` must point to files that actually exist after `npm run build`:
   - Root JS: `dist/mjs/index.js`, `dist/cjs/index.js`
   - Root types: `dist/index.d.ts`
@@ -201,11 +203,12 @@ Expected usage is as a child of the shipped get-dotenv `aws` plugin:
 Minimal host composition example:
 
 ```ts
-import { createCli } from '@karmaniverous/get-dotenv';
+import { createCli } from '@karmaniverous/get-dotenv/cli';
 import { awsPlugin } from '@karmaniverous/get-dotenv/plugins';
 import { dynamodbPlugin } from '@karmaniverous/entity-client-dynamodb/get-dotenv';
 
 await createCli({
+  importMetaUrl: import.meta.url,
   alias: 'mycli',
   compose: (p) => p.use(awsPlugin().use(dynamodbPlugin())),
 })(process.argv.slice(2));

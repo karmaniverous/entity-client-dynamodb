@@ -1,5 +1,6 @@
-import { dotenvExpand, type ProcessEnv } from '@karmaniverous/get-dotenv';
+import { dotenvExpand } from '@karmaniverous/get-dotenv';
 
+import type { ProcessEnv } from '../../../ProcessEnv';
 import { parseExcludeKeys } from './coerce';
 import type { DynamodbPluginConfig } from './types';
 

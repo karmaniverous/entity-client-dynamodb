@@ -17,7 +17,7 @@ export function registerCreate(
   cli: GetDotenvCliPublic,
   group: Command,
 ) {
-  const cmd = group
+  group
     .command('create')
     .description(
       'Create table from tables/NNN/table.yml (validate/refresh as configured)',
@@ -162,5 +162,4 @@ export function registerCreate(
         JSON.stringify({ waiter: waiterState }, null, 2) + '\n',
       );
     });
-  void cmd;
 }

@@ -1,4 +1,5 @@
 export * from './EntityClient';
+export type { ProcessEnv } from './ProcessEnv';
 export * from './QueryBuilder';
 export * from './Tables';
 

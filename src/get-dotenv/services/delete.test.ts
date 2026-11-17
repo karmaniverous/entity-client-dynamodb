@@ -8,10 +8,13 @@ type AnyClient = EntityClient<BaseConfigMap>;
 
 describe('get-dotenv delete/purge service wrappers', function () {
   it('deleteTable should pass TableName override and waiter', async function () {
-    const deleteSpy = vi.fn(async (_opts?: unknown, _waiter?: unknown) => {
-      // satisfy require-await and mark params used
-      void _opts;
-      void _waiter;
+    const deleteSpy = vi.fn<
+      (
+        opts?: unknown,
+        waiter?: unknown,
+      ) => Promise<{ waiterResult: { state: 'SUCCESS' } }>
+    >(async () => {
+      // satisfy require-await
       await Promise.resolve();
       return { waiterResult: { state: 'SUCCESS' as const } };
     });
@@ -25,7 +28,7 @@ describe('get-dotenv delete/purge service wrappers', function () {
     });
 
     expect(deleteSpy).toHaveBeenCalledTimes(1);
-    const [optsArg, waiterArg] = deleteSpy.mock.calls[0] as [unknown, unknown];
+    const [optsArg, waiterArg] = deleteSpy.mock.calls[0];
     expect(optsArg).to.deep.equal({ TableName: 'MyTable' });
     expect(waiterArg).to.deep.equal(waiter);
     expect(
@@ -34,22 +37,24 @@ describe('get-dotenv delete/purge service wrappers', function () {
   });
 
   it('deleteTable should accept defaults when no options are provided', async function () {
-    const deleteSpy = vi.fn(async (_opts?: unknown, _waiter?: unknown) => {
-      void _opts;
-      void _waiter;
+    const deleteSpy = vi.fn<
+      (
+        opts?: unknown,
+        waiter?: unknown,
+      ) => Promise<{ waiterResult: { state: 'SUCCESS' } }>
+    >(async () => {
       await Promise.resolve();
       return { waiterResult: { state: 'SUCCESS' as const } };
     });
     const client = { deleteTable: deleteSpy } as unknown as AnyClient;
     await deleteTable(client);
     expect(deleteSpy).toHaveBeenCalledTimes(1);
-    const [optsArg] = deleteSpy.mock.calls[0] as [unknown];
+    const [optsArg] = deleteSpy.mock.calls[0];
     expect(optsArg).to.deep.equal({});
   });
 
   it('purgeTable should pass tableName override and return purged count', async function () {
-    const purgeSpy = vi.fn(async (_opts?: unknown) => {
-      void _opts;
+    const purgeSpy = vi.fn<(opts?: unknown) => Promise<number>>(async () => {
       await Promise.resolve();
       return 42;
     });
@@ -66,7 +71,7 @@ describe('get-dotenv delete/purge service wrappers', function () {
 
     expect(count).to.equal(42);
     expect(purgeSpy).toHaveBeenCalledTimes(1);
-    const [optsArg] = purgeSpy.mock.calls[0] as [unknown];
+    const [optsArg] = purgeSpy.mock.calls[0];
     expect(optsArg).to.deep.equal({
       tableName: 'TargetTable',
       ReturnConsumedCapacity: 'TOTAL',

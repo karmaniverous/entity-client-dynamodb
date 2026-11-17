@@ -51,6 +51,7 @@ Documentation (guides)
 CLI Plugin (get-dotenv)
 
 - [CLI Plugin](./guides/cli/index.md) - get-dotenv plugin (subpath export `@karmaniverous/entity-client-dynamodb/get-dotenv`) for versioned table lifecycle, transforms, migration, config overlays, Local DynamoDB, Serverless, and recipes.
+- The main package entry has no get-dotenv requirement. Install the optional `@karmaniverous/get-dotenv` 8 peer only when using the `/get-dotenv` plugin subpath.
 
 API Reference
 

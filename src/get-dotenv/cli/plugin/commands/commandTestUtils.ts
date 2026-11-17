@@ -4,7 +4,7 @@ import { GetDotenvCli } from '@karmaniverous/get-dotenv/cliHost';
 export async function makeInstalledCli(
   install: (cli: GetDotenvCli) => void,
 ): Promise<GetDotenvCli> {
-  const cli = new GetDotenvCli('testcli');
+  const cli = new GetDotenvCli('testcli', { importMetaUrl: import.meta.url });
   cli.attachRootOptions({ loadProcess: false, log: false });
   install(cli);
   await cli.install();

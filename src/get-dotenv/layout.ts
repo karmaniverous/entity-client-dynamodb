@@ -285,6 +285,14 @@ export async function resolveTransformFile(
   return firstExisting(vp.transformFileCandidates);
 }
 
+/** Result of enumerating migration step versions. */
+export interface EnumeratedStepVersions {
+  /** Existing version-directory tokens between the requested bounds. */
+  steps: string[];
+  /** Whether the bounds are equal, so no migration is required. */
+  isLatest: boolean;
+}
+
 /**
  * Compute the inclusive ascending list of step versions where
  * fromVersion \< k \<= toVersion. We do not create directories.
@@ -293,7 +301,7 @@ export async function enumerateStepVersions(
   fromVersion: string,
   toVersion: string,
   cfg?: VersionedLayoutConfig,
-): Promise<{ steps: string[]; isLatest: boolean }> {
+): Promise<EnumeratedStepVersions> {
   const from = parseVersionValue(fromVersion);
   const to = parseVersionValue(toVersion);
 

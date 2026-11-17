@@ -17,6 +17,7 @@ import { pathToFileURL } from 'node:url';
 import type {
   BaseConfigMap,
   EntityManager,
+  ParsedConfig,
 } from '@karmaniverous/entity-manager';
 
 import {
@@ -24,9 +25,67 @@ import {
   type VersionedLayoutConfig,
 } from './layout';
 
-/** Minimal structural guard to sanity check the loaded EM. */
-function isEntityManagerLike(value: unknown): value is { config: unknown } {
-  return !!value && typeof value === 'object' && 'config' in value;
+const entityManagerMethods = [
+  'addKeys',
+  'encodeGeneratedProperty',
+  'findIndexToken',
+  'getPrimaryKey',
+  'query',
+  'removeKeys',
+] as const;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isParsedConfig(value: unknown): value is ParsedConfig {
+  if (!isRecord(value) || !isRecord(value.generatedProperties)) {
+    return false;
+  }
+
+  return (
+    isRecord(value.entities) &&
+    isRecord(value.generatedProperties.sharded) &&
+    isRecord(value.generatedProperties.unsharded) &&
+    typeof value.hashKey === 'string' &&
+    isRecord(value.indexes) &&
+    typeof value.generatedKeyDelimiter === 'string' &&
+    typeof value.generatedValueDelimiter === 'string' &&
+    isRecord(value.propertyTranscodes) &&
+    typeof value.rangeKey === 'string' &&
+    typeof value.shardKeyDelimiter === 'string' &&
+    typeof value.throttle === 'number' &&
+    Number.isFinite(value.throttle) &&
+    isRecord(value.transcodes)
+  );
+}
+
+/**
+ * Validate the public EntityManager capability surface without relying on
+ * constructor identity. Dynamic modules can resolve a second physical copy of
+ * `@karmaniverous/entity-manager`, making `instanceof` reject valid instances.
+ */
+function isEntityManager(
+  value: unknown,
+): value is EntityManager<BaseConfigMap> {
+  if (
+    !isRecord(value) ||
+    !isParsedConfig(value.config) ||
+    !isRecord(value.logger)
+  ) {
+    return false;
+  }
+
+  if (
+    typeof value.logger.debug !== 'function' ||
+    typeof value.logger.error !== 'function'
+  ) {
+    return false;
+  }
+
+  return entityManagerMethods.every(
+    (method) => typeof value[method] === 'function',
+  );
 }
 
 /**
@@ -57,13 +116,13 @@ export async function loadEntityManagerFromFile(
     em = exp;
   }
 
-  if (!isEntityManagerLike(em)) {
+  if (!isEntityManager(em)) {
     throw new Error(
       `invalid EntityManager module export at ${modulePath} (expected default EM instance or factory)`,
     );
   }
 
-  return em as EntityManager<BaseConfigMap>;
+  return em;
 }
 
 /**

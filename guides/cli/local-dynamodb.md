@@ -30,10 +30,10 @@ No separate "ready" command
 
 Endpoint derivation
 
-1) `plugins["aws/dynamodb"].local.endpoint`
-2) `plugins["aws/dynamodb"].local.port` → `http://localhost:{port}`
-3) `DYNAMODB_LOCAL_ENDPOINT` (env)
-4) Fallback: `http://localhost:${DYNAMODB_LOCAL_PORT ?? '8000'}`
+1. `plugins["aws/dynamodb"].local.endpoint`
+2. `plugins["aws/dynamodb"].local.port` → `http://localhost:{port}`
+3. `DYNAMODB_LOCAL_ENDPOINT` (env)
+4. Fallback: `http://localhost:${DYNAMODB_LOCAL_PORT ?? '8000'}`
 
 On successful start the CLI prints:
 

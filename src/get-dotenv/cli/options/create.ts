@@ -1,7 +1,8 @@
-import { dotenvExpand, type ProcessEnv } from '@karmaniverous/get-dotenv';
+import { dotenvExpand } from '@karmaniverous/get-dotenv';
 import { shake } from 'radash';
 
 import type { WaiterConfig } from '../../../EntityClient/WaiterConfig';
+import type { ProcessEnv } from '../../../ProcessEnv';
 import type { VersionedLayoutConfig } from '../../layout';
 import { firstDefined, num } from './coerce';
 import { resolveLayoutConfig } from './layout';
