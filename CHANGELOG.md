@@ -2,9 +2,30 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.12.0](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.12.0-alpha.0...0.12.0)
+
+- [GH-6] Support get-dotenv 8 host contract [`#14`](https://github.com/karmaniverous/entity-client-dynamodb/pull/14)
+- [GH-6] updated dependencies [`6962c37`](https://github.com/karmaniverous/entity-client-dynamodb/commit/6962c37ef4c654363b64a219f54c61753374d948)
+- [GH-6] feat: support get-dotenv 8 host contract [`58ca1b4`](https://github.com/karmaniverous/entity-client-dynamodb/commit/58ca1b4603d57d858120fd947a730ecbac7bf7fa)
+- [GH-6] test: finish get-dotenv 8 migration review [`40ae440`](https://github.com/karmaniverous/entity-client-dynamodb/commit/40ae440e19bb674a2a87d42d90bed37cc859082f)
+- [GH-6] chore(deps): eliminate npm install warnings [`e62f304`](https://github.com/karmaniverous/entity-client-dynamodb/commit/e62f3040fe7f305b749e3c8454d3ab5fcb4ab680)
+- [GH-6] fix: accept cross-copy EntityManager exports [`9758e70`](https://github.com/karmaniverous/entity-client-dynamodb/commit/9758e702ad82a581efe9420986923b1acb93259b)
+- [GH-6] test: cover entity manager config fields [`602a14d`](https://github.com/karmaniverous/entity-client-dynamodb/commit/602a14dc7db99cc931b774df44f99d1a452ebe7e)
+- [GH-6] chore: establish pull request quality gates [`05215c9`](https://github.com/karmaniverous/entity-client-dynamodb/commit/05215c95368ee34d9f9337da7661c5e3a816aa6a)
+- [GH-6] refactor: adapt implementation to updated lint rules [`7d375df`](https://github.com/karmaniverous/entity-client-dynamodb/commit/7d375dffc079e2a04fa6e04b5dbb0c0086dcc17e)
+- [GH-6] fix: validate loaded entity manager config [`be756cf`](https://github.com/karmaniverous/entity-client-dynamodb/commit/be756cf79dc20aed013c8f5dc9c454f102288a60)
+- [GH-6] chore(deps): require released get-dotenv ^8.0.0 [`3b0922a`](https://github.com/karmaniverous/entity-client-dynamodb/commit/3b0922ad7f82ef85790c889e664b690b0d914fa6)
+- [GH-6] ci: build before package type tests [`177840a`](https://github.com/karmaniverous/entity-client-dynamodb/commit/177840a6a986dd49160434c973d8a31f669f9794)
+- [GH-6] test: skip Linux dynamodb image on Windows [`f856a68`](https://github.com/karmaniverous/entity-client-dynamodb/commit/f856a6805f00e7b89c8846534e6a0bcafae94857)
+- [GH-6] ci: skip dependency install scripts [`68e3ab1`](https://github.com/karmaniverous/entity-client-dynamodb/commit/68e3ab1d93d9347e3e24de3e590e730f113dbb98)
+- Merge 0.12.0-alpha.0 (exclude keys on purgeItems) into main [`8b99097`](https://github.com/karmaniverous/entity-client-dynamodb/commit/8b990976df78e838c00aca557b288421732889cb)
+
 #### [0.12.0-alpha.0](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.9...0.12.0-alpha.0)
 
+> 30 October 2026
+
 - feat: support exclude keys on purgeItems [`b353fcb`](https://github.com/karmaniverous/entity-client-dynamodb/commit/b353fcbd39e5cc96a6d84a2384d56944321885fd)
+- chore: release v0.12.0-alpha.0 [`fb1dc0c`](https://github.com/karmaniverous/entity-client-dynamodb/commit/fb1dc0c21685ca6e9e820e2c75cb7b1d0287f08d)
 
 #### [0.11.9](https://github.com/karmaniverous/entity-client-dynamodb/compare/0.11.8...0.11.9)
 
