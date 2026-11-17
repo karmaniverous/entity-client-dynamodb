@@ -7,7 +7,7 @@ title: Install & Host Integration
 Install the get-dotenv host (optional peer) and wire the DynamoDB plugin.
 
 ```bash
-npm i -D @karmaniverous/get-dotenv@^8.0.0-0
+npm i -D @karmaniverous/get-dotenv@^8.0.0
 ```
 
 Create a host CLI
